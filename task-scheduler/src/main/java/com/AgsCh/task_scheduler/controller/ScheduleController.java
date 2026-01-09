@@ -1,6 +1,5 @@
 package com.AgsCh.task_scheduler.controller;
 
-import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.*;
 
@@ -28,13 +27,23 @@ public class ScheduleController {
         return scheduleService.solve(problem);
     }
 
-    // ✅ ENDPOINT REAL
     @PostMapping("/solve")
-    public ScheduleResponseDTO solve(
-            @Valid @RequestBody ScheduleRequestDTO request
-    ) {
-        Schedule problem = ScheduleMapper.toModel(request);
-        Schedule solution = scheduleService.solve(problem);
-        return ScheduleMapper.toResponse(solution);
-    }
+public ScheduleResponseDTO solve(@RequestBody ScheduleRequestDTO request) {
+
+    //System.out.println("1️⃣ request recibido");
+    //System.out.println("Persons: " + request.getPersons());
+    //System.out.println("Tasks: " + request.getTasks());
+
+    Schedule schedule = ScheduleMapper.toModel(request);
+    //System.out.println("2️⃣ mapper OK");
+
+    Schedule solved = scheduleService.solve(schedule);
+    //System.out.println("3️⃣ solver OK");
+
+    ScheduleResponseDTO response = ScheduleMapper.toResponse(solved);
+    //System.out.println("4️⃣ response OK");
+
+    return response;
+}
+
 }

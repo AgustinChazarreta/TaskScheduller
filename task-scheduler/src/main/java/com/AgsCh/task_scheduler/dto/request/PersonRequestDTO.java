@@ -9,17 +9,23 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 public class PersonRequestDTO {
-
+    
     @NotBlank
     private String name;
-
+    
     @NotBlank
     private String category;
+
+    @NotBlank   
+    private LocalDate birthDate;
 
     @NotNull
     @NotEmpty
     private List<DayOfWeek> availableDays;
-
+    
+    public PersonRequestDTO() {
+    }
+    
     // getters & setters
     public String getName() {
         return name;
@@ -27,6 +33,14 @@ public class PersonRequestDTO {
 
     public void setName(String name) {
         this.name = name;
+    }
+    
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
     }
 
     public String getCategory() {
@@ -40,13 +54,8 @@ public class PersonRequestDTO {
     public List<DayOfWeek> getAvailableDays() {
         return availableDays;
     }
-
+    
     public void setAvailableDays(List<DayOfWeek> availableDays) {
         this.availableDays = availableDays;
-    }
-
-    public LocalDate getBirthDate() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getBirthDate'");
     }
 }

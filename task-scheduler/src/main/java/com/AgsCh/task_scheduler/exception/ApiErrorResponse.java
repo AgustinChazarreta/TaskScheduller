@@ -3,14 +3,14 @@ package com.AgsCh.task_scheduler.exception;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class ApiError {
+public class ApiErrorResponse {
 
     private LocalDateTime timestamp;
     private int status;
     private String error;
     private List<String> details;
 
-    public ApiError(int status, String error, List<String> details) {
+    public ApiErrorResponse(int status, String error, List<String> details) {
         this.timestamp = LocalDateTime.now();
         this.status = status;
         this.error = error;

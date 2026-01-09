@@ -1,66 +1,46 @@
 package com.AgsCh.task_scheduler.exception;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 1️⃣ errores de validación (@Valid)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidationErrors(
-            MethodArgumentNotValidException ex) {
+        // =========================
+        // ERRORES DE NEGOCIO (400)
+        // =========================
+        @ExceptionHandler(BusinessException.class)
+        public ResponseEntity<ApiErrorResponse> handleBusinessException(BusinessException ex) {
 
-        List<String> errors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                .collect(Collectors.toList());
+                ApiErrorResponse error = new ApiErrorResponse(
+                                HttpStatus.BAD_REQUEST.value(),
+                                "Business validation error",
+                                List.of(ex.getMessage()));
 
-        ApiError apiError = new ApiError(
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation error",
-                errors
-        );
+                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
 
-        return ResponseEntity.badRequest().body(apiError);
-    }
+        // =========================
+        // ERRORES NO CONTROLADOS (500)
+        // =========================
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ApiErrorResponse> handleGenericException(Exception ex) {
 
-    // 2️⃣ errores de negocio
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiError> handleBusinessException(
-            BusinessException ex) {
+                // 🔴 FUNDAMENTAL: ver el error real en consola
+                ex.printStackTrace();
 
-        ApiError apiError = new ApiError(
-                HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                "Business rule violation",
-                List.of(ex.getMessage())
-        );
+                ApiErrorResponse error = new ApiErrorResponse(
+                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                                ex.getClass().getSimpleName(),
+                                List.of(
+                                                ex.getMessage() != null
+                                                                ? ex.getMessage()
+                                                                : "Unexpected error occurred"));
 
-        return ResponseEntity
-                .status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(apiError);
-    }
-
-    // 3️⃣ error inesperado
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleGenericException(
-            Exception ex) {
-
-        ApiError apiError = new ApiError(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal server error",
-                List.of("Unexpected error occurred")
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(apiError);
-    }
+                return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 }

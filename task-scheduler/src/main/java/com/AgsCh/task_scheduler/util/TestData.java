@@ -38,7 +38,7 @@ public class TestData {
 
         /* ========= TASKS ========= */
 
-        Task backend = new Task("Backend", "JAVA", List.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY));
+        Task backend = new Task("Backend", "JAVA", List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY));
         Task database = new Task("Database", "SQL", List.of(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY));
         Task deploy = new Task("Deploy", "DEVOPS", List.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY));
 
