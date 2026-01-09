@@ -15,8 +15,11 @@ import com.AgsCh.task_scheduler.planner.ScheduleConstraintProvider;
 public class ScheduleService {
 
     private final SolverFactory<Schedule> solverFactory;
+    private final ScheduleValidator validator;
 
-    public ScheduleService() {
+    public ScheduleService(ScheduleValidator validator) {
+
+        this.validator = validator;
 
         SolverConfig solverConfig = new SolverConfig()
             .withSolutionClass(Schedule.class)
@@ -28,6 +31,11 @@ public class ScheduleService {
     }
 
     public Schedule solve(Schedule problem) {
+
+        // 🔒 VALIDACIONES DE NEGOCIO (antes del solver)
+        validator.validate(problem);
+
+        // 🧠 RESOLUCIÓN
         Solver<Schedule> solver = solverFactory.buildSolver();
         return solver.solve(problem);
     }
