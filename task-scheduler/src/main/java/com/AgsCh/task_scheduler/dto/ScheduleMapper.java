@@ -3,31 +3,41 @@ package com.AgsCh.task_scheduler.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.AgsCh.task_scheduler.dto.request.*;
+import com.AgsCh.task_scheduler.dto.response.*;
 import com.AgsCh.task_scheduler.model.*;
 
 public class ScheduleMapper {
 
-    public static Schedule toModel(ScheduleRequestDTO dto) {
+    /* ======================
+        REQUEST → MODEL
+       ====================== */
 
-        List<Person> persons = dto.persons.stream()
-            .map(p -> new Person(
-                p.name,
-                p.category,
-                null,
-                p.availableDays
-            ))
-            .toList();
+    public static Schedule toModel(ScheduleRequestDTO request) {
 
-        List<Task> tasks = dto.tasks.stream()
-            .map(t -> new Task(
-                t.name,
-                t.category,
-                t.assignedDays
-            ))
-            .toList();
+        // Personas
+        List<Person> persons = new ArrayList<>();
+        for (PersonRequestDTO p : request.getPersons()) {
+            persons.add(new Person(
+                p.getName(),
+                p.getCategory(),
+                p.getBirthDate(),
+                p.getAvailableDays()
+            ));
+        }
 
+        // Tareas
+        List<Task> tasks = new ArrayList<>();
+        for (TaskRequestDTO t : request.getTasks()) {
+            tasks.add(new Task(
+                t.getName(),
+                t.getCategory(),
+                t.getAssignedDays()
+            ));
+        }
+
+        // Assignments (una por tarea y día)
         List<TaskAssignment> assignments = new ArrayList<>();
-
         for (Task task : tasks) {
             for (var day : task.getAssignedDays()) {
                 assignments.add(new TaskAssignment(task, day));
@@ -37,20 +47,25 @@ public class ScheduleMapper {
         return new Schedule(persons, tasks, assignments);
     }
 
+    /* ======================
+        MODEL → RESPONSE
+       ====================== */
+
     public static ScheduleResponseDTO toResponse(Schedule solution) {
 
-        ScheduleResponseDTO response = new ScheduleResponseDTO();
-        response.assignments = solution.getTaskAssignmentList().stream()
-            .map(a -> {
-                TaskAssignmentResultDTO dto = new TaskAssignmentResultDTO();
-                dto.taskName = a.getTask().getName();
-                dto.day = a.getDay();
-                dto.personName = a.getPerson().getName();
-                return dto;
-            })
-            .toList();
+        List<TaskAssignmentResponseDTO> assignments = new ArrayList<>();
 
-        response.score = solution.getScore().toString();
-        return response;
+        for (TaskAssignment a : solution.getTaskAssignmentList()) {
+            assignments.add(new TaskAssignmentResponseDTO(
+                a.getDay(),
+                a.getTask().getName(),
+                a.getPerson().getName()
+            ));
+        }
+
+        return new ScheduleResponseDTO(
+            assignments,
+            solution.getScore().toString()
+        );
     }
 }
