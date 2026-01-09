@@ -53,10 +53,6 @@ public class TestData {
                 assignments.add(new TaskAssignment(task, day));
             }
         }
-        
-        for (TaskAssignment taskAssignment : assignments) {
-            System.out.println(taskAssignment.getTask().getName() + " -> " + taskAssignment.getDay());
-        }
 
         /* ========= SCHEDULE ========= */
 
