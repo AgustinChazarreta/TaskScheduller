@@ -2,7 +2,8 @@ package com.AgsCh.task_scheduler.dto.request;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Set;
+import com.AgsCh.task_scheduler.model.Category;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -14,14 +15,14 @@ public class PersonRequestDTO {
     private String name;
     
     @NotBlank
-    private String category;
+    private Category category;
 
     @NotBlank   
     private LocalDate birthDate;
 
     @NotNull
     @NotEmpty
-    private List<DayOfWeek> availableDays;
+    private Set<DayOfWeek> assignedDays;
     
     public PersonRequestDTO() {
     }
@@ -43,19 +44,19 @@ public class PersonRequestDTO {
         this.birthDate = birthDate;
     }
 
-    public String getCategory() {
+    public Category getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(Category category) {
         this.category = category;
     }
 
-    public List<DayOfWeek> getAvailableDays() {
-        return availableDays;
+    public Set<DayOfWeek> getAvailableDays() {
+        return assignedDays;
     }
-    
-    public void setAvailableDays(List<DayOfWeek> availableDays) {
-        this.availableDays = availableDays;
+
+    public void setAvailableDays(Set<DayOfWeek> assignedDays) {
+        this.assignedDays = assignedDays;
     }
 }

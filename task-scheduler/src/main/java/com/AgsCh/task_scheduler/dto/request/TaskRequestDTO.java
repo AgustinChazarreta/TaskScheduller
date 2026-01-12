@@ -1,7 +1,8 @@
 package com.AgsCh.task_scheduler.dto.request;
 
 import java.time.DayOfWeek;
-import java.util.List;
+import java.util.Set;
+import com.AgsCh.task_scheduler.model.Category;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -12,12 +13,13 @@ public class TaskRequestDTO {
     @NotBlank
     private String name;
 
-    @NotBlank
-    private String category;
+    @NotNull
+    @NotEmpty
+    private Set<Category> allowedCategories;
 
     @NotNull
     @NotEmpty
-    private List<DayOfWeek> assignedDays;
+    private Set<DayOfWeek> assignedDays;
 
     // getters & setters
     public String getName() {
@@ -28,19 +30,19 @@ public class TaskRequestDTO {
         this.name = name;
     }
 
-    public String getCategory() {
-        return category;
+    public Set<Category> getAllowedCategories() {
+        return allowedCategories;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public void setAllowedCategories(Set<Category> allowedCategories) {
+        this.allowedCategories = allowedCategories;
     }
 
-    public List<DayOfWeek> getAssignedDays() {
+    public Set<DayOfWeek> getAssignedDays() {
         return assignedDays;
     }
 
-    public void setAssignedDays(List<DayOfWeek> assignedDays) {
+    public void setAssignedDays(Set<DayOfWeek> assignedDays) {
         this.assignedDays = assignedDays;
     }
 }

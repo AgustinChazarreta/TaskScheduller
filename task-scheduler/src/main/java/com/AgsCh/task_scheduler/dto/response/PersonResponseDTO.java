@@ -1,29 +1,31 @@
 package com.AgsCh.task_scheduler.dto.response;
 
 import java.time.DayOfWeek;
-import java.util.List;
+import java.util.Set;
+
+import com.AgsCh.task_scheduler.model.Category;
 
 public class PersonResponseDTO {
 
     private String name;
-    private String category;
-    private List<DayOfWeek> availableDays;
+    private Category category;
+    private Set<DayOfWeek> assignedDays;
 
-    public PersonResponseDTO(String name, String category, List<DayOfWeek> availableDays) {
+    public PersonResponseDTO(String name, Category category, Set<DayOfWeek> assignedDays) {
         this.name = name;
         this.category = category;
-        this.availableDays = availableDays;
+        this.assignedDays = assignedDays;
     }
 
     public String getName() {
         return name;
     }
 
-    public String getCategory() {
+    public Category getCategory() {
         return category;
     }
 
-    public List<DayOfWeek> getAvailableDays() {
-        return availableDays;
+    public Set<DayOfWeek> getAssignedDays() {
+        return assignedDays;
     }
 }

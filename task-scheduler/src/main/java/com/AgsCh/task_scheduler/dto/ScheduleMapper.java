@@ -30,7 +30,7 @@ public class ScheduleMapper {
         for (TaskRequestDTO t : request.getTasks()) {
             tasks.add(new Task(
                     t.getName(),
-                    t.getCategory(),
+                    t.getAllowedCategories(),
                     t.getAssignedDays()));
         }
 

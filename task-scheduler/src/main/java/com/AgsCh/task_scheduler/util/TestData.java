@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.AgsCh.task_scheduler.model.*;
 
@@ -15,32 +16,32 @@ public class TestData {
 
         Person alice = new Person(
             "Alice",
-            "JAVA",
+            Category.CATEGORY_1,
             LocalDate.of(1995, 5, 10),
-            List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY)
+            Set.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY)
         );
 
         Person bob = new Person(
             "Bob",
-            "SQL",
+            Category.CATEGORY_2,
             LocalDate.of(1990, 8, 20),
-            List.of(DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY)
+            Set.of(DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY)
         );
 
         Person charlie = new Person(
             "Charlie",
-            "DEVOPS",
+            Category.CATEGORY_3,
             LocalDate.of(1988, 3, 3),
-            List.of(DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+            Set.of(DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
         );
 
         List<Person> persons = List.of(alice, bob, charlie);
 
         /* ========= TASKS ========= */
 
-        Task backend = new Task("Backend", "JAVA", List.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY));
-        Task database = new Task("Database", "SQL", List.of(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY));
-        Task deploy = new Task("Deploy", "DEVOPS", List.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY));
+        Task backend = new Task("Backend", Set.of(Category.CATEGORY_1), Set.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY));
+        Task database = new Task("Database", Set.of(Category.CATEGORY_2), Set.of(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY));
+        Task deploy = new Task("Deploy", Set.of(Category.CATEGORY_3), Set.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY));
 
         List<Task> tasks = List.of(backend, database, deploy);
 
