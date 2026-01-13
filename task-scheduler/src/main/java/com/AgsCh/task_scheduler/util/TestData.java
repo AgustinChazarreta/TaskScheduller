@@ -51,7 +51,7 @@ public class TestData {
 
         for (Task task : tasks) {
             for (DayOfWeek day : task.getAssignedDays()) {
-                assignments.add(new TaskAssignment(task, day));
+                assignments.add(new TaskAssignment(task, null));
             }
         }
 

@@ -4,8 +4,13 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 public class ScheduleRequestDTO {
+
+    @Valid
+    @NotNull
+    private PlanningPeriodRequestDTO period;
 
     @Valid
     @NotEmpty
@@ -16,6 +21,15 @@ public class ScheduleRequestDTO {
     private List<TaskRequestDTO> tasks;
 
     // getters & setters
+
+    public PlanningPeriodRequestDTO getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(PlanningPeriodRequestDTO period) {
+        this.period = period;
+    }
+
     public List<PersonRequestDTO> getPersons() {
         return persons;
     }
