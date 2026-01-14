@@ -8,7 +8,6 @@ import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
 import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
 import com.AgsCh.task_scheduler.model.Schedule;
 import com.AgsCh.task_scheduler.service.ScheduleService;
-import com.AgsCh.task_scheduler.util.TestData;
 
 @RestController
 @RequestMapping("/api/schedule")
@@ -18,13 +17,6 @@ public class ScheduleController {
 
     public ScheduleController(ScheduleService scheduleService) {
         this.scheduleService = scheduleService;
-    }
-
-    // ⚠️ TEST (solo para desarrollo)
-    @GetMapping("/solve/test")
-    public Schedule solveTest() {
-        Schedule problem = TestData.buildSchedule();
-        return scheduleService.solve(problem);
     }
 
     @PostMapping("/solve")
