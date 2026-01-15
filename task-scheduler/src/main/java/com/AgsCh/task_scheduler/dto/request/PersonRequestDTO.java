@@ -22,7 +22,7 @@ public class PersonRequestDTO {
 
     @NotNull
     @NotEmpty
-    private Set<DayOfWeek> assignedDays;
+    private Set<DayOfWeek> availableDays;
     
     public PersonRequestDTO() {
     }
@@ -53,10 +53,10 @@ public class PersonRequestDTO {
     }
 
     public Set<DayOfWeek> getAvailableDays() {
-        return assignedDays;
+        return availableDays;
     }
 
     public void setAvailableDays(Set<DayOfWeek> assignedDays) {
-        this.assignedDays = assignedDays;
+        this.availableDays = assignedDays;
     }
 }

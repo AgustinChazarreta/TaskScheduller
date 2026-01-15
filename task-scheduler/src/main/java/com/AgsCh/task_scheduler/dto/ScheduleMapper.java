@@ -5,10 +5,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.AgsCh.task_scheduler.dto.request.PlanningPeriodRequestDTO;
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
 import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
 import com.AgsCh.task_scheduler.dto.request.TaskRequestDTO;
+import com.AgsCh.task_scheduler.dto.request.requestAdapter.PlanningPeriodRequestDTO;
 import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.TaskAssignmentResponseDTO;
 import com.AgsCh.task_scheduler.model.Person;
@@ -18,6 +18,10 @@ import com.AgsCh.task_scheduler.model.TaskAssignment;
 
 public class ScheduleMapper {
 
+    private ScheduleMapper() {
+        // utility class
+    }
+
     /*
      * ======================
      * REQUEST → MODEL
@@ -26,9 +30,22 @@ public class ScheduleMapper {
 
     public static Schedule toModel(ScheduleRequestDTO request) {
 
-        // -------- persons --------
+        List<Person> persons = mapPersons(request.getPersons());
+        List<Task> tasks = mapTasks(request.getTasks());
+
+        PlanningPeriodRequestDTO period = request.getPeriod();
+        List<TaskAssignment> assignments = buildAssignments(
+                tasks,
+                period.getStartDate(),
+                period.getEndDate());
+
+        return new Schedule(persons, tasks, assignments);
+    }
+
+    private static List<Person> mapPersons(List<PersonRequestDTO> personDTOs) {
         List<Person> persons = new ArrayList<>();
-        for (PersonRequestDTO p : request.getPersons()) {
+
+        for (PersonRequestDTO p : personDTOs) {
             persons.add(new Person(
                     p.getName(),
                     p.getCategory(),
@@ -36,21 +53,27 @@ public class ScheduleMapper {
                     p.getAvailableDays()));
         }
 
-        // -------- tasks --------
+        return persons;
+    }
+
+    private static List<Task> mapTasks(List<TaskRequestDTO> taskDTOs) {
         List<Task> tasks = new ArrayList<>();
-        for (TaskRequestDTO t : request.getTasks()) {
+
+        for (TaskRequestDTO t : taskDTOs) {
             tasks.add(new Task(
                     t.getName(),
                     t.getAllowedCategories(),
                     t.getAssignedDays()));
         }
 
-        // -------- planning period --------
-        PlanningPeriodRequestDTO period = request.getPeriod();
-        LocalDate startDate = period.getStartDate();
-        LocalDate endDate = period.getEndDate();
+        return tasks;
+    }
 
-        // -------- task assignments (KEY PART) --------
+    private static List<TaskAssignment> buildAssignments(
+            List<Task> tasks,
+            LocalDate startDate,
+            LocalDate endDate) {
+
         List<TaskAssignment> assignments = new ArrayList<>();
 
         for (Task task : tasks) {
@@ -60,33 +83,13 @@ public class ScheduleMapper {
 
                 if (task.getAssignedDays().contains(dayOfWeek)) {
                     TaskAssignment assignment = new TaskAssignment(task, date);
-                    assignment.setDate(date); // 🔥 ESTA LÍNEA ES CLAVE
+                    assignment.setDate(date);
                     assignments.add(assignment);
                 }
             }
         }
 
-
-
-
-
-        System.out.println("==== DEBUG ASSIGNMENTS GENERADOS ====");
-        for (TaskAssignment a : assignments) {
-            System.out.println(
-                    "task=" + a.getTask().getName() +
-                            " | day=" + a.getDate().getDayOfWeek() +
-                            " | date=" + a.getDate());
-        }
-        System.out.println("====================================");
-
-
-
-
-
-
-
-
-        return new Schedule(persons, tasks, assignments);
+        return assignments;
     }
 
     /*
@@ -105,11 +108,10 @@ public class ScheduleMapper {
                     ? a.getPerson().getName()
                     : "UNASSIGNED";
 
-            assignments.add(
-                    new TaskAssignmentResponseDTO(
-                            a.getDate().getDayOfWeek(),
-                            a.getTask().getName(),
-                            personName));
+            assignments.add(new TaskAssignmentResponseDTO(
+                    a.getDate().getDayOfWeek(),
+                    a.getTask().getName(),
+                    personName));
         }
 
         String score = solution.getScore() != null

@@ -1,4 +1,4 @@
-package com.AgsCh.task_scheduler.dto.request;
+package com.AgsCh.task_scheduler.dto.request.requestAdapter;
 
 import java.time.LocalDate;
 
@@ -11,6 +11,8 @@ public class PlanningPeriodRequestDTO {
 
     @NotNull
     private LocalDate endDate;
+
+    public PlanningPeriodRequestDTO() {}
 
     public LocalDate getStartDate() {
         return startDate;
