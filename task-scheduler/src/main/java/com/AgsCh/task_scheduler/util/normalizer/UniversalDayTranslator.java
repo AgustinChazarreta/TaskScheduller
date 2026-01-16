@@ -1,4 +1,4 @@
-package com.AgsCh.task_scheduler.util;
+package com.AgsCh.task_scheduler.util.normalizer;
 
 import java.time.DayOfWeek;
 import java.time.format.TextStyle;

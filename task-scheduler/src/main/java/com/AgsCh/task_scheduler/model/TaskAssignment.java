@@ -13,44 +13,35 @@ public class TaskAssignment {
     @PlanningId
     private String id = UUID.randomUUID().toString();
 
-    private Task task;
+    private Task task;           // Tarea fija
+    private LocalDate date;      // Fecha fija
 
-    /** Fecha concreta: FIXA */
-    private LocalDate date;
-
-    /** Variable que decide OptaPlanner */
     @PlanningVariable(valueRangeProviderRefs = {"personRange"})
-    private Person person;
+    private Person person;       // Variable que asigna OptaPlanner
 
-    public TaskAssignment() {
-    }
+    // --------- Constructores ---------
+    public TaskAssignment() {}
 
     public TaskAssignment(Task task, LocalDate date) {
         this.task = task;
         this.date = date;
     }
 
-    public String getId() {
-        return id;
-    }
+    // --------- Getters y setters ---------
+    public String getId() { return id; }
+    public Task getTask() { return task; }
+    public LocalDate getDate() { return date; }
+    public Person getPerson() { return person; }
 
-    public Task getTask() {
-        return task;
-    }
+    public void setDate(LocalDate date) { this.date = date; }
+    public void setPerson(Person person) { this.person = person; }
 
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public Person getPerson() {
-        return person;
-    }
-
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
-    
-    public void setPerson(Person person) {
-        this.person = person;
+    @Override
+    public String toString() {
+        return "TaskAssignment{" +
+                "task=" + (task != null ? task.getName() : "null") +
+                ", date=" + date +
+                ", person=" + (person != null ? person.getName() : "UNASSIGNED") +
+                '}';
     }
 }

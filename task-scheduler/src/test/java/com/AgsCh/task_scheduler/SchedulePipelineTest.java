@@ -12,10 +12,10 @@ import com.AgsCh.task_scheduler.dto.request.requestAdapter.PlanningPeriodRequest
 import com.AgsCh.task_scheduler.dto.request.requestAdapter.ScheduleRequestDTOAdapter;
 import com.AgsCh.task_scheduler.model.Category;
 import com.AgsCh.task_scheduler.model.Task;
-import com.AgsCh.task_scheduler.util.TaskAssembler;
-import com.AgsCh.task_scheduler.util.TaskRefactor;
-import com.AgsCh.task_scheduler.util.UserInputSimulator;
-import com.AgsCh.task_scheduler.util.WordParser;
+import com.AgsCh.task_scheduler.util.assembler.TaskAssembler;
+import com.AgsCh.task_scheduler.util.mock.UserInputSimulator;
+import com.AgsCh.task_scheduler.util.normalizer.TaskRefactor;
+import com.AgsCh.task_scheduler.util.word.WordParser;
 
 public class SchedulePipelineTest {
 

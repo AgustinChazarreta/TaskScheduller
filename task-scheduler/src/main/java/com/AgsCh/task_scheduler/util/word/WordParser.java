@@ -1,4 +1,4 @@
-package com.AgsCh.task_scheduler.util;
+package com.AgsCh.task_scheduler.util.word;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -14,6 +14,13 @@ import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * Utilitario para parsear archivos Word y extraer tareas con sus días
+ * asignados.
+ * Se espera que el Word contenga una tabla donde:
+ * - Primera fila: encabezados con los días.
+ * - Primera columna: nombres de las tareas.
+ */
 public class WordParser {
 
     /**
@@ -48,8 +55,6 @@ public class WordParser {
 
     /**
      * Lógica central de parseo del documento Word.
-     * Se espera una tabla donde la primera fila contiene los días
-     * y la primera columna el nombre de la tarea.
      */
     private static Map<String, List<String>> parseDocument(XWPFDocument document) {
 
@@ -61,15 +66,13 @@ public class WordParser {
 
         XWPFTable table = document.getTables().get(0);
         List<XWPFTableRow> rows = table.getRows();
-
         if (rows.size() < 2) {
             return tasks;
         }
 
-        // Encabezados (días de la semana)
+        // Encabezados: días de la semana
         List<String> days = new ArrayList<>();
         List<XWPFTableCell> headerCells = rows.get(0).getTableCells();
-
         for (int i = 1; i < headerCells.size(); i++) {
             days.add(headerCells.get(i).getText().trim());
         }
@@ -77,11 +80,9 @@ public class WordParser {
         // Filas de tareas
         for (int r = 1; r < rows.size(); r++) {
             List<XWPFTableCell> cells = rows.get(r).getTableCells();
-
             String taskName = cells.get(0).getText().trim();
-            if (taskName.isEmpty()) {
+            if (taskName.isEmpty())
                 continue;
-            }
 
             List<String> assignedDays = new ArrayList<>();
             for (int c = 1; c < cells.size() && c <= days.size(); c++) {

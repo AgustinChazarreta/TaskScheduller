@@ -1,6 +1,7 @@
 package com.AgsCh.task_scheduler.model;
 
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
@@ -14,28 +15,28 @@ public class Person {
 
     @PlanningId @Id
     private String id = UUID.randomUUID().toString(); // Identificador único
+
     private String name;                 // Nombre legible
-    private Category category;             // Rol o categoría
-    private LocalDate birthDate;            // Fecha de nacimiento
+    private Category category;           // Rol o categoría
+    private LocalDate birthDate;         // Fecha de nacimiento
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     private Set<DayOfWeek> availableDays; // Días que puede trabajar
 
-    public Person() {}
+    // --------- Constructores ---------
+    public Person() {
+        this.availableDays = EnumSet.noneOf(DayOfWeek.class);
+    }
 
     public Person(String name, Category category, LocalDate birthDate, Set<DayOfWeek> assignedDays) {
         this.name = name;
         this.category = category;
         this.birthDate = birthDate;
-        this.availableDays = EnumSet.copyOf(assignedDays);
+        this.availableDays = assignedDays != null ? EnumSet.copyOf(assignedDays) : EnumSet.noneOf(DayOfWeek.class);
     }
 
-    @Override
-    public String toString() {
-        return name;
-    }
-
-    // Getters y setters
+    // --------- Getters y setters ---------
     public String getId() { return id; }
     public String getName() { return name; }
     public Category getCategory() { return category; }
@@ -45,5 +46,12 @@ public class Person {
     public void setName(String name) { this.name = name; }
     public void setCategory(Category category) { this.category = category; }
     public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
-    public void setAvailableDays(Set<DayOfWeek> assignedDays) { this.availableDays = assignedDays; }
+    public void setAvailableDays(Set<DayOfWeek> assignedDays) { 
+        this.availableDays = assignedDays != null ? EnumSet.copyOf(assignedDays) : EnumSet.noneOf(DayOfWeek.class);
+    }
+
+    @Override
+    public String toString() {
+        return name + " (" + category + ")";
+    }
 }

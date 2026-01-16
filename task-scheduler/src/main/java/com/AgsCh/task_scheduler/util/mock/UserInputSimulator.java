@@ -1,4 +1,4 @@
-package com.AgsCh.task_scheduler.util;
+package com.AgsCh.task_scheduler.util.mock;
 
 import java.time.DayOfWeek;
 import java.util.EnumSet;
