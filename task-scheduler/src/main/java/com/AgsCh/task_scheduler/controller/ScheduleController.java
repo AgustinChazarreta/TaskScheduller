@@ -89,6 +89,29 @@ public class ScheduleController {
                         // 4️⃣ SOLVER
                         // =========================
                         Schedule schedule = ScheduleMapper.toModel(scheduleRequest);
+
+
+
+
+                        System.out.println("=== Schedule inicial ===");
+
+                        System.out.println("Personas:");
+                        schedule.getPersonList().forEach(
+                                        p -> System.out.println(" - " + p.getName() + " (" + p.getCategory() + ")"));
+
+                        System.out.println("Tareas:");
+                        schedule.getTaskList().forEach(t -> System.out
+                                        .println(" - " + t.getName() + " días permitidos: " + t.getAssignedDays()));
+
+                        System.out.println("Asignaciones:");
+                        schedule.getTaskAssignmentList()
+                                        .forEach(a -> System.out.println(" - Tarea: " + a.getTask().getName()
+                                                        + ", Fecha: " + a.getDate() + ", Persona: " + a.getPerson()));
+
+
+
+
+                                                        
                         Schedule solved = scheduleService.solve(schedule);
 
                         ScheduleResponseDTO response = ScheduleMapper.toResponse(solved);

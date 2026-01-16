@@ -1,7 +1,8 @@
 package com.AgsCh.task_scheduler.service;
 
 import java.time.Duration;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.optaplanner.core.api.solver.Solver;
 import org.optaplanner.core.api.solver.SolverFactory;
@@ -52,6 +53,9 @@ public class ScheduleService {
 
         log.info("Schedule resuelto correctamente");
 
+        // --- Debug: mostrar mensajes de hard + soft constraints ---
+        printConstraintViolations(solution);
+
         return solution;
     }
 
@@ -72,7 +76,6 @@ public class ScheduleService {
             throw new BusinessException("Task assignments list is empty");
         }
 
-        // validaciones extra
         problem.getTaskAssignmentList().forEach(a -> {
             if (Objects.isNull(a.getTask())) {
                 throw new BusinessException("TaskAssignment sin Task asignada");
@@ -83,5 +86,90 @@ public class ScheduleService {
         });
 
         log.debug("Validación del schedule completada con éxito");
+    }
+
+    /**
+     * Método para imprimir mensajes de hard + soft constraints sin ScoreDirector
+     */
+    private void printConstraintViolations(Schedule solution) {
+        System.out.println("=== Constraint violations ===");
+
+        Map<String, List<TaskAssignment>> personAssignments = new HashMap<>();
+
+        // --- HARD CONSTRAINTS ---
+        for (TaskAssignment ta : solution.getTaskAssignmentList()) {
+
+            if (ta.getPerson() == null) {
+                System.out.println("[Task has no assigned person] Tarea: " + ta.getTask().getName()
+                        + ", Fecha: " + ta.getDate());
+                continue;
+            }
+
+            // Construir mapa persona → lista de tareas para soft constraints
+            personAssignments.computeIfAbsent(ta.getPerson().getName(), k -> new ArrayList<>()).add(ta);
+
+            if (!ta.getTask().getAllowedCategories().contains(ta.getPerson().getCategory())) {
+                System.out.println("[Person category mismatch] Persona: " + ta.getPerson().getName()
+                        + ", Tarea: " + ta.getTask().getName() + ", Fecha: " + ta.getDate());
+            }
+
+            if (!ta.getPerson().getAvailableDays().contains(ta.getDate().getDayOfWeek())) {
+                System.out.println("[Person not available] Persona: " + ta.getPerson().getName()
+                        + ", Fecha: " + ta.getDate() + ", Tarea: " + ta.getTask().getName());
+            }
+
+            if (isBirthday(ta.getPerson().getBirthDate(), ta.getDate())) {
+                System.out.println("[Person cannot work on birthday] Persona: " + ta.getPerson().getName()
+                        + ", Fecha: " + ta.getDate() + ", Tarea: " + ta.getTask().getName());
+            }
+
+            if (!ta.getTask().getAssignedDays().contains(ta.getDate().getDayOfWeek())) {
+                System.out.println("[Task scheduled on invalid day] Tarea: " + ta.getTask().getName()
+                        + ", Fecha: " + ta.getDate() + ", Persona: " + ta.getPerson().getName());
+            }
+        }
+
+        // Double booking
+        solution.getPersonList().forEach(person -> {
+            Map<java.time.LocalDate, List<TaskAssignment>> assignmentsByDate = solution.getTaskAssignmentList().stream()
+                    .filter(ta -> person.equals(ta.getPerson()))
+                    .collect(Collectors.groupingBy(TaskAssignment::getDate));
+
+            assignmentsByDate.forEach((date, tas) -> {
+                if (tas.size() > 1) {
+                    System.out.println("[Person double booked] Persona: " + person.getName()
+                            + ", Fecha: " + date + ", Tareas asignadas: " + tas.size());
+                }
+            });
+        });
+
+        // --- SOFT CONSTRAINTS ---
+        personAssignments.forEach((personName, tas) -> {
+            int taskCount = tas.size();
+
+            // balanceWorkload: penaliza tareas > 3
+            if (taskCount > 3) {
+                System.out.println("[Soft Constraint - workload > 3] Persona: " + personName
+                        + ", Tareas asignadas: " + taskCount
+                        + " (penalización: " + (taskCount - 3) + ")");
+            }
+
+            // preferLessLoadedPerson: muestra cantidad de tareas total (penaliza según la
+            // cantidad)
+            System.out.println("[Soft Constraint - prefer less loaded] Persona: " + personName
+                    + ", Tareas asignadas: " + taskCount);
+        });
+
+        System.out.println("=== End of violations ===");
+    }
+
+    /**
+     * Helper para cumpleaños
+     */
+    private boolean isBirthday(java.time.LocalDate birthDate, java.time.LocalDate assignmentDate) {
+        return birthDate != null &&
+                assignmentDate != null &&
+                birthDate.getMonth() == assignmentDate.getMonth() &&
+                birthDate.getDayOfMonth() == assignmentDate.getDayOfMonth();
     }
 }

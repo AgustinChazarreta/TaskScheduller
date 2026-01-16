@@ -30,7 +30,6 @@ public class TaskRefactor {
             }
             result.put(entry.getKey(), days);
         }
-
         return result;
     }
 }
