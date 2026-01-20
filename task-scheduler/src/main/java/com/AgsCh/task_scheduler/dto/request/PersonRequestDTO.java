@@ -14,10 +14,10 @@ public class PersonRequestDTO {
     @NotBlank
     private String name;
     
-    @NotBlank
+    @NotNull
     private Category category;
 
-    @NotBlank   
+    @NotNull   
     private LocalDate birthDate;
 
     @NotNull

@@ -60,6 +60,22 @@ public class ScheduleController {
                         @RequestPart("persons") String personsJson) {
 
                 try {
+
+                        // Logs para verificar recepción
+                        System.out.println("=== Datos recibidos en /api/schedule/from-word ===");
+                        System.out.println("Archivo Word: " + (word != null ? word.getOriginalFilename() : "null"));
+                        System.out.println("Período JSON: " + periodJson);
+                        System.out.println("Personas JSON: " + personsJson);
+
+                        // Si personsJson está vacío, usa un dummy para no romper
+                        if (personsJson == null || personsJson.trim().isEmpty() || personsJson.equals("[]")) {
+                                personsJson = "[{\"name\": \"Dummy\", \"category\": \"A\", \"birthDate\": \"1990-01-01\", \"availableDays\": [\"MONDAY\"]}]";
+                                System.out.println("Usando personas dummy: " + personsJson);
+                        }
+
+
+
+                        
                         // =========================
                         // 1️⃣ JSON → DTOs (Data Transfer Objects)
                         // =========================
@@ -90,9 +106,6 @@ public class ScheduleController {
                         // =========================
                         Schedule schedule = ScheduleMapper.toModel(scheduleRequest);
 
-
-
-
                         System.out.println("=== Schedule inicial ===");
 
                         System.out.println("Personas:");
@@ -108,10 +121,6 @@ public class ScheduleController {
                                         .forEach(a -> System.out.println(" - Tarea: " + a.getTask().getName()
                                                         + ", Fecha: " + a.getDate() + ", Persona: " + a.getPerson()));
 
-
-
-
-                                                        
                         Schedule solved = scheduleService.solve(schedule);
 
                         ScheduleResponseDTO response = ScheduleMapper.toResponse(solved);

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="layout/main :: layout(~{::section})">
+
+<section>
+
+    <h1 class="mb-4">
+        <i class="nav-icon bi bi-people me-2"></i>
+        Personas
+    </h1>
+
+    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#personModal">
+        <i class="bi bi-plus"></i> Agregar persona
+    </button>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Personas cargadas</h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Nacimiento</th>
+                        <th>Días disponibles</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="personsBody">
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            Sin personas
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal fade" id="personModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <form id="personForm">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Agregar persona</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <div class="mb-2">
+                            <label class="form-label">Nombre</label>
+                            <input id="personName" class="form-control" required>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" id="personCategory" required>
+                                <option value="CATEGORY_1">Categoría 1</option>
+                                <option value="CATEGORY_2">Categoría 2</option>
+                                <option value="CATEGORY_3">Categoría 3</option>
+                                <option value="CATEGORY_4">Categoría 4</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Fecha de nacimiento</label>
+                            <input id="personBirthDate" type="date" class="form-control" required>
+                        </div>
+
+                        <label class="form-label">Días disponibles</label>
+                        <div class="form-check">
+                            <input class="form-check-input day" value="MONDAY" type="checkbox"> Lunes<br>
+                            <input class="form-check-input day" value="TUESDAY" type="checkbox"> Martes<br>
+                            <input class="form-check-input day" value="WEDNESDAY" type="checkbox"> Miércoles<br>
+                            <input class="form-check-input day" value="THURSDAY" type="checkbox"> Jueves<br>
+                            <input class="form-check-input day" value="FRIDAY" type="checkbox"> Viernes
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-primary" type="submit">Guardar</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE LA PÁGINA -->
+    <script src="/js/persons.js"></script>
+
+</section>
+
+</html>

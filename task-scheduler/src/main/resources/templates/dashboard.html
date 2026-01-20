@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="layout/main :: layout(~{::section})">
+<section>
+
+    <h1 class="mb-4">
+        <i class="nav-icon bi bi-speedometer me-2"></i>
+        Dashboard
+    </h1>
+
+    <!-- ALERTAS -->
+    <div id="alertContainer" class="mb-3"></div>
+
+    <!-- RESULTADO -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Asignaciones resueltas</h3>
+        </div>
+
+        <div class="card-body">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Día</th>
+                        <th>Tarea</th>
+                        <th>Persona</th>
+                    </tr>
+                </thead>
+
+                <tbody id="assignmentsBody">
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">
+                            Sube datos y ejecuta el solver
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div id="scoreDisplay" class="mt-3 text-end fw-bold"></div>
+        </div>
+    </div>
+
+</section>
+
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="layout/main :: layout(~{::section})">
+
+<section>
+
+    <h1 class="mb-4">Página principal - Resolver Schedule</h1>
+
+    <!-- ALERTAS -->
+    <div id="alertContainer"></div>
+
+    <!-- FORMULARIO -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Subir archivo y resolver</h3>
+        </div>
+        <div class="card-body">
+            <form id="scheduleForm" enctype="multipart/form-data">
+
+                <div class="mb-3">
+                    <label for="wordFile" class="form-label">Archivo Word (.docx)</label>
+                    <input type="file" class="form-control" id="wordFile" name="file" accept=".docx" required>
+                </div>
+
+                <h5>Período de planificación</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="startDate" class="form-label">Fecha de inicio</label>
+                        <input type="date" class="form-control" id="startDate" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="endDate" class="form-label">Fecha de fin</label>
+                        <input type="date" class="form-control" id="endDate" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-play"></i> Resolver schedule
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PERSONAS -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Personas disponibles</h3>
+        </div>
+        <div class="card-body" id="personsContainer"></div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Asignaciones resueltas</h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Día</th>
+                        <th>Tarea</th>
+                        <th>Persona</th>
+                    </tr>
+                </thead>
+                <tbody id="assignmentsBody">
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">
+                            Sube datos y ejecuta el solver
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div id="scoreDisplay" class="mt-3 text-end fw-bold"></div>
+        </div>
+    </div>
+
+</section>
+
+</html>
