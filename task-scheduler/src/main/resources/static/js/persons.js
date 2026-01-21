@@ -9,7 +9,7 @@ const personsCache = {};
 /* ========= FORMATOS ========= */
 
 function formatCategory(cat) {
-    return (
+    const categoryText = (
         {
             CATEGORY_1: "Categoría 1",
             CATEGORY_2: "Categoría 2",
@@ -17,10 +17,11 @@ function formatCategory(cat) {
             CATEGORY_4: "Categoría 4",
         }[cat] ?? cat
     );
+    return `<span class="badge bg-warning text-dark me-1">${categoryText}</span>`;
 }
 
 function formatDays(days) {
-    const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+    const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 
     const labels = {
         MONDAY: "Lunes",
@@ -28,11 +29,13 @@ function formatDays(days) {
         WEDNESDAY: "Miércoles",
         THURSDAY: "Jueves",
         FRIDAY: "Viernes",
+        SATURDAY: "Sábado",
+        SUNDAY: "Domingo",
     };
 
     return order
         .filter((d) => days.includes(d))
-        .map((d) => `<span class="badge bg-secondary me-1">${labels[d]}</span>`)
+        .map((d) => `<span class="badge bg-danger me-1">${labels[d]}</span>`)
         .join("");
 }
 
@@ -62,6 +65,7 @@ async function loadPersons() {
                 "beforeend",
                 `
                     <tr>
+                        <td style="text-align: center;"><i class="bi bi-person-fill"></i></td>
                         <td>${p.name}</td>
                         <td>${formatCategory(p.category)}</td>
                         <td>${p.birthDate}</td>
