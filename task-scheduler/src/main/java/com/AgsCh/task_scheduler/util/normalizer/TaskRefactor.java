@@ -4,7 +4,8 @@ import java.time.DayOfWeek;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Convierte los días en formato String a DayOfWeek.
@@ -16,11 +17,11 @@ public class TaskRefactor {
         // utility class
     }
 
-    public static Map<String, List<DayOfWeek>> refactorDays(Map<String, List<String>> tasks) {
-        Map<String, List<DayOfWeek>> result = new LinkedHashMap<>();
+    public static Map<String, Set<DayOfWeek>> refactorDays(Map<String, List<String>> tasks) {
+        Map<String, Set<DayOfWeek>> result = new LinkedHashMap<>();
 
         for (Map.Entry<String, List<String>> entry : tasks.entrySet()) {
-            List<DayOfWeek> days = new ArrayList<>();
+            Set<DayOfWeek> days = new HashSet<>();
             for (String day : entry.getValue()) {
                 DayOfWeek converted = UniversalDayTranslator.toDayOfWeek(day);
                 if (converted == null) {

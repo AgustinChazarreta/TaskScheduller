@@ -1,90 +1,125 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="layout/main :: layout(~{::section})">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
 
 <section>
+
     <h1 class="mb-4">
         <i class="nav-icon bi bi-list-task me-2"></i>
-        Tareas Asignadas
+        Tareas
     </h1>
 
-    <div id="alertContainer"></div>
+    <!-- ================= CARGA WORD ================= -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Cargar archivo de tareas</h3>
+        </div>
+        <div class="card-body">
+            <input type="file" class="form-control mb-2" id="wordFile" accept=".docx">
+            <button class="btn btn-primary" onclick="loadTasksFromWord()">
+                <i class="bi bi-upload me-1"></i>
+                Cargar tareas
+            </button>
+        </div>
+    </div>
 
-    <a href="/dashboard" class="btn btn-primary mb-3">
-        <i class="bi bi-play"></i> Resolver Nuevo Schedule
-    </a>
+    <!-- Cambiado: onclick="addTask()" en lugar de data-bs-toggle y data-bs-target -->
+    <button class="btn btn-primary mb-3" onclick="addTask()">
+        <i class="bi bi-plus"></i> Agregar tarea
+    </button>
 
+    <!-- ================= TABLA ================= -->
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Asignaciones del Último Schedule</h3>
+            <h3 class="card-title">Tareas</h3>
         </div>
-
         <div class="card-body">
-            <table class="table table-striped" id="tasksTable">
+            <table class="table table-striped align-middle">
                 <thead>
                     <tr>
-                        <th>Día</th>
                         <th>Tarea</th>
-                        <th>Persona Asignada</th>
+                        <th>Días</th>
+                        <th>Categorías</th>
+                        <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
+
                 <tbody id="tasksBody">
                     <tr>
-                        <td colspan="3" class="text-center text-muted">
-                            Cargando...
-                        </td>
+                        <td colspan="4" class="text-center text-muted">Sin tareas</td>
                     </tr>
                 </tbody>
             </table>
 
-            <div id="scoreDisplay" class="mt-3 text-end fw-bold"></div>
+            <button class="btn btn-success mt-3" onclick="saveTasks()">
+                <i class="bi bi-floppy me-1"></i>
+                Guardar tareas
+            </button>
         </div>
     </div>
 
-    <script>
-        async function loadTasks() {
-            try {
-                const response = await fetch('/api/schedule/last-resolved');
+    <!-- ================= MODAL ================= -->
+    <div class="modal fade" id="taskModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="taskForm">
+                    <!-- Cambiado: título inicial a "Agregar tarea" -->
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Agregar tarea</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
 
-                const tbody = document.getElementById('tasksBody');
+                        <div class="mb-2">
+                            <label class="form-label">Nombre</label>
+                            <input id="taskName" class="form-control" required>
+                        </div>
 
-                if (response.status === 204) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="3" class="text-center text-muted">
-                                No hay schedule resuelto. Ve al Dashboard para resolver uno.
-                            </td>
-                        </tr>`;
-                    return;
-                }
+                        <!-- Fila para Días (izquierda) y Categorías (derecha) -->
+                        <div class="row">
+                            <!-- Columna izquierda: Días asignados -->
+                            <div class="col-md-6">
+                                <label class="form-label">Días asignados</label>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input day" value="MONDAY" type="checkbox"> Lunes<br>
+                                    <input class="form-check-input day" value="TUESDAY" type="checkbox"> Martes<br>
+                                    <input class="form-check-input day" value="WEDNESDAY" type="checkbox"> Miércoles<br>
+                                    <input class="form-check-input day" value="THURSDAY" type="checkbox"> Jueves<br>
+                                    <input class="form-check-input day" value="FRIDAY" type="checkbox"> Viernes<br>
+                                    <input class="form-check-input day" value="SATURDAY" type="checkbox"> Sábado<br>
+                                    <input class="form-check-input day" value="SUNDAY" type="checkbox"> Domingo
+                                </div>
+                            </div>
 
-                const data = await response.json();
-                tbody.innerHTML = '';
+                            <!-- Columna derecha: Categorías posibles -->
+                            <div class="col-md-6">
+                                <div class="mb-2">
+                                    <label class="form-label">Categorías posibles</label>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input category" value="CATEGORY_1" type="checkbox">
+                                        Categoría 1<br>
+                                        <input class="form-check-input category" value="CATEGORY_2" type="checkbox">
+                                        Categoría 2<br>
+                                        <input class="form-check-input category" value="CATEGORY_3" type="checkbox">
+                                        Categoría 3<br>
+                                        <input class="form-check-input category" value="CATEGORY_4" type="checkbox">
+                                        Categoría 4
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                data.assignments.forEach(a => {
-                    tbody.insertAdjacentHTML('beforeend', `
-                        <tr>
-                            <td>${a.day}</td>
-                            <td>${a.task}</td>
-                            <td>${a.person}</td>
-                        </tr>
-                    `);
-                });
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-                document.getElementById('scoreDisplay').textContent =
-                    `Puntuación: ${data.score ?? 'N/A'}`;
-
-            } catch (e) {
-                document.getElementById('tasksBody').innerHTML = `
-                    <tr>
-                        <td colspan="3" class="text-center text-danger">
-                            Error cargando tareas
-                        </td>
-                    </tr>`;
-            }
-        }
-
-        loadTasks();
-    </script>
+    <!-- SCRIPT DE LA PÁGINA -->
+    <script src="/js/tasks.js"></script>
 
 </section>
 

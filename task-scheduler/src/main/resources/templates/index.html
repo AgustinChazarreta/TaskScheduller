@@ -1,41 +1,44 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="layout/main :: layout(~{::section})">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
 
 <section>
 
-    <h1 class="mb-4">Página principal - Resolver Schedule</h1>
+    <h1 class="mb-4">
+        <i class="bi bi-play-circle me-2"></i>
+        Resolver schedule
+    </h1>
 
     <!-- ALERTAS -->
     <div id="alertContainer"></div>
 
-    <!-- FORMULARIO -->
+    <!-- PARÁMETROS -->
     <div class="card mb-4">
         <div class="card-header">
-            <h3 class="card-title">Subir archivo y resolver</h3>
+            <h3 class="card-title">Parámetros de resolución</h3>
         </div>
+
         <div class="card-body">
-            <form id="scheduleForm" enctype="multipart/form-data">
+            <form id="scheduleForm">
 
-                <div class="mb-3">
-                    <label for="wordFile" class="form-label">Archivo Word (.docx)</label>
-                    <input type="file" class="form-control" id="wordFile" name="file" accept=".docx" required>
-                </div>
-
-                <h5>Período de planificación</h5>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="startDate" class="form-label">Fecha de inicio</label>
                         <input type="date" class="form-control" id="startDate" required>
                     </div>
+
                     <div class="col-md-6">
                         <label for="endDate" class="form-label">Fecha de fin</label>
                         <input type="date" class="form-control" id="endDate" required>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-play"></i> Resolver schedule
-                </button>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-cpu"></i>
+                        Resolver schedule
+                    </button>
+                </div>
+
             </form>
         </div>
     </div>
@@ -45,7 +48,10 @@
         <div class="card-header">
             <h3 class="card-title">Personas disponibles</h3>
         </div>
-        <div class="card-body" id="personsContainer"></div>
+
+        <div class="card-body" id="personsContainer">
+            <p class="text-muted mb-0">Cargando personas...</p>
+        </div>
     </div>
 
     <!-- RESULTADO -->
@@ -53,7 +59,9 @@
         <div class="card-header">
             <h3 class="card-title">Asignaciones resueltas</h3>
         </div>
+
         <div class="card-body">
+
             <table class="table table-striped align-middle">
                 <thead>
                     <tr>
@@ -65,15 +73,154 @@
                 <tbody id="assignmentsBody">
                     <tr>
                         <td colspan="3" class="text-center text-muted">
-                            Sube datos y ejecuta el solver
+                            Ejecutá el solver para ver resultados
                         </td>
                     </tr>
                 </tbody>
             </table>
 
             <div id="scoreDisplay" class="mt-3 text-end fw-bold"></div>
+
         </div>
     </div>
+
+    <!-- SCRIPT -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPersons();
+            bindForm();
+        });
+
+        function bindForm() {
+            const form = document.getElementById('scheduleForm');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                clearAlerts();
+                clearResults();
+
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+
+                if (!startDate || !endDate) {
+                    showAlert('Debe completar ambas fechas', 'warning');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/schedule/solve', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            startDate,
+                            endDate
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error al resolver el schedule');
+                    }
+
+                    const result = await response.json();
+                    renderAssignments(result.assignments);
+                    renderScore(result.score);
+
+                } catch (error) {
+                    showAlert(error.message, 'danger');
+                }
+            });
+        }
+
+        async function loadPersons() {
+            try {
+                const response = await fetch('/api/persons');
+
+                if (!response.ok) {
+                    throw new Error();
+                }
+
+                const persons = await response.json();
+                renderPersons(persons);
+
+            } catch {
+                showAlert('No se pudieron cargar las personas', 'danger');
+            }
+        }
+
+        function renderPersons(persons) {
+            const container = document.getElementById('personsContainer');
+
+            if (!persons.length) {
+                container.innerHTML = '<p class="text-muted mb-0">No hay personas cargadas</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <ul class="list-group">
+                    ${persons.map(p => `
+                        <li class="list-group-item d-flex justify-content-between">
+                            ${p.name}
+                            <span class="badge bg-secondary">${p.role ?? 'sin rol'}</span>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+        }
+
+        function renderAssignments(assignments) {
+            const tbody = document.getElementById('assignmentsBody');
+
+            if (!assignments.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">
+                            No se generaron asignaciones
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = assignments.map(a => `
+                <tr>
+                    <td>${a.day}</td>
+                    <td>${a.taskName}</td>
+                    <td>${a.personName}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderScore(score) {
+            document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
+        }
+
+        function showAlert(message, type) {
+            document.getElementById('alertContainer').innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+
+        function clearAlerts() {
+            document.getElementById('alertContainer').innerHTML = '';
+        }
+
+        function clearResults() {
+            document.getElementById('assignmentsBody').innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-center text-muted">
+                        Ejecutando solver...
+                    </td>
+                </tr>
+            `;
+            document.getElementById('scoreDisplay').textContent = '';
+        }
+    </script>
 
 </section>
 

@@ -19,13 +19,13 @@ public class TaskAssembler {
         // utility class
     }
 
-    public static List<Task> buildTasks(Map<String, List<DayOfWeek>> parsed,
+    public static List<Task> buildTasks(Map<String, Set<DayOfWeek>> parsed,
                                         Map<String, Set<Category>> userCategories) {
         List<Task> tasks = new ArrayList<>();
 
-        for (Map.Entry<String, List<DayOfWeek>> entry : parsed.entrySet()) {
+        for (Map.Entry<String, Set<DayOfWeek>> entry : parsed.entrySet()) {
             String name = entry.getKey();
-            List<DayOfWeek> days = entry.getValue();
+            Set<DayOfWeek> days = entry.getValue();
 
             Set<Category> categories = userCategories.get(name);
             if (categories == null || categories.isEmpty()) {

@@ -20,7 +20,6 @@ import com.AgsCh.task_scheduler.model.Task;
 import com.AgsCh.task_scheduler.service.ScheduleService;
 import com.AgsCh.task_scheduler.util.word.WordParser;
 import com.AgsCh.task_scheduler.util.assembler.*;
-import com.AgsCh.task_scheduler.util.mock.UserInputSimulator;
 import com.AgsCh.task_scheduler.util.normalizer.TaskRefactor;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -57,7 +56,8 @@ public class ScheduleController {
         public ResponseEntity<ScheduleResponseDTO> scheduleFromWord(
                         @RequestPart("file") MultipartFile word,
                         @RequestPart("period") String periodJson,
-                        @RequestPart("persons") String personsJson) {
+                        @RequestPart("persons") String personsJson,
+                        @RequestPart("taskCategories") String taskCategoriesJson) {
 
                 try {
 
@@ -67,15 +67,6 @@ public class ScheduleController {
                         System.out.println("Período JSON: " + periodJson);
                         System.out.println("Personas JSON: " + personsJson);
 
-                        // Si personsJson está vacío, usa un dummy para no romper
-                        if (personsJson == null || personsJson.trim().isEmpty() || personsJson.equals("[]")) {
-                                personsJson = "[{\"name\": \"Dummy\", \"category\": \"A\", \"birthDate\": \"1990-01-01\", \"availableDays\": [\"MONDAY\"]}]";
-                                System.out.println("Usando personas dummy: " + personsJson);
-                        }
-
-
-
-                        
                         // =========================
                         // 1️⃣ JSON → DTOs (Data Transfer Objects)
                         // =========================
@@ -90,9 +81,11 @@ public class ScheduleController {
                         // =========================
                         Map<String, List<String>> parsedTasks = WordParser.parseTasks(word);
 
-                        Map<String, List<DayOfWeek>> normalizedDays = TaskRefactor.refactorDays(parsedTasks);
+                        Map<String, Set<DayOfWeek>> normalizedDays = TaskRefactor.refactorDays(parsedTasks);
 
-                        Map<String, Set<Category>> categories = UserInputSimulator.enrich(normalizedDays);
+                        Map<String, Set<Category>> categories = objectMapper.readValue(taskCategoriesJson,
+                                        new TypeReference<Map<String, Set<Category>>>() {
+                                        });
 
                         List<Task> tasks = TaskAssembler.buildTasks(normalizedDays, categories);
 
@@ -102,7 +95,7 @@ public class ScheduleController {
                         ScheduleRequestDTO scheduleRequest = ScheduleRequestDTOAdapter.adapt(periodDTO, persons, tasks);
 
                         // =========================
-                        // 4️⃣ SOLVER
+                        // 4️⃣ SOLVERS
                         // =========================
                         Schedule schedule = ScheduleMapper.toModel(scheduleRequest);
 
@@ -131,4 +124,23 @@ public class ScheduleController {
                         throw new BusinessException("Error processing scheduling request", e);
                 }
         }
+        
+
+        
+        @PostMapping(value = "/tasks/from-word", consumes = "multipart/form-data")
+        public Map<String, Set<DayOfWeek>> parseTasks(
+                        @RequestPart("file") MultipartFile word) {
+
+                System.out.println("=== PARSE TASKS ===");
+                System.out.println("Archivo: " + word.getOriginalFilename());
+
+                Map<String, List<String>> raw = WordParser.parseTasks(word);
+                System.out.println("RAW: " + raw);
+
+                Map<String, Set<DayOfWeek>> result = TaskRefactor.refactorDays(raw);
+                System.out.println("NORMALIZED: " + result);
+
+                return result;
+        }
+
 }

@@ -28,7 +28,7 @@ public class SchedulePipelineTest {
 
                 Map<String, List<String>> parsed = WordParser.parseTasks(path);
 
-                Map<String, List<DayOfWeek>> normalized = TaskRefactor.refactorDays(parsed);
+                Map<String, Set<DayOfWeek>> normalized = TaskRefactor.refactorDays(parsed);
 
                 Map<String, Set<Category>> categories = UserInputSimulator.enrich(normalized);
 
