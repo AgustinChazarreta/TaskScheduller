@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
+
+<section>
+    <style th:inline="text">
+        @media print {
+            .day-block {
+                page-break-inside: avoid;
+                /* todo el bloque se intenta mantener junto */
+            }
+
+            /* tarjetas individuales también evitan cortes */
+            .card {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+        }
+    </style>
+
+    <h1 class="mb-4">
+        <i class="bi bi-check-circle me-2"></i>
+        Resultados del Schedule
+    </h1>
+
+    <div class="card mb-3">
+        <div class="card-header" id="weekLabel"></div>
+    </div>
+
+    <div id="assignmentsContainer" class="mb-3 d-flex flex-wrap justify-content-center"
+        style="gap: 3rem; padding-bottom: 2rem;">
+        <!-- cards -->
+    </div>
+
+    <div class="text-center mt-3">
+        <button class="btn btn-primary me-2" onclick="prevWeek()">Semana anterior</button>
+        <button class="btn btn-primary" onclick="nextWeek()">Semana siguiente</button>
+    </div>
+
+    <div class="mt-4 text-center">
+        <button class="btn btn-secondary" onclick="window.location.href='/'">Volver</button>
+    </div>
+
+    <script>
+        let assignments = [];
+        let currentWeek = 1;
+        let maxWeek = 1;
+        let weekMap = {};
+        let inverseWeekMap = {};
+        const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+
+        document.addEventListener('DOMContentLoaded', () => loadResults());
+
+        function loadResults() {
+            const result = JSON.parse(sessionStorage.getItem('scheduleResults'));
+            const container = document.getElementById('assignmentsContainer');
+            const weekLabel = document.getElementById('weekLabel');
+
+            if (!result || !result.assignments || result.assignments.length === 0) {
+                container.innerHTML = `<p class="text-muted text-center">No hay resultados disponibles.</p>`;
+                weekLabel.innerHTML = ``;
+                return;
+            }
+
+            assignments = result.assignments;
+
+            const uniqueWeeks = [...new Set(assignments.map(a => a.week))].sort((a, b) => a - b);
+
+            weekMap = {};
+            inverseWeekMap = {};
+            uniqueWeeks.forEach((realWeek, index) => {
+                const normalized = index + 1;
+                weekMap[realWeek] = normalized;
+                inverseWeekMap[normalized] = realWeek;
+            });
+
+            maxWeek = uniqueWeeks.length;
+            currentWeek = 1;
+
+            renderCards();
+        }
+
+        function renderCards() {
+            const container = document.getElementById('assignmentsContainer');
+            const weekLabel = document.getElementById('weekLabel');
+            const realWeek = inverseWeekMap[currentWeek];
+
+            // Etiqueta de la semana
+            weekLabel.innerHTML = `<h3 class="card-title">
+        <span class="badge bg-primary fs-2">${"Semana " + currentWeek}</span>
+    </h3>`;
+
+            let html = "";
+
+            order.forEach(day => {
+                // Filtrar tareas de este día
+                const tasksOfDay = assignments
+                    .filter(a => a.week === realWeek)
+                    .filter(a => (Array.isArray(a.day) ? a.day : [a.day]).includes(day));
+
+                if (tasksOfDay.length > 0) {
+                    // Bloque del día: columna flexible, cards apilados verticalmente
+                    html += `<div class="day-block d-flex flex-column align-items-center"
+                        style="flex: 1 1 250px; max-width: 300px; min-width: 200px; gap: 0.5rem; margin: 0.5rem;">`;
+
+                    // Título del día
+                    html += `<h5 class="w-100 text-center mb-2">
+                        <span class="badge bg-danger bg-gradient px-3 py-2"
+                              style="font-size: clamp(0.8rem, 2vw, 1.2rem);">
+                            ${formatDays([day])}
+                        </span>
+                    </h5>`;
+
+                    // Cards de tareas
+                    tasksOfDay.forEach(a => {
+                        html += `
+                        <div class="card shadow-sm" style="width: 80%; padding: 0.5rem 1rem;">
+                            <div class="card-body d-grid" style="
+                                grid-template-columns: 1fr auto; 
+                                gap: 0.5rem; 
+                                font-size: clamp(0.7rem, 1.5vw, 1rem); 
+                                padding: 0.5rem;">
+                                <div><strong>${a.personName}</strong></div>
+                                <div class="badge bg-success bg-gradient px-3 py-2 text-truncate">${a.taskName}</div>
+                            </div>
+                        </div>`;
+                    });
+
+
+                    html += `</div>`; // cierre day-block
+                }
+            });
+
+            container.innerHTML = html || `<p class="text-muted text-center">No hay tareas para esta semana</p>`;
+
+            // Botones de navegación
+            document.querySelector('button[onclick="prevWeek()"]').disabled = currentWeek === 1;
+            document.querySelector('button[onclick="nextWeek()"]').disabled = currentWeek === maxWeek;
+        }
+
+
+        function nextWeek() {
+            if (currentWeek < maxWeek) { currentWeek++; renderCards(); }
+        }
+
+        function prevWeek() {
+            if (currentWeek > 1) { currentWeek--; renderCards(); }
+        }
+
+        function formatDays(days) {
+            const labels = {
+                MONDAY: "Lunes",
+                TUESDAY: "Martes",
+                WEDNESDAY: "Miércoles",
+                THURSDAY: "Jueves",
+                FRIDAY: "Viernes",
+                SATURDAY: "Sábado",
+                SUNDAY: "Domingo",
+            };
+            return order.filter(d => days.includes(d)).map(d => labels[d]).join(", ");
+        }
+    </script>
+</section>
+
+
+</html>

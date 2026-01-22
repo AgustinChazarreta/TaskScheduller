@@ -13,8 +13,6 @@ public class ScheduleResponseDTO {
             String score) {
         this.assignments = assignments;
         this.score = score;
-        this.persons = null;
-        this.tasks = null;
     }
 
     public ScheduleResponseDTO(List<PersonResponseDTO> persons,

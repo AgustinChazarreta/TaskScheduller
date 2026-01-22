@@ -9,6 +9,43 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="/css/adminlte.css" />
     <link rel="nav-icon" href="/src/main/resources/static/img/favicon.ico" />
+    <style>
+        @media print {
+    /* Ocultar sidebar, overlay y botones */
+    .app-sidebar,
+    .sidebar-overlay,
+    .btn,
+    .navbar,
+    .sidebar-toggle {
+        display: none !important;
+    }
+
+    /* Main ocupa todo el ancho */
+    .app-main {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Ajustar container para que se vea completo */
+    .container-fluid {
+        width: 100% !important;
+        padding: 0 10px !important;
+    }
+
+    /* Evitar que tarjetas se corten */
+    .card {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Fuente más pequeña si es necesario */
+    body {
+        font-size: 14px !important;
+    }
+}
+
+    </style>
 </head>
 
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -17,24 +54,23 @@
             <div class="container-fluid"> <span class="navbar-brand mb-0 h1">Task Scheduler</span> </div>
         </nav> <!-- SIDEBAR -->
         <aside class="app-sidebar bg-dark shadow" data-bs-theme="dark">
-            <div class="sidebar-brand"> 
+            <div class="sidebar-brand">
                 <a href="/" class="brand-link">
-                    <span class="brand-text fw-bold"><i class="bi bi-ui-checks-grid me-2"></i>Scheduler</span> 
-                </a> 
+                    <span class="brand-text fw-bold"><i class="bi bi-ui-checks-grid me-2"></i>Scheduler</span>
+                </a>
             </div>
             <div class="sidebar-wrapper">
                 <nav class="mt-2">
                     <ul class="nav sidebar-menu flex-column">
                         <li class="nav-item"> <a href="/tasks" class="nav-link"> <i
-                            class="nav-icon bi bi-list-task"></i>
-                            <p>Tareas</p>
-                        </a> </li>
+                                    class="nav-icon bi bi-list-task"></i>
+                                <p>Tareas</p>
+                            </a> </li>
                         <li class="nav-item"> <a href="/persons" class="nav-link"> <i class="nav-icon bi bi-people"></i>
-                            <p>Personas</p>
-                        </a> </li>
-                        <li class="nav-item"> <a href="/dashboard" class="nav-link"> <i
-                                    class="nav-icon bi bi-speedometer"></i>
-                                <p>Dashboard</p>
+                                <p>Personas</p>
+                            </a> </li>
+                        <li class="nav-item"> <a href="/schedule-results" class="nav-link"> <i class="nav-icon bi bi-speedometer"></i>
+                                <p>Resultados</p>
                             </a> </li>
                     </ul>
                 </nav>
@@ -55,6 +91,6 @@
 </html>
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="layout/main :: layout(~{::section})">
-<section>  </section>
+<section> </section>
 
 </html>

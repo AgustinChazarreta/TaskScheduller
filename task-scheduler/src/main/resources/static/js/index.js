@@ -47,8 +47,7 @@ function bindForm() {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        clearAlerts();
-        clearResults();
+        clearAlerts();  // Solo limpiar alertas
 
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
@@ -88,8 +87,12 @@ function bindForm() {
             }
 
             const result = await response.json();
-            renderAssignments(result.assignments);
-            renderScore(result.score);
+
+            // Guardar resultados en localStorage para la nueva página
+            sessionStorage.setItem('scheduleResults', JSON.stringify(result));
+
+            // Redirigir a la página de resultados
+            window.location.href = '/schedule-results';
 
         } catch (error) {
             showAlert(error.message, 'danger');
@@ -207,15 +210,15 @@ function renderTasks(tasks) {
             </thead>
             <tbody>
                 ${tasks.map(t => {
-                    const categoriesStr = (t.allowedCategories || []).map(cat => `<span class="badge bg-warning text-dark me-1">${formatCategory(cat)}</span>`).join("");
-                    return `
+        const categoriesStr = (t.allowedCategories || []).map(cat => `<span class="badge bg-warning text-dark me-1">${formatCategory(cat)}</span>`).join("");
+        return `
                         <tr>
                             <td>${t.name}</td>
                             <td>${formatDays(t.assignedDays)}</td>
                             <td>${categoriesStr}</td>
                         </tr>
                     `;
-                }).join('')}
+    }).join('')}
             </tbody>
         </table>
     `;
@@ -262,12 +265,20 @@ function clearAlerts() {
 }
 
 function clearResults() {
-    document.getElementById('assignmentsBody').innerHTML = `
-        <tr>
-            <td colspan="3" class="text-center text-muted">
-                Ejecutando solver...
-            </td>
-        </tr>
-    `;
-    document.getElementById('scoreDisplay').textContent = '';
+    const tbody = document.getElementById('assignmentsBody');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center text-muted">
+                    Ejecutando solver...
+                </td>
+            </tr>
+        `;
+    }
+
+    if (scoreDisplay) {
+        scoreDisplay.textContent = '';
+    }
 }

@@ -107,7 +107,7 @@ public final class ScheduleMapper {
                     : "UNASSIGNED";
 
             assignmentResponses.add(new TaskAssignmentResponseDTO(
-                    assignment.getDate().getDayOfWeek(),
+                    assignment.getDate(),
                     assignment.getTask().getName(),
                     personName));
         }

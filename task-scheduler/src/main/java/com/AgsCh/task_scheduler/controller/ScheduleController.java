@@ -63,13 +63,14 @@ public class ScheduleController {
                                         .collect(Collectors.toList());
 
                         // Tareas ya vienen como List<Task>
-                        ///////////////////////////////////// 
-                        ///////////////////////////////////// 
-                        ///////////////////////////////////// 
-//////////////////////////ToDo: converitr igual a DTO///////////////////////////////////
-                        ///////////////////////////////////// 
-                        ///////////////////////////////////// 
-                        ///////////////////////////////////// 
+                        /////////////////////////////////////
+                        /////////////////////////////////////
+                        /////////////////////////////////////
+                        ////////////////////////// ToDo: converitr igual a
+                        ////////////////////////// DTO///////////////////////////////////
+                        /////////////////////////////////////
+                        /////////////////////////////////////
+                        /////////////////////////////////////
                         List<Task> tasks = request.getTasks();
 
                         // =========================
@@ -97,6 +98,16 @@ public class ScheduleController {
                         Schedule solved = scheduleService.solve(schedule);
 
                         ScheduleResponseDTO response = ScheduleMapper.toResponse(solved);
+
+                        System.out.println("===================================================");
+                        System.out.println("===================================================");
+                        System.out.println("===================================================");
+                        System.out.println("===================================================");
+                        System.out.println("=== Schedule respuesta ===");
+                        System.out.println("Asignaciones:");
+                        response.getAssignments()
+                                        .forEach(a -> System.out.println("Semana: " + a.getWeek() + " - Tarea: " + a.getTaskName()
+                                                        + ", Fecha: " + a.getDay() + ", Persona: " + a.getPersonName()));
 
                         return response;
 
