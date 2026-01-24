@@ -2,8 +2,6 @@ package com.AgsCh.task_scheduler.dto.request;
 
 import java.util.List;
 
-import com.AgsCh.task_scheduler.dto.request.requestAdapter.PlanningPeriodRequestDTO;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

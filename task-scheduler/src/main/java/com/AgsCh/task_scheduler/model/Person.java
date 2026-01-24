@@ -13,12 +13,13 @@ import jakarta.persistence.*;
 @Entity
 public class Person {
 
-    @PlanningId @Id
+    @PlanningId
+    @Id
     private String id = UUID.randomUUID().toString(); // Identificador único
 
-    private String name;                 // Nombre legible
-    private Category category;           // Rol o categoría
-    private LocalDate birthDate;         // Fecha de nacimiento
+    private String name; // Nombre legible
+    private Category category; // Rol o categoría
+    private LocalDate birthDate; // Fecha de nacimiento
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
@@ -37,16 +38,39 @@ public class Person {
     }
 
     // --------- Getters y setters ---------
-    public String getId() { return id; }
-    public String getName() { return name; }
-    public Category getCategory() { return category; }
-    public LocalDate getBirthDate() { return birthDate; }
-    public Set<DayOfWeek> getAvailableDays() { return availableDays; }
+    public String getId() {
+        return id;
+    }
 
-    public void setName(String name) { this.name = name; }
-    public void setCategory(Category category) { this.category = category; }
-    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
-    public void setAvailableDays(Set<DayOfWeek> assignedDays) { 
+    public String getName() {
+        return name;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public Set<DayOfWeek> getAvailableDays() {
+        return availableDays;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public void setAvailableDays(Set<DayOfWeek> assignedDays) {
         this.availableDays = assignedDays != null ? EnumSet.copyOf(assignedDays) : EnumSet.noneOf(DayOfWeek.class);
     }
 

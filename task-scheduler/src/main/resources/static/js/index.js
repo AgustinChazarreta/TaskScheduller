@@ -75,11 +75,14 @@ function bindForm() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    startDate,
-                    endDate,
-                    selectedPersons: selectedPersonsData,  // Array de objetos personas
-                    tasks: tasksData  // Array de objetos tareas
+                    period: {
+                        startDate: startDate,
+                        endDate: endDate
+                    },
+                    persons: selectedPersonsData,
+                    tasks: tasksData
                 })
+
             });
 
             if (!response.ok) {
@@ -92,7 +95,7 @@ function bindForm() {
             sessionStorage.setItem('scheduleResults', JSON.stringify(result));
 
             // Redirigir a la página de resultados
-            window.location.href = '/schedule-results';
+            window.location.href = '/results';
 
         } catch (error) {
             showAlert(error.message, 'danger');

@@ -1,9 +1,9 @@
-package com.AgsCh.task_scheduler.controller;
+package com.AgsCh.task_scheduler.controller.api;
 
 import java.util.*;
 import org.springframework.web.bind.annotation.*;
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
-import com.AgsCh.task_scheduler.service.PersonStore;
+import com.AgsCh.task_scheduler.repository.PersonStore;
 
 @RestController
 @RequestMapping("/api/persons")

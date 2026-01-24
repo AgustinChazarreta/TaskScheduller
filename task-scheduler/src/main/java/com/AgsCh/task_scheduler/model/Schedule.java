@@ -44,11 +44,27 @@ public class Schedule {
     }
 
     // --------- Getters y setters ---------
-    public List<Person> getPersonList() { return personList; }
-    public List<Task> getTaskList() { return taskList; }
-    public List<TaskAssignment> getTaskAssignmentList() { return taskAssignmentList; }
-    public HardSoftScore getScore() { return score; }
-    public SolverStatus getSolverStatus() { return solverStatus; }
+    public List<Person> getPersonList() {
+        return personList;
+    }
 
-    public void setSolverStatus(SolverStatus solverStatus) { this.solverStatus = solverStatus; }
+    public List<Task> getTaskList() {
+        return taskList;
+    }
+
+    public List<TaskAssignment> getTaskAssignmentList() {
+        return taskAssignmentList;
+    }
+
+    public HardSoftScore getScore() {
+        return score;
+    }
+
+    public SolverStatus getSolverStatus() {
+        return solverStatus;
+    }
+
+    public void setSolverStatus(SolverStatus solverStatus) {
+        this.solverStatus = solverStatus;
+    }
 }

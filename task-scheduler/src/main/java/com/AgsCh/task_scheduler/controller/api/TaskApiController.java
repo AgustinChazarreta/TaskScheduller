@@ -1,4 +1,4 @@
-package com.AgsCh.task_scheduler.controller;
+package com.AgsCh.task_scheduler.controller.api;
 
 import java.time.DayOfWeek;
 import java.util.List;
@@ -9,8 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.TaskRequestDTO;
+import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Category;
-import com.AgsCh.task_scheduler.service.TaskStore;
+import com.AgsCh.task_scheduler.repository.TaskStore;
 import com.AgsCh.task_scheduler.util.normalizer.TaskRefactor;
 import com.AgsCh.task_scheduler.util.word.WordParser;
 
@@ -65,7 +66,7 @@ public class TaskApiController {
         TaskRequestDTO task = store.findByName(name);
 
         if (task == null) {
-            throw new IllegalArgumentException("Tarea inexistente: " + name);
+            throw new BusinessException("Tarea inexistente: " + name);
         }
 
         task.setAllowedCategories(categories);
@@ -84,7 +85,7 @@ public class TaskApiController {
     }
 
     @PostMapping
-    public void saveTasks(@RequestBody List<TaskRequestDTO> tasks) {
+    public void saveTasks(@RequestBody @NotEmpty List<TaskRequestDTO> tasks) {
         tasks.forEach(store::save);
     }
 

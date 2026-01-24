@@ -1,4 +1,4 @@
-package com.AgsCh.task_scheduler.controller;
+package com.AgsCh.task_scheduler.controller.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

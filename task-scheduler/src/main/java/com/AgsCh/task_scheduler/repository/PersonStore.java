@@ -1,10 +1,11 @@
-package com.AgsCh.task_scheduler.service;
+package com.AgsCh.task_scheduler.repository;
 
 import java.util.*;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
+
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
 
-@Component
+@Repository
 public class PersonStore {
 
     private final Map<UUID, PersonRequestDTO> persons = new LinkedHashMap<>();
@@ -16,7 +17,7 @@ public class PersonStore {
     }
 
     public Map<UUID, PersonRequestDTO> findAll() {
-        return persons;
+        return Map.copyOf(persons);
     }
 
     public List<PersonRequestDTO> findByIds(List<UUID> ids) {

@@ -1,4 +1,4 @@
-package com.AgsCh.task_scheduler.dto.request.requestAdapter;
+package com.AgsCh.task_scheduler.dto.request;
 
 import java.time.LocalDate;
 

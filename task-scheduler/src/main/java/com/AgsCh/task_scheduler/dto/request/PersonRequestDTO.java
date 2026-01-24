@@ -10,23 +10,23 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 public class PersonRequestDTO {
-    
+
     @NotBlank
     private String name;
-    
+
     @NotNull
     private Category category;
 
-    @NotNull   
+    @NotNull
     private LocalDate birthDate;
 
     @NotNull
     @NotEmpty
     private Set<DayOfWeek> availableDays;
-    
+
     public PersonRequestDTO() {
     }
-    
+
     // getters & setters
     public String getName() {
         return name;
@@ -35,7 +35,7 @@ public class PersonRequestDTO {
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public LocalDate getBirthDate() {
         return birthDate;
     }
@@ -56,7 +56,7 @@ public class PersonRequestDTO {
         return availableDays;
     }
 
-    public void setAvailableDays(Set<DayOfWeek> assignedDays) {
-        this.availableDays = assignedDays;
+    public void setAvailableDays(Set<DayOfWeek> availableDays) {
+        this.availableDays = availableDays;
     }
 }

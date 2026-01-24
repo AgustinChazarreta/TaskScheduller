@@ -4,16 +4,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
-import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
-import com.AgsCh.task_scheduler.dto.request.TaskRequestDTO;
-import com.AgsCh.task_scheduler.dto.request.requestAdapter.PlanningPeriodRequestDTO;
-import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
-import com.AgsCh.task_scheduler.dto.response.TaskAssignmentResponseDTO;
-import com.AgsCh.task_scheduler.model.Person;
-import com.AgsCh.task_scheduler.model.Schedule;
-import com.AgsCh.task_scheduler.model.Task;
-import com.AgsCh.task_scheduler.model.TaskAssignment;
+import com.AgsCh.task_scheduler.dto.request.*;
+import com.AgsCh.task_scheduler.dto.response.*;
+import com.AgsCh.task_scheduler.exception.BusinessException;
+import com.AgsCh.task_scheduler.model.*;
 
 public final class ScheduleMapper {
 
@@ -32,18 +26,15 @@ public final class ScheduleMapper {
         List<Person> persons = toPersons(request.getPersons());
         List<Task> tasks = toTasks(request.getTasks());
 
-        PlanningPeriodRequestDTO period = request.getPeriod();
+        LocalDate start = request.getPeriod().getStartDate();
+        LocalDate end = request.getPeriod().getEndDate();
 
-        List<TaskAssignment> assignments = createAssignments(
-                tasks,
-                period.getStartDate(),
-                period.getEndDate());
+        List<TaskAssignment> assignments = createAssignments(tasks, start, end);
 
         return new Schedule(persons, tasks, assignments);
     }
 
     private static List<Person> toPersons(List<PersonRequestDTO> dtos) {
-
         List<Person> persons = new ArrayList<>();
 
         for (PersonRequestDTO dto : dtos) {
@@ -53,12 +44,10 @@ public final class ScheduleMapper {
                     dto.getBirthDate(),
                     dto.getAvailableDays()));
         }
-
         return persons;
     }
 
     private static List<Task> toTasks(List<TaskRequestDTO> dtos) {
-
         List<Task> tasks = new ArrayList<>();
 
         for (TaskRequestDTO dto : dtos) {
@@ -67,7 +56,6 @@ public final class ScheduleMapper {
                     dto.getAllowedCategories(),
                     dto.getAssignedDays()));
         }
-
         return tasks;
     }
 
@@ -76,17 +64,19 @@ public final class ScheduleMapper {
             LocalDate startDate,
             LocalDate endDate) {
 
+        if (startDate.isAfter(endDate)) {
+            throw new BusinessException("Start date is after end date");
+        }
+
         List<TaskAssignment> assignments = new ArrayList<>();
 
         for (Task task : tasks) {
             for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-
                 if (task.getAssignedDays().contains(date.getDayOfWeek())) {
                     assignments.add(new TaskAssignment(task, date));
                 }
             }
         }
-
         return assignments;
     }
 
