@@ -41,6 +41,7 @@ public class PersonApiController {
                 p.getId(),
                 p.getName(),
                 p.getCategory(),
+                p.getBirthDate(),
                 p.getAvailableDays()
             ))
             .collect(Collectors.toList());

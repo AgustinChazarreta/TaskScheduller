@@ -12,8 +12,8 @@ import jakarta.persistence.*;
 public class Person {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Identificador único
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // Identificador único
 
     @Column(nullable = false)
     private String name; // Nombre legible

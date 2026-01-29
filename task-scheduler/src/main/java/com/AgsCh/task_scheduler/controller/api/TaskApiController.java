@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.TaskRequestDTO;
+import com.AgsCh.task_scheduler.dto.response.TaskResponseDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Category;
-import com.AgsCh.task_scheduler.repository.TaskStore;
+import com.AgsCh.task_scheduler.model.Task;
+import com.AgsCh.task_scheduler.repository.TaskRepository;
 import com.AgsCh.task_scheduler.util.normalizer.TaskRefactor;
 import com.AgsCh.task_scheduler.util.word.WordParser;
 
@@ -21,15 +23,15 @@ import jakarta.validation.constraints.NotEmpty;
 @RequestMapping("/api/tasks")
 public class TaskApiController {
 
-    private final TaskStore store;
+    private final TaskRepository repository;
 
-    public TaskApiController(TaskStore store) {
-        this.store = store;
+    public TaskApiController(TaskRepository repository) {
+        this.repository = repository;
     }
 
     /*
      * =====================================================
-     * PARSE WORD → CREA TAREAS EN MEMORIA
+     * PARSE WORD → SOLO DEVUELVE PREVIEW (NO PERSISTE)
      * =====================================================
      */
 
@@ -43,13 +45,36 @@ public class TaskApiController {
 
     /*
      * =====================================================
-     * LISTAR TAREAS (PERSISTEN AL RECARGAR)
+     * LISTAR TAREAS (DESDE DB)
      * =====================================================
      */
 
     @GetMapping
-    public Map<String, TaskRequestDTO> list() {
-        return store.findAll();
+    public List<TaskResponseDTO> list() {
+        return repository.findAll().stream()
+                .map(t -> new TaskResponseDTO(
+                        t.getId(),
+                        t.getName(),
+                        t.getAllowedCategories(),
+                        t.getAssignedDays()))
+                .toList();
+    }
+
+    /*
+     * =====================================================
+     * CREAR TAREAS (BATCH O INDIVIDUAL)
+     * =====================================================
+     */
+
+    @PostMapping
+    public void saveTasks(@RequestBody @NotEmpty List<TaskRequestDTO> tasks) {
+        tasks.forEach(dto -> {
+            Task task = new Task(
+                    dto.getName(),
+                    dto.getAllowedCategories(),
+                    dto.getAssignedDays());
+            repository.save(task);
+        });
     }
 
     /*
@@ -58,35 +83,43 @@ public class TaskApiController {
      * =====================================================
      */
 
-    @PutMapping("/{name}/categories")
+    @PutMapping("/{id}/categories")
     public void updateCategories(
-            @PathVariable String name,
+            @PathVariable Long id,
             @RequestBody @NotEmpty Set<Category> categories) {
 
-        TaskRequestDTO task = store.findByName(name);
-
-        if (task == null) {
-            throw new BusinessException("Tarea inexistente: " + name);
-        }
+        Task task = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("Tarea inexistente: " + id));
 
         task.setAllowedCategories(categories);
-        store.update(name, task);
+        repository.save(task);
     }
 
     /*
      * =====================================================
-     * ELIMINAR / LIMPIAR
+     * ACTUALIZAR TAREA COMPLETA
+     * =====================================================
+     */
+    @PutMapping("/{id}")
+    public void updateTask(@PathVariable Long id, @RequestBody TaskRequestDTO dto) {
+        Task task = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("Tarea inexistente: " + id));
+
+        task.setName(dto.getName());
+        task.setAllowedCategories(dto.getAllowedCategories());
+        task.setAssignedDays(dto.getAssignedDays());
+
+        repository.save(task);
+    }
+
+    /*
+     * =====================================================
+     * ELIMINAR
      * =====================================================
      */
 
-    @DeleteMapping("/{name}")
-    public void delete(@PathVariable String name) {
-        store.delete(name);
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        repository.deleteById(id);
     }
-
-    @PostMapping
-    public void saveTasks(@RequestBody @NotEmpty List<TaskRequestDTO> tasks) {
-        tasks.forEach(store::save);
-    }
-
 }
