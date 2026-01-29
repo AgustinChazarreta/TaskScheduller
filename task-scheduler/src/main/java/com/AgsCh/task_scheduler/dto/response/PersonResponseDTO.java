@@ -7,14 +7,20 @@ import com.AgsCh.task_scheduler.model.Category;
 
 public class PersonResponseDTO {
 
+    private Long id;
     private String name;
     private Category category;
-    private Set<DayOfWeek> assignedDays;
+    private Set<DayOfWeek> availableDays;
 
-    public PersonResponseDTO(String name, Category category, Set<DayOfWeek> assignedDays) {
+    public PersonResponseDTO(Long id, String name, Category category, Set<DayOfWeek> availableDays) {
+        this.id = id;
         this.name = name;
         this.category = category;
-        this.assignedDays = assignedDays;
+        this.availableDays = availableDays;
+    }
+
+    public Long getId(){
+        return id;
     }
 
     public String getName() {
@@ -25,7 +31,7 @@ public class PersonResponseDTO {
         return category;
     }
 
-    public Set<DayOfWeek> getAssignedDays() {
-        return assignedDays;
+    public Set<DayOfWeek> getAvailableDays() {
+        return availableDays;
     }
 }

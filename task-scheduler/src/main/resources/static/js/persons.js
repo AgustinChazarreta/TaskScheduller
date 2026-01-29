@@ -46,7 +46,7 @@ async function loadPersons() {
     const data = await res.json();
 
     tbody.innerHTML = "";
-    const entries = Object.entries(data);
+    const entries = data.map(p => [p.id, p]);
 
     if (entries.length === 0) {
         tbody.innerHTML = `

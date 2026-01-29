@@ -4,26 +4,31 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.UUID;
-
-import org.optaplanner.core.api.domain.lookup.PlanningId;
 
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "persons")
 public class Person {
 
-    @PlanningId
     @Id
-    private String id = UUID.randomUUID().toString(); // Identificador único
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Identificador único
+    private Long id;
 
+    @Column(nullable = false)
     private String name; // Nombre legible
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Category category; // Rol o categoría
+
     private LocalDate birthDate; // Fecha de nacimiento
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "person_available_days", joinColumns = @JoinColumn(name = "person_id"))
+    @Column(name = "available_day")
     @Enumerated(EnumType.STRING)
-    private Set<DayOfWeek> availableDays; // Días que puede trabajar
+    private Set<DayOfWeek> availableDays;
 
     // --------- Constructores ---------
     public Person() {
@@ -38,7 +43,7 @@ public class Person {
     }
 
     // --------- Getters y setters ---------
-    public String getId() {
+    public Long getId() {
         return id;
     }
 

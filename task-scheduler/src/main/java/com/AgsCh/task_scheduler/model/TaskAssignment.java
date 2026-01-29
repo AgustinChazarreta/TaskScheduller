@@ -7,16 +7,24 @@ import org.optaplanner.core.api.domain.entity.PlanningEntity;
 import org.optaplanner.core.api.domain.lookup.PlanningId;
 import org.optaplanner.core.api.domain.variable.PlanningVariable;
 
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+
 @PlanningEntity
 public class TaskAssignment {
 
     @PlanningId
+    @Id
     private String id = UUID.randomUUID().toString();
 
+    @ManyToOne
     private Task task; // Tarea fija
+    
     private LocalDate date; // Fecha fija
 
     @PlanningVariable(valueRangeProviderRefs = { "personRange" })
+    @ManyToOne
+
     private Person person; // Variable que asigna OptaPlanner
 
     // --------- Constructores ---------

@@ -17,7 +17,11 @@ public class Task {
     private String id = UUID.randomUUID().toString(); // Identificador único
 
     private String name; // Nombre de la tarea
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
     private Set<Category> allowedCategories; // Categorías permitidas
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
     private Set<DayOfWeek> assignedDays; // Días asignados
 
     // --------- Constructores ---------

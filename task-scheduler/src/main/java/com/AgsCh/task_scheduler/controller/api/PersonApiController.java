@@ -1,37 +1,68 @@
 package com.AgsCh.task_scheduler.controller.api;
 
-import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.web.bind.annotation.*;
+
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
-import com.AgsCh.task_scheduler.repository.PersonStore;
+import com.AgsCh.task_scheduler.dto.response.PersonResponseDTO;
+import com.AgsCh.task_scheduler.model.Person;
+import com.AgsCh.task_scheduler.repository.PersonRepository;
 
 @RestController
 @RequestMapping("/api/persons")
 public class PersonApiController {
 
-    private final PersonStore store;
+    private final PersonRepository repository;
 
-    public PersonApiController(PersonStore store) {
-        this.store = store;
+    public PersonApiController(PersonRepository repository) {
+        this.repository = repository;
     }
 
+    // -------- CREATE --------
     @PostMapping
-    public UUID create(@RequestBody PersonRequestDTO person) {
-        return store.save(person);
+    public Long create(@RequestBody PersonRequestDTO dto) {
+        Person person = new Person(
+            dto.getName(),
+            dto.getCategory(),
+            dto.getBirthDate(),
+            dto.getAvailableDays()
+        );
+
+        return repository.save(person).getId();
     }
 
+    // -------- READ --------
     @GetMapping
-    public Map<UUID, PersonRequestDTO> list() {
-        return store.findAll();
+    public List<PersonResponseDTO> list() {
+        return repository.findAll().stream()
+            .map(p -> new PersonResponseDTO(
+                p.getId(),
+                p.getName(),
+                p.getCategory(),
+                p.getAvailableDays()
+            ))
+            .collect(Collectors.toList());
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable UUID id) {
-        store.delete(id);
-    }
-
+    // -------- UPDATE --------
     @PutMapping("/{id}")
-    public void update(@PathVariable UUID id, @RequestBody PersonRequestDTO person) {
-        store.update(id, person);
+    public void update(@PathVariable Long id, @RequestBody PersonRequestDTO dto) {
+        Person person = repository.findById(id)
+            .orElseThrow();
+
+        person.setAvailableDays(dto.getAvailableDays());
+        person.setCategory(dto.getCategory());
+        person.setName(dto.getName());
+        person.setBirthDate(dto.getBirthDate());
+
+        repository.save(person);
+    }
+
+    // -------- DELETE --------
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        repository.deleteById(id);
     }
 }
