@@ -4,12 +4,15 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Set;
 import com.AgsCh.task_scheduler.model.Category;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 public class PersonRequestDTO {
+    @NotNull
+    private Long id;
 
     @NotBlank
     private String name;
@@ -20,14 +23,22 @@ public class PersonRequestDTO {
     @NotNull
     private LocalDate birthDate;
 
-    @NotNull
-    @NotEmpty
+    @NotNull @NotEmpty
+    @JsonProperty("availableDays")
     private Set<DayOfWeek> availableDays;
 
     public PersonRequestDTO() {
     }
 
     // getters & setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+    
     public String getName() {
         return name;
     }

@@ -8,6 +8,8 @@ import com.AgsCh.task_scheduler.dto.request.*;
 import com.AgsCh.task_scheduler.dto.response.*;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.*;
+import com.AgsCh.task_scheduler.repository.PersonRepository;
+import com.AgsCh.task_scheduler.repository.TaskRepository;
 
 public final class ScheduleMapper {
 
@@ -21,42 +23,47 @@ public final class ScheduleMapper {
      * ======================
      */
 
-    public static Schedule toModel(ScheduleRequestDTO request) {
+    public static Schedule toModel(
+            ScheduleRequestDTO request,
+            TaskRepository taskRepository,
+            PersonRepository personRepository) {
 
-        List<Person> persons = toPersons(request.getPersons());
-        List<Task> tasks = toTasks(request.getTasks());
+        // 1️⃣ Traer Tasks y Persons existentes de la DB
+        List<Task> tasks = loadTasks(request.getTasks(), taskRepository);
+        List<Person> persons = loadPersons(request.getPersons(), personRepository);
 
+        // 2️⃣ Fechas
         LocalDate start = request.getPeriod().getStartDate();
         LocalDate end = request.getPeriod().getEndDate();
 
+        // 3️⃣ Crear TaskAssignments con planningId
         List<TaskAssignment> assignments = createAssignments(tasks, start, end);
 
         return new Schedule(persons, tasks, assignments);
     }
 
-    private static List<Person> toPersons(List<PersonRequestDTO> dtos) {
-        List<Person> persons = new ArrayList<>();
-
-        for (PersonRequestDTO dto : dtos) {
-            persons.add(new Person(
-                    dto.getName(),
-                    dto.getCategory(),
-                    dto.getBirthDate(),
-                    dto.getAvailableDays()));
-        }
-        return persons;
-    }
-
-    private static List<Task> toTasks(List<TaskRequestDTO> dtos) {
+    private static List<Task> loadTasks(List<TaskRequestDTO> dtos, TaskRepository repo) {
         List<Task> tasks = new ArrayList<>();
-
         for (TaskRequestDTO dto : dtos) {
-            tasks.add(new Task(
-                    dto.getName(),
-                    dto.getAllowedCategories(),
-                    dto.getAssignedDays()));
+            // Asume que cada TaskRequestDTO tiene un campo id que ya existe en la DB
+            Task task = repo.findById(dto.getId())
+                    .orElseThrow(() -> new BusinessException(
+                            "Task no encontrada en DB: " + dto.getId()));
+            tasks.add(task);
         }
         return tasks;
+    }
+
+    private static List<Person> loadPersons(List<PersonRequestDTO> dtos, PersonRepository repo) {
+        List<Person> persons = new ArrayList<>();
+        for (PersonRequestDTO dto : dtos) {
+            // Asume que cada PersonRequestDTO tiene un id válido
+            Person person = repo.findById(dto.getId())
+                    .orElseThrow(() -> new BusinessException(
+                            "Person no encontrada en DB: " + dto.getId()));
+            persons.add(person);
+        }
+        return persons;
     }
 
     private static List<TaskAssignment> createAssignments(
@@ -73,7 +80,9 @@ public final class ScheduleMapper {
         for (Task task : tasks) {
             for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
                 if (task.getAssignedDays().contains(date.getDayOfWeek())) {
-                    assignments.add(new TaskAssignment(task, date));
+                    TaskAssignment ta = new TaskAssignment(task, date); // planningId generado automáticamente
+                    ta.setPerson(null); // UNASSIGNED
+                    assignments.add(ta);
                 }
             }
         }

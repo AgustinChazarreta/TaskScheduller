@@ -7,27 +7,35 @@ import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
 import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Schedule;
+import com.AgsCh.task_scheduler.repository.PersonRepository;
+import com.AgsCh.task_scheduler.repository.TaskRepository;
 import com.AgsCh.task_scheduler.service.ScheduleService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/schedule")
 public class ScheduleController {
 
         private final ScheduleService scheduleService;
+        private final TaskRepository taskRepository;
+        private final PersonRepository personRepository;
 
-        public ScheduleController(
-                ScheduleService scheduleService) { this.scheduleService = scheduleService; }
+        public ScheduleController(ScheduleService scheduleService, TaskRepository taskRepository, PersonRepository personRepository) {
+                this.scheduleService = scheduleService;
+                this.taskRepository = taskRepository;
+                this.personRepository = personRepository;
+        }
 
         /**
          * Resuelve el schedule a partir de los datos enviados por el frontend.
          */
         @PostMapping("/solve")
-        public ScheduleResponseDTO solve(@RequestBody ScheduleRequestDTO request) {
+        public ScheduleResponseDTO solve(@Valid @RequestBody ScheduleRequestDTO request) {
                 try {
-                        // 1️⃣ Caso de uso: construir el Schedule de dominio
-                        Schedule schedule = ScheduleMapper.toModel(request);
+                        // 1️⃣ Convertir DTO a Schedule de dominio con entidades persistidas
+                        Schedule schedule = ScheduleMapper.toModel(request, taskRepository, personRepository);
 
-                        // 2️⃣ Resolver el problema con OptaPlanner
+                        // 2️⃣ Resolver con OptaPlanner
                         Schedule solvedSchedule = scheduleService.solve(schedule);
 
                         // 3️⃣ Mapear a DTO de respuesta
@@ -39,4 +47,5 @@ public class ScheduleController {
                                         e);
                 }
         }
+
 }

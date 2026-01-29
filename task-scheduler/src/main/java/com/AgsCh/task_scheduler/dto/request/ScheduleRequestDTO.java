@@ -45,4 +45,39 @@ public class ScheduleRequestDTO {
     public void setTasks(List<TaskRequestDTO> tasks) {
         this.tasks = tasks;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("ScheduleRequestDTO {\n");
+
+        // Periodo
+        sb.append("  period: ").append(period != null ? period.toString() : "null").append(",\n");
+
+        // Persons
+        sb.append("  persons: [\n");
+        if (persons != null) {
+            for (PersonRequestDTO p : persons) {
+                sb.append("    ").append(p != null ? p.toString() : "null").append(",\n");
+            }
+        } else {
+            sb.append("    null\n");
+        }
+        sb.append("  ],\n");
+
+        // Tasks
+        sb.append("  tasks: [\n");
+        if (tasks != null) {
+            for (TaskRequestDTO t : tasks) {
+                sb.append("    ").append(t != null ? t.toString() : "null").append(",\n");
+            }
+        } else {
+            sb.append("    null\n");
+        }
+        sb.append("  ]\n");
+
+        sb.append("}");
+        return sb.toString();
+    }
+
 }

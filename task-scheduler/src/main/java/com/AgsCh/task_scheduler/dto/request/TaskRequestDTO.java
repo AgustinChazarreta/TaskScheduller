@@ -3,25 +3,36 @@ package com.AgsCh.task_scheduler.dto.request;
 import java.time.DayOfWeek;
 import java.util.Set;
 import com.AgsCh.task_scheduler.model.Category;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 public class TaskRequestDTO {
+    @NotNull
+    private Long id;
 
     @NotBlank
     private String name;
 
-    @NotNull
-    @NotEmpty
+    @NotNull @NotEmpty
+    @JsonProperty("allowedCategories")
     private Set<Category> allowedCategories;
 
-    @NotNull
-    @NotEmpty
+    @NotNull @NotEmpty
+    @JsonProperty("assignedDays")
     private Set<DayOfWeek> assignedDays;
 
     // getters & setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+    
     public String getName() {
         return name;
     }

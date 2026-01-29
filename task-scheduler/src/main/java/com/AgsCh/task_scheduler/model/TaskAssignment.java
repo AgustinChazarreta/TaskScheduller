@@ -7,38 +7,31 @@ import org.optaplanner.core.api.domain.entity.PlanningEntity;
 import org.optaplanner.core.api.domain.lookup.PlanningId;
 import org.optaplanner.core.api.domain.variable.PlanningVariable;
 
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-
 @PlanningEntity
 public class TaskAssignment {
 
+    // ID SOLO para OptaPlanner (no DB)
     @PlanningId
-    @Id
-    private String id = UUID.randomUUID().toString();
+    private String planningId = UUID.randomUUID().toString();
 
-    @ManyToOne
-    private Task task; // Tarea fija
-    
-    private LocalDate date; // Fecha fija
+    // Datos de dominio (ya persistidos)
+    private Task task;
+    private LocalDate date;
 
     @PlanningVariable(valueRangeProviderRefs = { "personRange" })
-    @ManyToOne
+    private Person person;
 
-    private Person person; // Variable que asigna OptaPlanner
-
-    // --------- Constructores ---------
-    public TaskAssignment() {
-    }
+    public TaskAssignment() {}
 
     public TaskAssignment(Task task, LocalDate date) {
         this.task = task;
         this.date = date;
     }
 
-    // --------- Getters y setters ---------
-    public String getId() {
-        return id;
+    // getters & setters
+
+    public String getPlanningId() {
+        return planningId;
     }
 
     public Task getTask() {
@@ -53,20 +46,7 @@ public class TaskAssignment {
         return person;
     }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
-
     public void setPerson(Person person) {
         this.person = person;
-    }
-
-    @Override
-    public String toString() {
-        return "TaskAssignment{" +
-                "task=" + (task != null ? task.getName() : "null") +
-                ", date=" + date +
-                ", person=" + (person != null ? person.getName() : "UNASSIGNED") +
-                '}';
     }
 }
