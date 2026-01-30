@@ -7,36 +7,28 @@ import org.springframework.web.bind.annotation.*;
 
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonResponseDTO;
-import com.AgsCh.task_scheduler.model.Person;
-import com.AgsCh.task_scheduler.repository.PersonRepository;
+import com.AgsCh.task_scheduler.service.domain.PersonService;
 
 @RestController
 @RequestMapping("/api/persons")
 public class PersonApiController {
 
-    private final PersonRepository repository;
+    private final PersonService service;
 
-    public PersonApiController(PersonRepository repository) {
-        this.repository = repository;
+    public PersonApiController(PersonService service) {
+        this.service = service;
     }
 
     // -------- CREATE --------
     @PostMapping
     public Long create(@RequestBody PersonRequestDTO dto) {
-        Person person = new Person(
-            dto.getName(),
-            dto.getCategory(),
-            dto.getBirthDate(),
-            dto.getAvailableDays()
-        );
-
-        return repository.save(person).getId();
+        return service.create(dto).getId();
     }
 
     // -------- READ --------
     @GetMapping
     public List<PersonResponseDTO> list() {
-        return repository.findAll().stream()
+        return service.findAll().stream()
             .map(p -> new PersonResponseDTO(
                 p.getId(),
                 p.getName(),
@@ -50,20 +42,12 @@ public class PersonApiController {
     // -------- UPDATE --------
     @PutMapping("/{id}")
     public void update(@PathVariable Long id, @RequestBody PersonRequestDTO dto) {
-        Person person = repository.findById(id)
-            .orElseThrow();
-
-        person.setAvailableDays(dto.getAvailableDays());
-        person.setCategory(dto.getCategory());
-        person.setName(dto.getName());
-        person.setBirthDate(dto.getBirthDate());
-
-        repository.save(person);
+        service.update(id, dto);
     }
 
     // -------- DELETE --------
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        repository.deleteById(id);
+        service.delete(id);
     }
 }

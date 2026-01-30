@@ -9,7 +9,8 @@ import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Schedule;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.repository.TaskRepository;
-import com.AgsCh.task_scheduler.service.ScheduleService;
+import com.AgsCh.task_scheduler.service.solver.ScheduleService;
+
 import jakarta.validation.Valid;
 
 @RestController

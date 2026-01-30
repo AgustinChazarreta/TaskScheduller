@@ -1,4 +1,4 @@
-package com.AgsCh.task_scheduler.service;
+package com.AgsCh.task_scheduler.service.solver;
 
 import java.time.Duration;
 import java.util.Objects;
