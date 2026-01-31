@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::section})}">
+
+<section>
+
+    <h1 class="mb-4">
+        <i class="bi bi-speedometer2 me-2"></i>
+        Admin Dashboard
+    </h1>
+
+    <!-- ================= ESTADO DEL SCHEDULE ================= -->
+    <div class="card mb-4 shadow-sm p-3">
+        <div class="card-header">
+            <h4>Estado del Schedule</h4>
+        </div>
+        <div class="card-body d-flex flex-wrap gap-3 align-items-center">
+            <div>
+                <span class="fw-bold">Último resuelto:</span>
+                <span id="lastSolvedAt">Cargando...</span>
+            </div>
+            <div>
+                <span class="fw-bold">Estado:</span>
+                <span id="scheduleStatus" class="badge">Cargando...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ALERTAS ================= -->
+    <div id="alertContainer"></div>
+
+    <!-- ================= RESOLVER SCHEDULE ================= -->
+    <div class="card mb-4 shadow-sm p-3">
+        <div class="card-header">
+            <h4>Resolver Schedule</h4>
+        </div>
+        <div class="card-body">
+            <form id="scheduleForm">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="startDate" class="form-label">Fecha de inicio</label>
+                        <input type="date" class="form-control" id="startDate" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="endDate" class="form-label">Fecha de fin</label>
+                        <input type="date" class="form-control" id="endDate" required>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-cpu me-1"></i> Generar Schedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= PERSONAS ================= -->
+    <div class="card mb-4 shadow-sm p-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Personas disponibles</h4>
+            <div>
+                <button class="btn btn-sm btn-secondary me-2" id="selectAllPersons">Seleccionar todo</button>
+                <button class="btn btn-sm btn-secondary" id="deselectAllPersons">Deseleccionar todo</button>
+            </div>
+        </div>
+        <div class="card-body" id="personsContainer">
+            <p class="text-muted mb-0">Cargando personas...</p>
+        </div>
+    </div>
+
+    <!-- ================= TAREAS ================= -->
+    <div class="card mb-4 shadow-sm p-3">
+        <div class="card-header">
+            <h4>Tareas cargadas</h4>
+        </div>
+        <div class="card-body" id="tasksContainer">
+            <p class="text-muted mb-0">Cargando tareas...</p>
+        </div>
+    </div>
+
+</section>
+
+<script>
+    // ================== ESTADO DEL SCHEDULE ==================
+    async function loadScheduleStatus() {
+        try {
+            const response = await fetch('/api/admin/schedule/status');
+            if (!response.ok) throw new Error();
+            const data = await response.json();
+
+            const statusBadge = document.getElementById('scheduleStatus');
+            const lastSolved = document.getElementById('lastSolvedAt');
+
+            statusBadge.textContent = data.invalidated ? 'Invalidado' : 'Válido';
+            statusBadge.className = data.invalidated ? 'badge bg-danger' : 'badge bg-success';
+
+            // Suponemos que adminService devuelve lastSolvedAt en formato ISO
+            const lastDate = sessionStorage.getItem('lastSolvedAt') || 'Nunca';
+            lastSolved.textContent = lastDate;
+
+        } catch {
+            showAlert('No se pudo cargar el estado del schedule', 'danger');
+        }
+    }
+
+    // ================== BOTONES SELECCIÓN ==================
+    document.addEventListener('DOMContentLoaded', () => {
+        loadScheduleStatus();
+
+        document.getElementById('selectAllPersons')?.addEventListener('click', () => {
+            document.querySelectorAll('.person-checkbox').forEach(cb => cb.checked = true);
+            updateSelectedPersons();
+        });
+
+        document.getElementById('deselectAllPersons')?.addEventListener('click', () => {
+            document.querySelectorAll('.person-checkbox').forEach(cb => cb.checked = false);
+            updateSelectedPersons();
+        });
+    });
+
+</script>
+
+<script src="/js/index.js"></script>
+</html>

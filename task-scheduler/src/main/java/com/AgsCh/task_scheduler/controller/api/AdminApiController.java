@@ -1,5 +1,6 @@
 package com.AgsCh.task_scheduler.controller.api;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
@@ -8,6 +9,7 @@ import com.AgsCh.task_scheduler.service.admin.AdminService;
 
 @RestController
 @RequestMapping("/api/admin")
+@PreAuthorize("hasRole('ADMIN')") // Toda la clase solo accesible por ADMIN
 public class AdminApiController {
 
     private final AdminService adminService;

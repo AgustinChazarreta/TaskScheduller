@@ -1,5 +1,6 @@
 package com.AgsCh.task_scheduler.controller.api;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.AgsCh.task_scheduler.dto.ScheduleMapper;
@@ -9,7 +10,7 @@ import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Schedule;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.repository.TaskRepository;
-import com.AgsCh.task_scheduler.service.solver.ScheduleService;
+import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 
 import jakarta.validation.Valid;
 
@@ -17,11 +18,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/schedule")
 public class ScheduleController {
 
-        private final ScheduleService scheduleService;
+        private final AdminScheduleService scheduleService;
         private final TaskRepository taskRepository;
         private final PersonRepository personRepository;
 
-        public ScheduleController(ScheduleService scheduleService, TaskRepository taskRepository, PersonRepository personRepository) {
+        public ScheduleController(AdminScheduleService scheduleService, TaskRepository taskRepository, PersonRepository personRepository) {
                 this.scheduleService = scheduleService;
                 this.taskRepository = taskRepository;
                 this.personRepository = personRepository;
@@ -31,13 +32,15 @@ public class ScheduleController {
          * Resuelve el schedule a partir de los datos enviados por el frontend.
          */
         @PostMapping("/solve")
+        @PreAuthorize("hasRole('ADMIN')")
         public ScheduleResponseDTO solve(@Valid @RequestBody ScheduleRequestDTO request) {
                 try {
                         // 1️⃣ Convertir DTO a Schedule de dominio con entidades persistidas
                         Schedule schedule = ScheduleMapper.toModel(request, taskRepository, personRepository);
 
                         // 2️⃣ Resolver con OptaPlanner
-                        Schedule solvedSchedule = scheduleService.solve(schedule);
+                        scheduleService.loadSchedule(schedule);
+                        Schedule solvedSchedule = scheduleService.solve();
 
                         // 3️⃣ Mapear a DTO de respuesta
                         return ScheduleMapper.toResponse(solvedSchedule);
@@ -47,6 +50,14 @@ public class ScheduleController {
                                         "Error al resolver el schedule con los datos proporcionados",
                                         e);
                 }
+        }
+
+        // -------- VER SCHEDULE ACTUAL --------
+        @GetMapping("/current")
+        @PreAuthorize("hasAnyRole('ADMIN','USER')")
+        public ScheduleResponseDTO current() {
+                Schedule current = scheduleService.getCurrentSchedule();
+                return ScheduleMapper.toResponse(current);
         }
 
 }

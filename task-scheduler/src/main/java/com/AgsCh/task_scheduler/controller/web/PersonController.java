@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.ui.Model;
 
 @Controller
-@RequestMapping("/persons")
+@RequestMapping("/admin/persons")
 public class PersonController {
     @GetMapping
     public String persons(Model model) {
