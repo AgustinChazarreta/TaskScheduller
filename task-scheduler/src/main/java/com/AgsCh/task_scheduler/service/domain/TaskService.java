@@ -1,12 +1,19 @@
 package com.AgsCh.task_scheduler.service.domain;
 
+import java.time.DayOfWeek;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.TaskRequestDTO;
+import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Task;
 import com.AgsCh.task_scheduler.repository.TaskRepository;
+import com.AgsCh.task_scheduler.util.normalizer.TaskRefactor;
+import com.AgsCh.task_scheduler.util.word.WordParser;
 
 @Service
 public class TaskService {
@@ -20,10 +27,9 @@ public class TaskService {
     // -------- CREATE --------
     public Task create(TaskRequestDTO dto) {
         Task task = new Task(
-            dto.getName(),
-            dto.getAllowedCategories(),
-            dto.getAssignedDays()
-        );
+                dto.getName(),
+                dto.getAllowedCategories(),
+                dto.getAssignedDays());
 
         return repository.save(task);
     }
@@ -35,7 +41,7 @@ public class TaskService {
 
     public Task findById(Long id) {
         return repository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new RuntimeException("Task not found"));
     }
 
     // -------- UPDATE --------
@@ -52,5 +58,21 @@ public class TaskService {
     // -------- DELETE --------
     public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    // -------- LOAD WORD --------
+    public Map<String, Set<DayOfWeek>> parseTasksFromWord(MultipartFile file) {
+
+        if (file.isEmpty()) {
+            throw new BusinessException("Archivo vacío");
+        }
+
+        Map<String, List<String>> raw = WordParser.parseTasks(file);
+        return TaskRefactor.refactorDays(raw);
+    }
+
+    // -------- CREATE TASKS--------
+    public void createTasks(List<TaskRequestDTO> tasks) {
+        tasks.forEach(this::create);
     }
 }
