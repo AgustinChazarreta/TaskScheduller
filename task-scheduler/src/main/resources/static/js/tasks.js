@@ -20,13 +20,13 @@ const categories = ["CATEGORY_1", "CATEGORY_2", "CATEGORY_3", "CATEGORY_4"];
     FORMATEO
 =========================================== */
 function formatDays(days) {
-    const order = ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"];
-    const labels = {MONDAY:"Lunes",TUESDAY:"Martes",WEDNESDAY:"Miércoles",THURSDAY:"Jueves",FRIDAY:"Viernes",SATURDAY:"Sábado",SUNDAY:"Domingo"};
-    return order.filter(d=>days.includes(d)).map(d=>`<span class="badge bg-danger bg-gradient me-1">${labels[d]}</span>`).join("");
+    const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+    const labels = { MONDAY: "Lunes", TUESDAY: "Martes", WEDNESDAY: "Miércoles", THURSDAY: "Jueves", FRIDAY: "Viernes", SATURDAY: "Sábado", SUNDAY: "Domingo" };
+    return order.filter(d => days.includes(d)).map(d => `<span class="badge bg-danger bg-gradient me-1">${labels[d]}</span>`).join("");
 }
 
 function formatCategory(cat) {
-    const mapping = {CATEGORY_1:"Categoría 1",CATEGORY_2:"Categoría 2",CATEGORY_3:"Categoría 3",CATEGORY_4:"Categoría 4"};
+    const mapping = { CATEGORY_1: "Categoría 1", CATEGORY_2: "Categoría 2", CATEGORY_3: "Categoría 3", CATEGORY_4: "Categoría 4" };
     return mapping[cat] || cat;
 }
 
@@ -42,22 +42,22 @@ function render(tasks) {
     }
 
     Object.values(tasks)
-        .sort((a,b)=> (a.name||"").localeCompare(b.name||""))
-        .forEach(t=>{
-            const categoriesStr = (t.allowedCategories||[])
-                .map(cat=>`<span class="badge bg-warning bg-gradient text-dark me-1">${formatCategory(cat)}</span>`)
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+        .forEach(t => {
+            const categoriesStr = (t.allowedCategories || [])
+                .map(cat => `<span class="badge bg-warning bg-gradient text-dark me-1">${formatCategory(cat)}</span>`)
                 .join("");
 
             tbody.insertAdjacentHTML("beforeend", `
                 <tr>
                     <td>${t.name}</td>
-                    <td>${formatDays(t.assignedDays||[])}</td>
+                    <td>${formatDays(t.assignedDays || [])}</td>
                     <td>${categoriesStr}</td>
                     <td class="text-end">
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editTask('${t.id||t.name}')">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editTask('${t.id || t.name}')">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTask('${t.id||t.name}')">
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTask('${t.id || t.name}')">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -75,10 +75,10 @@ async function loadTasks() {
 
     const data = await res.json();
 
-    Object.keys(tasksCache).forEach(k=>delete tasksCache[k]);
-    data.forEach(t=>tasksCache[t.id]=t);
+    Object.keys(tasksCache).forEach(k => delete tasksCache[k]);
+    data.forEach(t => tasksCache[t.id] = t);
 
-    render({...tasksCache, ...draftTasks});
+    render({ ...tasksCache, ...draftTasks });
 }
 
 document.addEventListener("DOMContentLoaded", loadTasks);
@@ -93,18 +93,22 @@ async function loadTasksFromWord() {
     const fd = new FormData();
     fd.append("file", file);
 
-    const res = await fetch("/api/tasks/from-word", {method:"POST", body:fd});
+    const res = await secureFetch("/api/tasks/from-word", {
+        method: "POST",
+        body: fd
+    });
+
     if (!res.ok) return alert("Error leyendo el Word");
 
     const data = await res.json();
 
-    Object.entries(data).forEach(([name, days])=>{
+    Object.entries(data).forEach(([name, days]) => {
         if (!tasksCache[name] && !draftTasks[name]) {
             draftTasks[name] = { name, assignedDays: days, allowedCategories: [] };
         }
     });
 
-    render({...tasksCache, ...draftTasks});
+    render({ ...tasksCache, ...draftTasks });
 }
 
 /* ===========================================
@@ -125,8 +129,8 @@ function editTask(key) {
 
     document.getElementById("taskName").value = task.name;
 
-    document.querySelectorAll(".category").forEach(cb=>cb.checked=task.allowedCategories.includes(cb.value));
-    document.querySelectorAll(".day").forEach(cb=>cb.checked=task.assignedDays.includes(cb.value));
+    document.querySelectorAll(".category").forEach(cb => cb.checked = task.allowedCategories.includes(cb.value));
+    document.querySelectorAll(".day").forEach(cb => cb.checked = task.assignedDays.includes(cb.value));
 
     new bootstrap.Modal(modalEl).show();
 }
@@ -154,13 +158,13 @@ form.addEventListener("submit", async e => {
         } else if (tasksCache[editingTaskId]) {
             // Si es persistida, hacemos PUT al backend
             try {
-                await fetch(`/api/tasks/${editingTaskId}`, {
+                await secureFetch(`/api/tasks/${editingTaskId}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(taskData)
                 });
                 // Actualizamos front
-                tasksCache[editingTaskId] = { ...tasksCache[editingTaskId], ...taskData, dirty: true  };
+                tasksCache[editingTaskId] = { ...tasksCache[editingTaskId], ...taskData, dirty: true };
             } catch {
                 return alert("Error actualizando la tarea");
             }
@@ -196,10 +200,10 @@ async function deleteTask(key) {
     if (draftTasks[key]) delete draftTasks[key];
     if (tasksCache[key]) {
         delete tasksCache[key];
-        await fetch(`/api/tasks/${key}`, {method:"DELETE"});
+        await secureFetch(`/api/tasks/${key}`, { method: "DELETE" });
     }
 
-    render({...tasksCache, ...draftTasks});
+    render({ ...tasksCache, ...draftTasks });
 }
 
 /* ===========================================
@@ -215,17 +219,18 @@ async function saveTasks() {
 
     // Validar categorías solo de los drafts
     for (const t of tdraft) {
-        if (!t.allowedCategories.length) 
+        if (!t.allowedCategories.length)
             return alert(`La tarea "${t.name}" no tiene categorías`);
     }
 
     // Guardar solo drafts
     if (tdraft.length) {
-        const res = await fetch("/api/tasks", {
+        const res = await secureFetch("/api/tasks", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(tdraft)
         });
+
 
         if (!res.ok) return alert("Error guardando tareas");
 

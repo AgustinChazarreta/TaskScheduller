@@ -69,7 +69,7 @@ function bindForm() {
         const tasksData = Object.values(tasksCache);
 
         try {
-            const response = await fetch('/api/schedule/solve', {
+            const response = await secureFetch('/api/schedule/solve', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

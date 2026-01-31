@@ -40,7 +40,7 @@ public class SecurityConfig {
         // Para pruebas rápidas: delega noop con formato {noop} (no encriptado)
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
-
+/*
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -68,12 +68,13 @@ public class SecurityConfig {
 
         return http.build();
     }
-
-    /*  @Bean
+*/    
+@Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf 
-                    .ignoringRequestMatchers("/h2-console/**"))
+                        .ignoringRequestMatchers("/api/**")
+                        .ignoringRequestMatchers("/h2-console/**"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/login",
@@ -96,7 +97,7 @@ public class SecurityConfig {
 
         return http.build();
     }
-*/
+
 
 
 }

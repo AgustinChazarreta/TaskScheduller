@@ -107,11 +107,14 @@ form.addEventListener("submit", async (e) => {
         : "/api/persons";
     const method = editingPersonId ? "PUT" : "POST";
 
-    await fetch(url, {
+    await secureFetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify(payload),
     });
+
 
     bootstrap.Modal.getInstance(modalEl).hide();
     resetForm();
@@ -139,7 +142,10 @@ function editPerson(id) {
 async function deletePerson(id, name) {
     if (!confirm(`¿Eliminar a ${name}?`)) return;
 
-    const res = await fetch(`/api/persons/${id}`, { method: "DELETE" });
+    const res = await secureFetch(`/api/persons/${id}`, {
+        method: "DELETE"
+    });
+
     if (res.ok) loadPersons();
 }
 

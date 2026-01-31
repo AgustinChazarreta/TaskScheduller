@@ -32,7 +32,7 @@ public class ScheduleController {
          * Resuelve el schedule a partir de los datos enviados por el frontend.
          */
         @PostMapping("/solve")
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("hasAnyRole('ADMIN','USER')")
         public ScheduleResponseDTO solve(@Valid @RequestBody ScheduleRequestDTO request) {
                 try {
                         // 1️⃣ Convertir DTO a Schedule de dominio con entidades persistidas
