@@ -5,13 +5,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
 
 import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
-import com.AgsCh.task_scheduler.model.Person;
-import com.AgsCh.task_scheduler.model.Task;
 import com.AgsCh.task_scheduler.service.admin.AdminService;
 import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
 @Controller
 @RequestMapping("/admin")
@@ -33,13 +30,6 @@ public class AdminWebController {
         model.addAttribute("lastSolvedAt", scheduleService.getLastSolvedAt());
         model.addAttribute("hasSchedule", scheduleService.getCurrentSchedule() != null);
 
-        // pasar listas de personas y tareas al dashboard
-        List<Person> persons = adminService.listPersons();
-        List<Task> tasks = adminService.listTasks();
-
-        model.addAttribute("persons", persons);
-        model.addAttribute("tasks", tasks);
-
         return "admin/dashboard";
     }
 
@@ -47,7 +37,7 @@ public class AdminWebController {
     @PostMapping("/schedule/solve")
     public String solve(@Valid @ModelAttribute("scheduleRequest") ScheduleRequestDTO request) {
         // Genera y resuelve el schedule usando AdminService
-        adminService.generateSchedule(request);
+        adminService.generateAndSolve(request);
         return "redirect:/admin";
     }
 

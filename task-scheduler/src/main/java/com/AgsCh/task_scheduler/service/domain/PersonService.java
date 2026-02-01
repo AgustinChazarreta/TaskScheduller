@@ -1,18 +1,23 @@
 package com.AgsCh.task_scheduler.service.domain;
+
 import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
 import com.AgsCh.task_scheduler.model.Person;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
+import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 
 @Service
 public class PersonService {
 
     private final PersonRepository repository;
+    private final AdminScheduleService scheduleService;
 
-    public PersonService(PersonRepository repository) {
+    public PersonService(PersonRepository repository,
+            AdminScheduleService scheduleService) {
         this.repository = repository;
+        this.scheduleService = scheduleService;
     }
 
     // CREATE
@@ -22,6 +27,7 @@ public class PersonService {
                 dto.getCategory(),
                 dto.getBirthDate(),
                 dto.getAvailableDays());
+        scheduleService.invalidate();
         return repository.save(person);
     }
 
@@ -44,11 +50,13 @@ public class PersonService {
         person.setBirthDate(dto.getBirthDate());
         person.setAvailableDays(dto.getAvailableDays());
 
+        scheduleService.invalidate();
         repository.save(person);
     }
-
+    
     // DELETE
     public void delete(Long id) {
         repository.deleteById(id);
+        scheduleService.invalidate();
     }
 }

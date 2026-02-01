@@ -12,6 +12,7 @@ import com.AgsCh.task_scheduler.dto.request.TaskRequestDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Task;
 import com.AgsCh.task_scheduler.repository.TaskRepository;
+import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 import com.AgsCh.task_scheduler.util.normalizer.TaskRefactor;
 import com.AgsCh.task_scheduler.util.word.WordParser;
 
@@ -19,9 +20,11 @@ import com.AgsCh.task_scheduler.util.word.WordParser;
 public class TaskService {
 
     private final TaskRepository repository;
+    private final AdminScheduleService scheduleService;
 
-    public TaskService(TaskRepository repository) {
+    public TaskService(TaskRepository repository, AdminScheduleService scheduleService) {
         this.repository = repository;
+        this.scheduleService = scheduleService;
     }
 
     // -------- CREATE --------
@@ -30,34 +33,36 @@ public class TaskService {
                 dto.getName(),
                 dto.getAllowedCategories(),
                 dto.getAssignedDays());
-
+        scheduleService.invalidate();
         return repository.save(task);
     }
-
+    
     // -------- READ --------
     public List<Task> findAll() {
         return repository.findAll();
     }
-
+    
     public Task findById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+        .orElseThrow(() -> new RuntimeException("Task not found"));
     }
-
+    
     // -------- UPDATE --------
     public void update(Long id, TaskRequestDTO dto) {
         Task task = findById(id);
-
+        
         task.setName(dto.getName());
         task.setAllowedCategories(dto.getAllowedCategories());
         task.setAssignedDays(dto.getAssignedDays());
-
+        
+        scheduleService.invalidate();
         repository.save(task);
     }
-
+    
     // -------- DELETE --------
     public void delete(Long id) {
         repository.deleteById(id);
+        scheduleService.invalidate();
     }
 
     // -------- LOAD WORD --------

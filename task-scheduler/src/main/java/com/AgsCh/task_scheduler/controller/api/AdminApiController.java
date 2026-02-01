@@ -21,7 +21,7 @@ public class AdminApiController {
     // -------------------- SCHEDULE --------------------
     @PostMapping("/schedule/solve")
     public Schedule solveSchedule(@RequestBody ScheduleRequestDTO request) {
-        return adminService.generateSchedule(request);
+        return adminService.generateAndSolve(request);
     }
 
     @PostMapping("/schedule/reset")
