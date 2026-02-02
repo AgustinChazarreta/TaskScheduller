@@ -4,7 +4,7 @@
 <section>
 
     <h1 class="mb-4">
-        <i class="bi bi-speedometer2 me-2"></i>
+        <i class="bi bi-play-circle me-2"></i>
         Admin Dashboard
     </h1>
 
@@ -14,13 +14,13 @@
             <h4>Estado del Schedule</h4>
         </div>
         <div class="card-body d-flex gap-4 align-items-center">
-            <div>
-                <strong>Último resuelto:</strong>
+            <div class="me-3">
+                <strong>Última resolución:</strong>
                 <span id="lastSolvedAt">Nunca</span>
             </div>
             <div>
-                <strong>Estado:</strong>
-                <span id="scheduleStatus" class="badge bg-secondary">
+                <strong class="me-1">Estado:</strong>
+                <span id="scheduleStatus" class="badge bg-secondary fs-5 px-2 py-1">
                     Cargando...
                 </span>
             </div>
@@ -31,10 +31,11 @@
     <div id="alertContainer"></div>
 
     <!-- ================= RESOLVER SCHEDULE ================= -->
-    <div class="card mb-4 shadow-sm">
+    <div class="card mb-4 shadow-sm overlay-wrapper" id="resolveCard">
         <div class="card-header">
             <h4>Resolver Schedule</h4>
         </div>
+
         <div class="card-body">
             <form id="scheduleForm">
 
@@ -50,12 +51,21 @@
                 </div>
 
                 <div class="text-end">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-cpu me-1"></i>
-                        Generar Schedule
+                    <button type="submit" class="btn btn-primary" id="resolveBtn">
+
+                        <!-- TEXTO NORMAL -->
+                        <span id="resolveText">
+                            <i class="bi bi-cpu me-1"></i>
+                            Generar Schedule
+                        </span>
+
+                        <!-- SPINNER -->
+                        <span id="resolveSpinner" class="d-none">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Resolviendo...
+                        </span>
                     </button>
                 </div>
-
             </form>
         </div>
     </div>
@@ -81,7 +91,7 @@
         </div>
     </div>
 
-    
+
     <script src="/js/csrf.js"></script>
     <script src="/js/dashboard.js"></script>
 </section>

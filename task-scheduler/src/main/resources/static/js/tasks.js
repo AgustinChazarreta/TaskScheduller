@@ -14,8 +14,6 @@ const tasksCache = {};
 // Tareas preliminares (solo en front, antes de guardar)
 const draftTasks = {};
 
-const categories = ["CATEGORY_1", "CATEGORY_2", "CATEGORY_3", "CATEGORY_4"];
-
 /* ===========================================
     FORMATEO
 =========================================== */
@@ -25,10 +23,12 @@ function formatDays(days) {
     return order.filter(d => days.includes(d)).map(d => `<span class="badge bg-danger bg-gradient me-1">${labels[d]}</span>`).join("");
 }
 
-function formatCategory(cat) {
-    const mapping = { CATEGORY_1: "Categoría 1", CATEGORY_2: "Categoría 2", CATEGORY_3: "Categoría 3", CATEGORY_4: "Categoría 4" };
-    return mapping[cat] || cat;
+function formatCategories(categories) {
+    const order = ["CATEGORY_1", "CATEGORY_2", "CATEGORY_3", "CATEGORY_4"];
+    const labels = { CATEGORY_1: "Categoría 1", CATEGORY_2: "Categoría 2", CATEGORY_3: "Categoría 3", CATEGORY_4: "Categoría 4" };
+    return order.filter(c => categories.includes(c)).map(c => `<span class="badge bg-warning bg-gradient text-dark me-1">${labels[c]}</span>`).join("");
 }
+
 
 /* ===========================================
     RENDER (UNIFICADO)
@@ -44,10 +44,7 @@ function render(tasks) {
     Object.values(tasks)
         .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
         .forEach(t => {
-            const categoriesStr = (t.allowedCategories || [])
-                .map(cat => `<span class="badge bg-warning bg-gradient text-dark me-1">${formatCategory(cat)}</span>`)
-                .join("");
-
+            const categoriesStr = formatCategories(t.allowedCategories || [])
             tbody.insertAdjacentHTML("beforeend", `
                 <tr>
                     <td>${t.name}</td>

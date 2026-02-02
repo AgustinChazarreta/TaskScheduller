@@ -5,43 +5,11 @@
 
     <h1 class="mb-4">
         <i class="bi bi-play-circle me-2"></i>
-        Resolver Schedule
+        Task Schedule
     </h1>
 
     <!-- ALERTAS -->
     <div id="alertContainer"></div>
-
-    <!-- PARÁMETROS -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3 class="card-title">Período de Planificación</h3>
-        </div>
-
-        <div class="card-body">
-            <form id="scheduleForm">
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="startDate" class="form-label">Fecha de inicio</label>
-                        <input type="date" class="form-control" id="startDate" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label for="endDate" class="form-label">Fecha de fin</label>
-                        <input type="date" class="form-control" id="endDate" required>
-                    </div>
-                </div>
-
-                <div class="text-end">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-cpu"></i>
-                        Resolver schedule
-                    </button>
-                </div>
-
-            </form>
-        </div>
-    </div>
 
     <!-- PERSONAS -->
     <div class="card mb-4">
@@ -59,11 +27,38 @@
         <div class="card-header">
             <h3 class="card-title">Tareas cargadas</h3>
         </div>
-
+        
         <div class="card-body" id="tasksContainer">
             <p class="text-muted mb-0">Cargando tareas...</p>
         </div>
     </div>
+    
+    <!-- RESULTADOS -->
+    <h1 class="mb-4">
+        <i class="bi bi-check-circle me-2"></i>
+        Resultados del Schedule
+    </h1>
+
+    <div id="resultsContainer">
+        <div class="card mb-3">
+            <div class="card-header" id="weekLabel"></div>
+        </div>
+
+        <div id="assignmentsContainer" class="mb-3 d-flex flex-wrap justify-content-center"
+            style="gap: 3rem; padding-bottom: 2rem;">
+            <!-- cards -->
+        </div>
+
+        <div class="text-center mt-3">
+            <button class="btn btn-primary me-2" onclick="prevWeek()">Semana anterior</button>
+            <button class="btn btn-primary" onclick="nextWeek()">Semana siguiente</button>
+        </div>
+
+        <div class="mt-4 text-center">
+            <button class="btn btn-secondary" onclick="window.location.href='/'">Volver</button>
+        </div>
+    </div>
+
 
     <script src="/js/csrf.js"></script>
     <script src="/js/index.js"></script>

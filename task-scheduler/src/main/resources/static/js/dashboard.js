@@ -33,10 +33,10 @@ async function loadScheduleStatus() {
         const statusBadge = document.getElementById('scheduleStatus');
         const lastSolved = document.getElementById('lastSolvedAt');
 
-        statusBadge.textContent = data.invalidated ? 'Invalidado' : 'Válido';
+        statusBadge.textContent = data.invalidated ? 'Inválido' : 'Válido';
         statusBadge.className = data.invalidated
-            ? 'badge bg-danger'
-            : 'badge bg-success';
+            ? 'badge bg-danger bg-gradient fs-5 px-2 py-1'
+            : 'badge bg-success bg-gradient fs-5 px-2 py-1';
 
         lastSolved.textContent =
             sessionStorage.getItem('lastSolvedAt') || 'Nunca';
@@ -78,6 +78,9 @@ function bindForm() {
         const tasks = Object.values(tasksCache);
 
         try {
+            // 👇 ACA MOSTRAMOS EL SPINNER
+            showSchedulerLoading();
+
             const response = await secureFetch('/api/schedule/solve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -94,7 +97,6 @@ function bindForm() {
 
             const result = await response.json();
 
-            // 👇 igual que antes en index
             sessionStorage.setItem(
                 'scheduleResults',
                 JSON.stringify(result)
@@ -105,15 +107,16 @@ function bindForm() {
                 new Date().toLocaleString()
             );
 
-            // 👉 volvemos a results
+            // ⛔ no hace falta ocultar spinner, redireccionás
             window.location.href = '/results';
 
         } catch (error) {
+            hideSchedulerLoading(); // 👈 SOLO si falla
             showAlert(error.message, 'danger');
+            console.error(error);
         }
     });
 }
-
 
 /* =====================================================
    PERSONAS
@@ -142,7 +145,7 @@ function bindSelectionButtons() {
                 .querySelectorAll('.person-checkbox')
                 .forEach(cb => cb.checked = false);
             updateSelectedPersons();
-        }); 
+        });
 }
 
 function updateSelectedPersons() {
@@ -257,14 +260,7 @@ function renderTasks(tasks) {
                     <tr>
                         <td>${t.name}</td>
                         <td>${formatDays(t.assignedDays)}</td>
-                        <td>
-                            ${(t.allowedCategories || [])
-            .map(c =>
-                `<span class="badge bg-warning text-dark me-1">
-                                        ${formatCategory(c)}
-                                    </span>`
-            ).join('')}
-                        </td>
+                        <td>${formatCategories(t.allowedCategories)}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -286,19 +282,36 @@ function formatCategory(cat) {
 }
 
 function formatDays(days = []) {
+    const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
     const labels = {
-        MONDAY: 'Lunes',
-        TUESDAY: 'Martes',
-        WEDNESDAY: 'Miércoles',
-        THURSDAY: 'Jueves',
-        FRIDAY: 'Viernes',
-        SATURDAY: 'Sábado',
-        SUNDAY: 'Domingo'
+        MONDAY: "Lunes",
+        TUESDAY: "Martes",
+        WEDNESDAY: "Miércoles",
+        THURSDAY: "Jueves",
+        FRIDAY: "Viernes",
+        SATURDAY: "Sábado",
+        SUNDAY: "Domingo"
     };
 
-    return days.map(d =>
-        `<span class="badge bg-danger me-1">${labels[d]}</span>`
-    ).join('');
+    return order
+        .filter(d => days.includes(d))
+        .map(d => `<span class="badge bg-danger bg-gradient me-1">${labels[d]}</span>`)
+        .join("");
+}
+
+function formatCategories(categories = []) {
+    const order = ["CATEGORY_1", "CATEGORY_2", "CATEGORY_3", "CATEGORY_4"];
+    const labels = {
+        CATEGORY_1: "Categoría 1",
+        CATEGORY_2: "Categoría 2",
+        CATEGORY_3: "Categoría 3",
+        CATEGORY_4: "Categoría 4"
+    };
+
+    return order
+        .filter(c => categories.includes(c))
+        .map(c => `<span class="badge bg-warning bg-gradient text-dark me-1">${labels[c]}</span>`)
+        .join("");
 }
 
 function showAlert(message, type) {
@@ -314,4 +327,19 @@ function showAlert(message, type) {
 
 function clearAlerts() {
     document.getElementById('alertContainer').innerHTML = '';
+}
+
+/* =====================================================
+   OVERLAY
+===================================================== */
+function showSchedulerLoading() {
+    document.getElementById('resolveBtn').disabled = true;
+    document.getElementById('resolveText').classList.add('d-none');
+    document.getElementById('resolveSpinner').classList.remove('d-none');
+}
+
+function hideSchedulerLoading() {
+    document.getElementById('resolveBtn').disabled = false;
+    document.getElementById('resolveSpinner').classList.add('d-none');
+    document.getElementById('resolveText').classList.remove('d-none');
 }

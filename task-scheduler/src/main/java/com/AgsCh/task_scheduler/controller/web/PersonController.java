@@ -12,7 +12,7 @@ public class PersonController {
     public String persons(Model model) {
         model.addAttribute("active", "persons");
         model.addAttribute("title", "Personas");
-        return "persons";
+        return "admin/persons";
     }
 
 }

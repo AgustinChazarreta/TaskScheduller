@@ -5,10 +5,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/tasks")
+@RequestMapping("/admin/tasks")
 public class TasksController {
     @GetMapping
     public String tasks() {
-        return "tasks";
+        return "admin/tasks";
     }
 }

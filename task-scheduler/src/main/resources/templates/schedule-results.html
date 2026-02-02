@@ -22,22 +22,24 @@
         Resultados del Schedule
     </h1>
 
-    <div class="card mb-3">
-        <div class="card-header" id="weekLabel"></div>
-    </div>
+    <div id="resultsContainer">
+        <div class="card mb-3">
+            <div class="card-header" id="weekLabel"></div>
+        </div>
 
-    <div id="assignmentsContainer" class="mb-3 d-flex flex-wrap justify-content-center"
-        style="gap: 3rem; padding-bottom: 2rem;">
-        <!-- cards -->
-    </div>
+        <div id="assignmentsContainer" class="mb-3 d-flex flex-wrap justify-content-center"
+            style="gap: 3rem; padding-bottom: 2rem;">
+            <!-- cards -->
+        </div>
 
-    <div class="text-center mt-3">
-        <button class="btn btn-primary me-2" onclick="prevWeek()">Semana anterior</button>
-        <button class="btn btn-primary" onclick="nextWeek()">Semana siguiente</button>
-    </div>
+        <div class="text-center mt-3">
+            <button class="btn btn-primary me-2" onclick="prevWeek()">Semana anterior</button>
+            <button class="btn btn-primary" onclick="nextWeek()">Semana siguiente</button>
+        </div>
 
-    <div class="mt-4 text-center">
-        <button class="btn btn-secondary" onclick="window.location.href='/'">Volver</button>
+        <div class="mt-4 text-center">
+            <button class="btn btn-secondary" onclick="window.location.href='/'">Volver</button>
+        </div>
     </div>
 
     <script>
@@ -48,11 +50,13 @@
         let inverseWeekMap = {};
         const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 
-        document.addEventListener('DOMContentLoaded', () => loadResults());
+        document.addEventListener('DOMContentLoaded', () => {
+            checkScheduleStatusAndLoad();
+        });
 
         function loadResults() {
             const result = JSON.parse(sessionStorage.getItem('scheduleResults'));
-            const container = document.getElementById('assignmentsContainer');
+            const container = document.getElementById('resultsContainer');
             const weekLabel = document.getElementById('weekLabel');
 
             if (!result || !result.assignments || result.assignments.length === 0) {
@@ -79,15 +83,49 @@
             renderCards();
         }
 
+        async function checkScheduleStatusAndLoad() {
+            const container = document.getElementById('resultsContainer');
+            const weekLabel = document.getElementById('weekLabel');
+
+            try {
+                const res = await fetch('/api/admin/schedule/status');
+                if (!res.ok) throw new Error();
+
+                const { invalidated } = await res.json();
+
+                if (invalidated) {
+                    weekLabel.innerHTML = '';
+                    container.innerHTML = `
+                        <div class="d-flex flex-column justify-content-center text-center text-muted" style="min-height: 50vh;">
+                            <i class="bi bi-exclamation-triangle fs-1 mb-3 d-block"></i>
+                            <h4>Resultados no disponibles</h4>
+                            <p>El schedule fue modificado y necesita resolverse nuevamente.</p>
+                        </div>`;
+                    return;
+                }
+
+                // si está válido → render normal
+                loadResults();
+
+            } catch (e) {
+                container.innerHTML = `
+                    <p class="text-danger text-center">
+                        No se pudo verificar el estado del schedule
+                    </p>`;
+            }
+        }
+
+
         function renderCards() {
             const container = document.getElementById('assignmentsContainer');
             const weekLabel = document.getElementById('weekLabel');
             const realWeek = inverseWeekMap[currentWeek];
 
             // Etiqueta de la semana
-            weekLabel.innerHTML = `<h3 class="card-title">
-        <span class="badge bg-primary fs-2">${"Semana " + currentWeek}</span>
-    </h3>`;
+            weekLabel.innerHTML =
+                `<h3 class="card-title">
+                <span class="badge bg-primary fs-2">${"Semana " + currentWeek}</span>
+            </h3>`;
 
             let html = "";
 
