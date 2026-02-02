@@ -15,89 +15,59 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity // permite usar @PreAuthorize
 public class SecurityConfig {
 
-    @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        var uds = new InMemoryUserDetailsManager();
+        @Bean
+        public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
+                var uds = new InMemoryUserDetailsManager();
 
-        var admin = User.withUsername("admin")
-                .password(passwordEncoder.encode("1234"))
-                .roles("ADMIN")
-                .build();
+                var admin = User.withUsername("admin")
+                                .password(passwordEncoder.encode("1234"))
+                                .roles("ADMIN")
+                                .build();
 
-        var user = User.withUsername("user")
-                .password(passwordEncoder.encode("1234"))
-                .roles("USER")
-                .build();
+                var user = User.withUsername("user")
+                                .password(passwordEncoder.encode("1234"))
+                                .roles("USER")
+                                .build();
 
-        uds.createUser(admin);
-        uds.createUser(user);
+                uds.createUser(admin);
+                uds.createUser(user);
 
-        return uds;
-    }
+                return uds;
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        // Para pruebas rápidas: delega noop con formato {noop} (no encriptado)
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
-/*
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable()) // ⬅️ CLAVE
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/login",
-                                "/css/**",
-                                "/js/**",
-                                "/images/**",
-                                "/h2-console/**")
-                        .permitAll()
-                        .anyRequest().authenticated())
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.sameOrigin()) // necesario para H2
-                )
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/admin/dashboard", true)
-                        .failureUrl("/login?error=true")
-                        .permitAll())
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/login?logout=true"));
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                // Para pruebas rápidas: delega noop con formato {noop} (no encriptado)
+                return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        }
 
-        return http.build();
-    }
-*/    
-@Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf 
-                        .ignoringRequestMatchers("/api/**")
-                        .ignoringRequestMatchers("/h2-console/**"))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/login",
-                                "/css/**",
-                                "/js/**",
-                                "/images/**",
-                                "/h2-console/**")
-                        .permitAll()
-                        .anyRequest().authenticated())
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.sameOrigin()))
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/admin/dashboard", true)
-                        .failureUrl("/login?error=true")
-                        .permitAll())
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/login?logout=true"));
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                .csrf(csrf -> csrf
+                                                .ignoringRequestMatchers("/api/**")
+                                                .ignoringRequestMatchers("/h2-console/**"))
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(
+                                                                "/login",
+                                                                "/css/**",
+                                                                "/js/**",
+                                                                "/images/**",
+                                                                "/h2-console/**")
+                                                .permitAll()
+                                                .anyRequest().authenticated())
+                                .headers(headers -> headers
+                                                .frameOptions(frame -> frame.sameOrigin()))
+                                .formLogin(form -> form
+                                                .loginPage("/login")
+                                                .loginProcessingUrl("/login")
+                                                .defaultSuccessUrl("/admin/dashboard", true)
+                                                .failureUrl("/login?error=true")
+                                                .permitAll())
+                                .logout(logout -> logout
+                                                .logoutSuccessUrl("/login?logout=true"));
 
-        return http.build();
-    }
-
-
+                return http.build();
+        }
 
 }
