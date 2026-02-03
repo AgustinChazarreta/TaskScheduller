@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.AgsCh.task_scheduler.model.Category;
-import com.AgsCh.task_scheduler.model.Task;
+import com.AgsCh.task_scheduler.model.Function;
 
 /**
  * Ensambla objetos Task a partir de los días normalizados y categorías de usuario.
@@ -19,9 +19,9 @@ public class TaskAssembler {
         // utility class
     }
 
-    public static List<Task> buildTasks(Map<String, Set<DayOfWeek>> parsed,
+    public static List<Function> buildTasks(Map<String, Set<DayOfWeek>> parsed,
                                         Map<String, Set<Category>> userCategories) {
-        List<Task> tasks = new ArrayList<>();
+        List<Function> tasks = new ArrayList<>();
 
         for (Map.Entry<String, Set<DayOfWeek>> entry : parsed.entrySet()) {
             String name = entry.getKey();
@@ -35,7 +35,7 @@ public class TaskAssembler {
             EnumSet<DayOfWeek> assignedDays = EnumSet.noneOf(DayOfWeek.class);
             assignedDays.addAll(days);
 
-            Task task = new Task(name, categories, assignedDays);
+            Function task = new Function(name, categories, assignedDays);
             tasks.add(task);
         }
 

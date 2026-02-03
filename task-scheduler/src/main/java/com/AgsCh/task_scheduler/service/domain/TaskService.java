@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.TaskRequestDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
-import com.AgsCh.task_scheduler.model.Task;
+import com.AgsCh.task_scheduler.model.Function;
 import com.AgsCh.task_scheduler.repository.TaskRepository;
 import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 import com.AgsCh.task_scheduler.util.normalizer.TaskRefactor;
@@ -28,8 +28,8 @@ public class TaskService {
     }
 
     // -------- CREATE --------
-    public Task create(TaskRequestDTO dto) {
-        Task task = new Task(
+    public Function create(TaskRequestDTO dto) {
+        Function task = new Function(
                 dto.getName(),
                 dto.getAllowedCategories(),
                 dto.getAssignedDays());
@@ -38,18 +38,18 @@ public class TaskService {
     }
     
     // -------- READ --------
-    public List<Task> findAll() {
+    public List<Function> findAll() {
         return repository.findAll();
     }
     
-    public Task findById(Long id) {
+    public Function findById(Long id) {
         return repository.findById(id)
         .orElseThrow(() -> new RuntimeException("Task not found"));
     }
     
     // -------- UPDATE --------
     public void update(Long id, TaskRequestDTO dto) {
-        Task task = findById(id);
+        Function task = findById(id);
         
         task.setName(dto.getName());
         task.setAllowedCategories(dto.getAllowedCategories());

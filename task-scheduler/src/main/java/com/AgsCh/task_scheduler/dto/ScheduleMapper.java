@@ -29,7 +29,7 @@ public final class ScheduleMapper {
             PersonRepository personRepository) {
 
         // 1️⃣ Traer Tasks y Persons existentes de la DB
-        List<Task> tasks = loadTasks(request.getTasks(), taskRepository);
+        List<Function> tasks = loadTasks(request.getTasks(), taskRepository);
         List<Person> persons = loadPersons(request.getPersons(), personRepository);
 
         // 2️⃣ Fechas
@@ -42,11 +42,11 @@ public final class ScheduleMapper {
         return new Schedule(persons, tasks, assignments);
     }
 
-    private static List<Task> loadTasks(List<TaskRequestDTO> dtos, TaskRepository repo) {
-        List<Task> tasks = new ArrayList<>();
+    private static List<Function> loadTasks(List<TaskRequestDTO> dtos, TaskRepository repo) {
+        List<Function> tasks = new ArrayList<>();
         for (TaskRequestDTO dto : dtos) {
             // Asume que cada TaskRequestDTO tiene un campo id que ya existe en la DB
-            Task task = repo.findById(dto.getId())
+            Function task = repo.findById(dto.getId())
                     .orElseThrow(() -> new BusinessException(
                             "Task no encontrada en DB: " + dto.getId()));
             tasks.add(task);
@@ -67,7 +67,7 @@ public final class ScheduleMapper {
     }
 
     private static List<TaskAssignment> createAssignments(
-            List<Task> tasks,
+            List<Function> tasks,
             LocalDate startDate,
             LocalDate endDate) {
 
@@ -77,7 +77,7 @@ public final class ScheduleMapper {
 
         List<TaskAssignment> assignments = new ArrayList<>();
 
-        for (Task task : tasks) {
+        for (Function task : tasks) {
             for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
                 if (task.getAssignedDays().contains(date.getDayOfWeek())) {
                     TaskAssignment ta = new TaskAssignment(task, date); // planningId generado automáticamente

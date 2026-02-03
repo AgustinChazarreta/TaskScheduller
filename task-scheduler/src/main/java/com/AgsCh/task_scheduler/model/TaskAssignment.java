@@ -15,7 +15,7 @@ public class TaskAssignment {
     private String planningId = UUID.randomUUID().toString();
 
     // Datos de dominio (ya persistidos)
-    private Task task;
+    private Function task;
     private LocalDate date;
 
     @PlanningVariable(valueRangeProviderRefs = { "personRange" })
@@ -23,7 +23,7 @@ public class TaskAssignment {
 
     public TaskAssignment() {}
 
-    public TaskAssignment(Task task, LocalDate date) {
+    public TaskAssignment(Function task, LocalDate date) {
         this.task = task;
         this.date = date;
     }
@@ -34,7 +34,7 @@ public class TaskAssignment {
         return planningId;
     }
 
-    public Task getTask() {
+    public Function getTask() {
         return task;
     }
 

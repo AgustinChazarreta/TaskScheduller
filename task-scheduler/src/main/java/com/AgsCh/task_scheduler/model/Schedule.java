@@ -20,7 +20,7 @@ public class Schedule {
 
     @ProblemFactCollectionProperty
     @ValueRangeProvider(id = "taskRange")
-    private List<Task> taskList;
+    private List<Function> taskList;
 
     @PlanningEntityCollectionProperty
     private List<TaskAssignment> taskAssignmentList;
@@ -37,7 +37,7 @@ public class Schedule {
         this.taskAssignmentList = new ArrayList<>();
     }
 
-    public Schedule(List<Person> personList, List<Task> taskList, List<TaskAssignment> taskAssignmentList) {
+    public Schedule(List<Person> personList, List<Function> taskList, List<TaskAssignment> taskAssignmentList) {
         this.personList = personList != null ? personList : new ArrayList<>();
         this.taskList = taskList != null ? taskList : new ArrayList<>();
         this.taskAssignmentList = taskAssignmentList != null ? taskAssignmentList : new ArrayList<>();
@@ -48,7 +48,7 @@ public class Schedule {
         return personList;
     }
 
-    public List<Task> getTaskList() {
+    public List<Function> getTaskList() {
         return taskList;
     }
 
