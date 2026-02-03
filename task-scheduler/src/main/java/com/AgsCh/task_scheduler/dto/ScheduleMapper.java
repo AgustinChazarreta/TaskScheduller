@@ -37,7 +37,7 @@ public final class ScheduleMapper {
         LocalDate end = request.getPeriod().getEndDate();
 
         // 3️⃣ Crear TaskAssignments con planningId
-        List<TaskAssignment> assignments = createAssignments(tasks, start, end);
+        List<FunctionAssignment> assignments = createAssignments(tasks, start, end);
 
         return new Schedule(persons, tasks, assignments);
     }
@@ -66,7 +66,7 @@ public final class ScheduleMapper {
         return persons;
     }
 
-    private static List<TaskAssignment> createAssignments(
+    private static List<FunctionAssignment> createAssignments(
             List<Function> tasks,
             LocalDate startDate,
             LocalDate endDate) {
@@ -75,12 +75,12 @@ public final class ScheduleMapper {
             throw new BusinessException("Start date is after end date");
         }
 
-        List<TaskAssignment> assignments = new ArrayList<>();
+        List<FunctionAssignment> assignments = new ArrayList<>();
 
         for (Function task : tasks) {
             for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
                 if (task.getAssignedDays().contains(date.getDayOfWeek())) {
-                    TaskAssignment ta = new TaskAssignment(task, date); // planningId generado automáticamente
+                    FunctionAssignment ta = new FunctionAssignment(task, date); // planningId generado automáticamente
                     ta.setPerson(null); // UNASSIGNED
                     assignments.add(ta);
                 }
@@ -99,7 +99,7 @@ public final class ScheduleMapper {
 
         List<TaskAssignmentResponseDTO> assignmentResponses = new ArrayList<>();
 
-        for (TaskAssignment assignment : solution.getTaskAssignmentList()) {
+        for (FunctionAssignment assignment : solution.getTaskAssignmentList()) {
 
             String personName = assignment.getPerson() != null
                     ? assignment.getPerson().getName()

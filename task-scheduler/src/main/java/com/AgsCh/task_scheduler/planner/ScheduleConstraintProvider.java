@@ -5,7 +5,7 @@ import org.optaplanner.core.api.score.stream.*;
 
 import java.time.LocalDate;
 
-import com.AgsCh.task_scheduler.model.TaskAssignment;
+import com.AgsCh.task_scheduler.model.FunctionAssignment;
 
 public class ScheduleConstraintProvider implements ConstraintProvider {
 
@@ -37,14 +37,14 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
          */
 
         private Constraint taskMustHavePerson(ConstraintFactory factory) {
-                return factory.forEach(TaskAssignment.class)
+                return factory.forEach(FunctionAssignment.class)
                                 .filter(ta -> ta.getPerson() == null)
                                 .penalize(HardSoftScore.ONE_HARD)
                                 .asConstraint("Task must have an assigned person");
         }
 
         private Constraint personMustMatchTaskCategory(ConstraintFactory factory) {
-                return factory.forEach(TaskAssignment.class)
+                return factory.forEach(FunctionAssignment.class)
                                 .filter(ta -> ta.getPerson() != null && ta.getTask() != null)
                                 .filter(ta -> !ta.getTask()
                                                 .getAllowedCategories()
@@ -54,7 +54,7 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
         }
 
         private Constraint personMustBeAvailable(ConstraintFactory factory) {
-                return factory.forEach(TaskAssignment.class)
+                return factory.forEach(FunctionAssignment.class)
                                 .filter(ta -> ta.getPerson() != null && ta.getDate() != null)
                                 .filter(ta -> !ta.getPerson()
                                                 .getAvailableDays()
@@ -64,7 +64,7 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
         }
 
         private Constraint taskMustBeScheduledOnAllowedDay(ConstraintFactory factory) {
-                return factory.forEach(TaskAssignment.class)
+                return factory.forEach(FunctionAssignment.class)
                                 .filter(ta -> ta.getTask() != null && ta.getDate() != null)
                                 .filter(ta -> !ta.getTask()
                                                 .getAssignedDays()
@@ -75,15 +75,15 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
 
         private Constraint noDoubleBooking(ConstraintFactory factory) {
                 return factory.forEachUniquePair(
-                                TaskAssignment.class,
-                                Joiners.equal(TaskAssignment::getPerson),
-                                Joiners.equal(TaskAssignment::getDate))
+                                FunctionAssignment.class,
+                                Joiners.equal(FunctionAssignment::getPerson),
+                                Joiners.equal(FunctionAssignment::getDate))
                                 .penalize(HardSoftScore.ONE_HARD)
                                 .asConstraint("Person cannot be assigned to multiple tasks on the same day");
         }
 
         private Constraint personCannotWorkOnBirthday(ConstraintFactory factory) {
-                return factory.forEach(TaskAssignment.class)
+                return factory.forEach(FunctionAssignment.class)
                                 .filter(ta -> ta.getPerson() != null && ta.getDate() != null)
                                 .filter(ta -> isBirthday(
                                                 ta.getPerson().getBirthDate(),
@@ -106,10 +106,10 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
          */
 
         private Constraint balanceWorkload(ConstraintFactory factory) {
-                return factory.forEach(TaskAssignment.class)
+                return factory.forEach(FunctionAssignment.class)
                                 .filter(ta -> ta.getPerson() != null)
                                 .groupBy(
-                                                TaskAssignment::getPerson,
+                                                FunctionAssignment::getPerson,
                                                 ConstraintCollectors.count())
                                 .filter((person, taskCount) -> taskCount > 3)
                                 .penalize(

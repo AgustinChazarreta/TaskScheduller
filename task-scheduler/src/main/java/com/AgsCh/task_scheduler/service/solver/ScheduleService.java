@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Schedule;
-import com.AgsCh.task_scheduler.model.TaskAssignment;
+import com.AgsCh.task_scheduler.model.FunctionAssignment;
 import com.AgsCh.task_scheduler.planner.ScheduleConstraintProvider;
 
 @Service
@@ -24,7 +24,7 @@ public class ScheduleService {
 
         SolverConfig solverConfig = new SolverConfig()
                 .withSolutionClass(Schedule.class)
-                .withEntityClasses(TaskAssignment.class)
+                .withEntityClasses(FunctionAssignment.class)
                 .withConstraintProviderClass(ScheduleConstraintProvider.class)
                 .withTerminationSpentLimit(Duration.ofSeconds(timeLimitSeconds));
 

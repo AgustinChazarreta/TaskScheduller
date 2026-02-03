@@ -23,7 +23,7 @@ public class Schedule {
     private List<Function> taskList;
 
     @PlanningEntityCollectionProperty
-    private List<TaskAssignment> taskAssignmentList;
+    private List<FunctionAssignment> taskAssignmentList;
 
     @PlanningScore
     private HardSoftScore score;
@@ -37,7 +37,7 @@ public class Schedule {
         this.taskAssignmentList = new ArrayList<>();
     }
 
-    public Schedule(List<Person> personList, List<Function> taskList, List<TaskAssignment> taskAssignmentList) {
+    public Schedule(List<Person> personList, List<Function> taskList, List<FunctionAssignment> taskAssignmentList) {
         this.personList = personList != null ? personList : new ArrayList<>();
         this.taskList = taskList != null ? taskList : new ArrayList<>();
         this.taskAssignmentList = taskAssignmentList != null ? taskAssignmentList : new ArrayList<>();
@@ -52,7 +52,7 @@ public class Schedule {
         return taskList;
     }
 
-    public List<TaskAssignment> getTaskAssignmentList() {
+    public List<FunctionAssignment> getTaskAssignmentList() {
         return taskAssignmentList;
     }
 
