@@ -3,6 +3,7 @@ package com.AgsCh.task_scheduler.model;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -18,7 +19,7 @@ public class Person {
 
     @Column(nullable = false)
     private String fullName; // Nombre completo
-    
+
     @Column(nullable = false)
     private String nickName; // Nombre de guerra
 
@@ -36,23 +37,26 @@ public class Person {
 
     private LocalDate exitDate;
 
-    // ---- Relaciones ----
+    // Patrón semanal (normalmente)
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "person_working_days", joinColumns = @JoinColumn(name = "person_id"))
+    @Column(name = "day_of_week", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Set<DayOfWeek> workingDays = EnumSet.noneOf(DayOfWeek.class);
 
+    // ---- Relaciones ----
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PersonUnavailability> unavailabilities = new ArrayList<>();
+    
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PersonFunction> personFunctions = new ArrayList<>();
 
     @OneToMany(mappedBy = "person")
     private List<FunctionAssignment> functionAssignments = new ArrayList<>();
 
-/*
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "person_available_days", joinColumns = @JoinColumn(name = "person_id"))
-    @Column(name = "available_day")
-    @Enumerated(EnumType.STRING)
-    private Set<DayOfWeek> availableDays;
-*/
     // --------- Constructores ---------
-    public Person() {}
+    public Person() {
+    }
 
     public Person(String fullName, LocalDate birthDate) {
         this.fullName = fullName;
@@ -69,7 +73,7 @@ public class Person {
         return fullName;
     }
 
-    public String getDisplayName() {
+    public String getNickName() {
         return nickName;
     }
 
@@ -95,6 +99,14 @@ public class Person {
 
     public LocalDate getExitDate() {
         return exitDate;
+    }
+
+    public Set<DayOfWeek> getWorkingDays() {
+        return workingDays;
+    }
+
+    public List<PersonUnavailability> getUnavailabilities() {
+        return unavailabilities;
     }
 
     public List<PersonFunction> getPersonFunctions() {
@@ -139,7 +151,27 @@ public class Person {
         this.exitDate = exitDate;
     }
 
+    public void setWorkingDays(Set<DayOfWeek> workingDays) {
+        this.workingDays = workingDays != null
+                ? EnumSet.copyOf(workingDays)
+                : EnumSet.noneOf(DayOfWeek.class);
+    }
+
     // ---- Helpers de dominio (opcional pero elegante) ----
+
+    public boolean worksOn(DayOfWeek dayOfWeek) {
+        return workingDays.contains(dayOfWeek);
+    }
+
+    public void addUnavailability(PersonUnavailability u) {
+        unavailabilities.add(u);
+        u.setPerson(this);
+    }
+
+    public void removeUnavailability(PersonUnavailability u) {
+        unavailabilities.remove(u);
+        u.setPerson(null);
+    }
 
     public void addPersonFunction(PersonFunction pf) {
         personFunctions.add(pf);
@@ -150,7 +182,7 @@ public class Person {
         personFunctions.remove(pf);
         pf.setPerson(null);
     }
-
+    
     @Override
     public String toString() {
         return nickName;

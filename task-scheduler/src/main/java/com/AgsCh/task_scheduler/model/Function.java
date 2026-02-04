@@ -62,6 +62,10 @@ public class Function {
         return sequential;
     }
 
+    public Set<DayOfWeek> getAssignedDays(){
+        return assignedDays;
+    }
+    
     public List<PersonFunction> getPersonFunctions() {
         return personFunctions;
     }
@@ -69,13 +73,17 @@ public class Function {
     public List<FunctionAssignment> getFunctionAssignments() {
         return functionAssignments;
     }
-
+    
     public void setName(String name) {
         this.name = name;
     }
-
+    
     public void setSequential(boolean sequential) {
         this.sequential = sequential;
+    }
+    
+    public void setAssignedDays(Set<DayOfWeek> assignedDays){
+        this.assignedDays = assignedDays;
     }
 
     @Override
