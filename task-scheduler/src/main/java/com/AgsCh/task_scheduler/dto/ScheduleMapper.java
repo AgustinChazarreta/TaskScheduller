@@ -99,15 +99,15 @@ public final class ScheduleMapper {
 
         List<TaskAssignmentResponseDTO> assignmentResponses = new ArrayList<>();
 
-        for (FunctionAssignment assignment : solution.getTaskAssignmentList()) {
+        for (FunctionAssignment assignment : solution.getFunctionAssignmentList()) {
 
             String personName = assignment.getPerson() != null
-                    ? assignment.getPerson().getName()
+                    ? assignment.getPerson().getFullName()
                     : "UNASSIGNED";
 
             assignmentResponses.add(new TaskAssignmentResponseDTO(
                     assignment.getDate(),
-                    assignment.getTask().getName(),
+                    assignment.getFunction().getName(),
                     personName));
         }
 
