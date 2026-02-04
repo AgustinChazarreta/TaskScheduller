@@ -35,9 +35,7 @@ public class ScheduleService {
      * Resuelve un Schedule usando OptaPlanner
      */
     public Schedule solve(Schedule problem) {
-
         validateProblem(problem);
-
         Solver<Schedule> solver = solverFactory.buildSolver();
         return solver.solve(problem);
     }
@@ -55,20 +53,20 @@ public class ScheduleService {
             throw new BusinessException("Persons list is empty");
         }
 
-        if (problem.getTaskList() == null || problem.getTaskList().isEmpty()) {
-            throw new BusinessException("Tasks list is empty");
+        if (problem.getFunctionList() == null || problem.getFunctionList().isEmpty()) {
+            throw new BusinessException("Functions list is empty");
         }
 
-        if (problem.getTaskAssignmentList() == null || problem.getTaskAssignmentList().isEmpty()) {
-            throw new BusinessException("Task assignments list is empty");
+        if (problem.getFunctionAssignmentList() == null || problem.getFunctionAssignmentList().isEmpty()) {
+            throw new BusinessException("Function assignments list is empty");
         }
 
-        problem.getTaskAssignmentList().forEach(a -> {
-            if (Objects.isNull(a.getTask())) {
-                throw new BusinessException("TaskAssignment sin Task asignada");
+        problem.getFunctionAssignmentList().forEach(a -> {
+            if (Objects.isNull(a.getFunction())) {
+                throw new BusinessException("FunctionAssignment sin Function asignada");
             }
             if (Objects.isNull(a.getDate())) {
-                throw new BusinessException("TaskAssignment sin fecha asignada");
+                throw new BusinessException("FunctionAssignment sin fecha asignada");
             }
         });
     }

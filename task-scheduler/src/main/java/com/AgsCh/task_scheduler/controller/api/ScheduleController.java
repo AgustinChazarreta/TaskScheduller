@@ -22,7 +22,8 @@ public class ScheduleController {
         private final TaskRepository taskRepository;
         private final PersonRepository personRepository;
 
-        public ScheduleController(AdminScheduleService scheduleService, TaskRepository taskRepository, PersonRepository personRepository) {
+        public ScheduleController(AdminScheduleService scheduleService, TaskRepository taskRepository,
+                        PersonRepository personRepository) {
                 this.scheduleService = scheduleService;
                 this.taskRepository = taskRepository;
                 this.personRepository = personRepository;
@@ -46,9 +47,7 @@ public class ScheduleController {
                         return ScheduleMapper.toResponse(solvedSchedule);
 
                 } catch (Exception e) {
-                        throw new BusinessException(
-                                        "Error al resolver el schedule con los datos proporcionados",
-                                        e);
+                        throw new BusinessException("Error al resolver el schedule con los datos proporcionados", e);
                 }
         }
 

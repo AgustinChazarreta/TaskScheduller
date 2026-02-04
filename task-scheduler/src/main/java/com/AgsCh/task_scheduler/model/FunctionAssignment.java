@@ -14,46 +14,73 @@ import jakarta.persistence.*;
 @PlanningEntity
 public class FunctionAssignment {
 
+    // =========================
+    // PERSISTENCE
+    // =========================
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ID SOLO para OptaPlanner (no DB)
+    /**
+     * ID exclusivo para OptaPlanner
+     * No representa identidad de dominio
+     */
     @PlanningId
     @Column(nullable = false, updatable = false)
     private String planningId = UUID.randomUUID().toString();
 
-    // ---- Qué función se está cubriendo ----
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "function_id")
+    // =========================
+    // DOMAIN
+    // =========================
+
+    /**
+     * Función que debe cubrirse
+     */
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "function_id", nullable = false)
     private Function function;
 
-    // ---- Quién la realiza (OptaPlanner decide) ----
-    @ManyToOne
+    /**
+     * Persona asignada (decisión del solver)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "person_id")
     @PlanningVariable(valueRangeProviderRefs = "personRange")
     private Person person;
 
-    // ---- Cuándo ocurre ----
+    /**
+     * Día en el que ocurre la función
+     */
     @Column(nullable = false)
     private LocalDate date;
 
-    // ---- A qué planificación pertenece ----
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "schedule_id")
-    private Schedule schedule;
+    /**
+     * Corrida del solver a la que pertenece
+     */
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_run_id", nullable = false)
+    private ScheduleRun scheduleRun;
 
-    // ---- Constructores ----
+    // =========================
+    // CONSTRUCTORS
+    // =========================
 
-    public FunctionAssignment() {
+    protected FunctionAssignment() {
+        // requerido por JPA
     }
 
+    /**
+     * Constructor usado por el solver (en memoria)
+     */
     public FunctionAssignment(Function function, LocalDate date) {
         this.function = function;
         this.date = date;
     }
 
-    // ---- Getters ----
+    // =========================
+    // GETTERS
+    // =========================
 
     public Long getId() {
         return id;
@@ -71,27 +98,25 @@ public class FunctionAssignment {
         return date;
     }
 
-    public Schedule getSchedule() {
-        return schedule;
+    public ScheduleRun getScheduleRun() {
+        return scheduleRun;
     }
 
-    // ---- Setters ----
-
-    public void setFunction(Function function) {
-        this.function = function;
-    }
+    // =========================
+    // SETTERS
+    // =========================
 
     public void setPerson(Person person) {
         this.person = person;
     }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
+    public void setScheduleRun(ScheduleRun scheduleRun) {
+        this.scheduleRun = scheduleRun;
     }
 
-    public void setSchedule(Schedule schedule) {
-        this.schedule = schedule;
-    }
+    // =========================
+    // DOMAIN HELPERS
+    // =========================
 
     public boolean isAssigned() {
         return person != null;
@@ -99,6 +124,7 @@ public class FunctionAssignment {
 
     @Override
     public String toString() {
-        return function.getName() + " - " + date;
+        return function.getName() + " - " + date +
+                (person != null ? " (" + person.getFullName() + ")" : " (UNASSIGNED)");
     }
 }

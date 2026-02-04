@@ -1,5 +1,6 @@
 package com.AgsCh.task_scheduler.model;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,9 @@ public class Schedule {
     @PlanningEntityCollectionProperty
     private List<FunctionAssignment> functionAssignmentList;
 
+    private LocalDate startDate;
+    private LocalDate endDate;
+
     @PlanningScore
     private HardSoftScore score;
 
@@ -36,10 +40,12 @@ public class Schedule {
         this.functionAssignmentList = new ArrayList<>();
     }
 
-    public Schedule(List<Person> personList, List<Function> functionList, List<FunctionAssignment> functionAssignmentList) {
+    public Schedule(List<Person> personList, List<Function> functionList, List<FunctionAssignment> functionAssignmentList, LocalDate startDate, LocalDate endDate) {
         this.personList = personList != null ? personList : new ArrayList<>();
         this.functionList = functionList != null ? functionList : new ArrayList<>();
         this.functionAssignmentList = functionAssignmentList != null ? functionAssignmentList : new ArrayList<>();
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 
     // --------- Getters y setters ---------
@@ -53,6 +59,14 @@ public class Schedule {
 
     public List<FunctionAssignment> getFunctionAssignmentList() {
         return functionAssignmentList;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+    
+    public LocalDate getEndDate() {
+        return endDate;
     }
 
     public HardSoftScore getScore() {

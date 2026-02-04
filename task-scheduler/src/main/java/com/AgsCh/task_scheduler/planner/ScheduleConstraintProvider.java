@@ -18,6 +18,7 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 // =========================
                                 functionMustHavePerson(factory),
                                 personMustBeAbleToPerformFunction(factory),
+                                personMustWorkThatDay(factory),
                                 personMustBeAvailable(factory),
                                 functionMustBeScheduledOnAllowedDay(factory),
                                 noDoubleBooking(factory),
@@ -54,14 +55,23 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 .asConstraint("Person must be able to perform function");
         }
 
+        private Constraint personMustWorkThatDay(ConstraintFactory factory) {
+                return factory.forEach(FunctionAssignment.class)
+                                .filter(fa -> fa.getPerson() != null && fa.getDate() != null)
+                                .filter(fa -> !fa.getPerson()
+                                                .getWorkingDays()
+                                                .contains(fa.getDate().getDayOfWeek()))
+                                .penalize(HardSoftScore.ONE_HARD)
+                                .asConstraint("Person must work on that day of week");
+        }
+
         private Constraint personMustBeAvailable(ConstraintFactory factory) {
                 return factory.forEach(FunctionAssignment.class)
                                 .filter(fa -> fa.getPerson() != null && fa.getDate() != null)
                                 .filter(fa -> fa.getPerson()
                                                 .getUnavailabilities()
                                                 .stream()
-                                                .anyMatch(u -> !fa.getDate().isBefore(u.getStartDate()) &&
-                                                                !fa.getDate().isAfter(u.getEndDate())))
+                                                .anyMatch(u -> u.includes(fa.getDate())))
                                 .penalize(HardSoftScore.ONE_HARD)
                                 .asConstraint("Person must be available (no unavailability)");
         }

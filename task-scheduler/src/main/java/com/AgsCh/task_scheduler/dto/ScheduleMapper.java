@@ -39,7 +39,7 @@ public final class ScheduleMapper {
         // 3️⃣ Crear TaskAssignments con planningId
         List<FunctionAssignment> assignments = createAssignments(tasks, start, end);
 
-        return new Schedule(persons, tasks, assignments);
+        return new Schedule(persons, tasks, assignments, start, end);
     }
 
     private static List<Function> loadTasks(List<TaskRequestDTO> dtos, TaskRepository repo) {
