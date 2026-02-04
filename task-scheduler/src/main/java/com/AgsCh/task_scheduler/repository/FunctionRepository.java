@@ -3,5 +3,5 @@ package com.AgsCh.task_scheduler.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.AgsCh.task_scheduler.model.Function;
 
-public interface TaskRepository extends JpaRepository<Function, Long> {
+public interface FunctionRepository extends JpaRepository<Function, Long> {
 }

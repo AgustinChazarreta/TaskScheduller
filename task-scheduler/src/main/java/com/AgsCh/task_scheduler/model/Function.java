@@ -44,9 +44,10 @@ public class Function {
     public Function() {
     }
 
-    public Function(String name, boolean sequential) {
+    public Function(String name, boolean sequential, Set<DayOfWeek> assignedDays) {
         this.name = name;
         this.sequential = sequential;
+        this.assignedDays = assignedDays;
     }
 
     // --------- Getters y setters ---------

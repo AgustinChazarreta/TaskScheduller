@@ -9,7 +9,7 @@ import com.AgsCh.task_scheduler.dto.response.*;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.*;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
-import com.AgsCh.task_scheduler.repository.TaskRepository;
+import com.AgsCh.task_scheduler.repository.FunctionRepository;
 
 public final class ScheduleMapper {
 
@@ -25,11 +25,11 @@ public final class ScheduleMapper {
 
     public static Schedule toModel(
             ScheduleRequestDTO request,
-            TaskRepository taskRepository,
+            FunctionRepository taskRepository,
             PersonRepository personRepository) {
 
-        // 1️⃣ Traer Tasks y Persons existentes de la DB
-        List<Function> tasks = loadTasks(request.getTasks(), taskRepository);
+        // 1️⃣ Traer Functions y Persons existentes de la DB
+        List<Function> functions = loadTasks(request.getFunctions(), taskRepository);
         List<Person> persons = loadPersons(request.getPersons(), personRepository);
 
         // 2️⃣ Fechas
@@ -37,18 +37,18 @@ public final class ScheduleMapper {
         LocalDate end = request.getPeriod().getEndDate();
 
         // 3️⃣ Crear TaskAssignments con planningId
-        List<FunctionAssignment> assignments = createAssignments(tasks, start, end);
+        List<FunctionAssignment> assignments = createAssignments(functions, start, end);
 
-        return new Schedule(persons, tasks, assignments, start, end);
+        return new Schedule(persons, functions, assignments, start, end);
     }
 
-    private static List<Function> loadTasks(List<TaskRequestDTO> dtos, TaskRepository repo) {
+    private static List<Function> loadTasks(List<FunctionRequestDTO> dtos, FunctionRepository repo) {
         List<Function> tasks = new ArrayList<>();
-        for (TaskRequestDTO dto : dtos) {
-            // Asume que cada TaskRequestDTO tiene un campo id que ya existe en la DB
+        for (FunctionRequestDTO dto : dtos) {
+            // Asume que cada FunctionRequestDTO tiene un campo id que ya existe en la DB
             Function task = repo.findById(dto.getId())
                     .orElseThrow(() -> new BusinessException(
-                            "Task no encontrada en DB: " + dto.getId()));
+                            "Function no encontrada en DB: " + dto.getId()));
             tasks.add(task);
         }
         return tasks;
@@ -97,7 +97,7 @@ public final class ScheduleMapper {
 
     public static ScheduleResponseDTO toResponse(Schedule solution) {
 
-        List<TaskAssignmentResponseDTO> assignmentResponses = new ArrayList<>();
+        List<FunctionAssignmentResponseDTO> assignmentResponses = new ArrayList<>();
 
         for (FunctionAssignment assignment : solution.getFunctionAssignmentList()) {
 
@@ -105,7 +105,7 @@ public final class ScheduleMapper {
                     ? assignment.getPerson().getFullName()
                     : "UNASSIGNED";
 
-            assignmentResponses.add(new TaskAssignmentResponseDTO(
+            assignmentResponses.add(new FunctionAssignmentResponseDTO(
                     assignment.getDate(),
                     assignment.getFunction().getName(),
                     personName));

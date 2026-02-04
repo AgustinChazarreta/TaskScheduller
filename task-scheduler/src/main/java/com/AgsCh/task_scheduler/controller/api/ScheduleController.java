@@ -9,7 +9,7 @@ import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Schedule;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
-import com.AgsCh.task_scheduler.repository.TaskRepository;
+import com.AgsCh.task_scheduler.repository.FunctionRepository;
 import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 
 import jakarta.validation.Valid;
@@ -19,10 +19,10 @@ import jakarta.validation.Valid;
 public class ScheduleController {
 
         private final AdminScheduleService scheduleService;
-        private final TaskRepository taskRepository;
+        private final FunctionRepository taskRepository;
         private final PersonRepository personRepository;
 
-        public ScheduleController(AdminScheduleService scheduleService, TaskRepository taskRepository,
+        public ScheduleController(AdminScheduleService scheduleService, FunctionRepository taskRepository,
                         PersonRepository personRepository) {
                 this.scheduleService = scheduleService;
                 this.taskRepository = taskRepository;

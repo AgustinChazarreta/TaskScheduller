@@ -10,44 +10,43 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.AgsCh.task_scheduler.dto.request.TaskRequestDTO;
-import com.AgsCh.task_scheduler.dto.response.TaskResponseDTO;
-import com.AgsCh.task_scheduler.service.domain.TaskService;
+import com.AgsCh.task_scheduler.dto.request.FunctionRequestDTO;
+import com.AgsCh.task_scheduler.dto.response.FunctionResponseDTO;
+import com.AgsCh.task_scheduler.service.domain.FunctionService;
 
 @RestController
-@RequestMapping("/api/tasks")
-public class TaskApiController {
+@RequestMapping("/api/functions")
+public class FunctionApiController {
 
-    private final TaskService service;
+    private final FunctionService service;
 
-    public TaskApiController(TaskService service) {
+    public FunctionApiController(FunctionService service) {
         this.service = service;
     }
 
     // -------- CREATE --------
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public void createTasks(@RequestBody List<TaskRequestDTO> tasks) {
-        service.createTasks(tasks);
+    public void createFunctions(@RequestBody List<FunctionRequestDTO> functions) {
+        service.createFunctions(functions);
     }
 
     // -------- READ --------
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
-    public List<TaskResponseDTO> list() {
+    public List<FunctionResponseDTO> list() {
         return service.findAll().stream()
-                .map(t -> new TaskResponseDTO(
-                        t.getId(),
-                        t.getName(),
-                        t.getAllowedCategories(),
-                        t.getAssignedDays()))
+                .map(f -> new FunctionResponseDTO(
+                        f.getId(),
+                        f.getName(),
+                        f.getAssignedDays()))
                 .collect(Collectors.toList());
     }
 
     // -------- UPDATE --------
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public void update(@PathVariable Long id, @RequestBody TaskRequestDTO dto) {
+    public void update(@PathVariable Long id, @RequestBody FunctionRequestDTO dto) {
         service.update(id, dto);
     }
 

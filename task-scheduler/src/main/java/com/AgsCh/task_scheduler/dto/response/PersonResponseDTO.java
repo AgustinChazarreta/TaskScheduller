@@ -4,41 +4,50 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Set;
 
-import com.AgsCh.task_scheduler.model.Category;
-
 public class PersonResponseDTO {
 
     private Long id;
-    private String name;
-    private Category category;
+    private String fullName;
+    private String nickName;
     private LocalDate birthDate;
-    private Set<DayOfWeek> availableDays;
+    private boolean active;
+    private Set<DayOfWeek> workingDays;
 
-    public PersonResponseDTO(Long id, String name, Category category, LocalDate birthDate, Set<DayOfWeek> availableDays) {
+    public PersonResponseDTO(
+            Long id,
+            String fullName,
+            LocalDate birthDate,
+            boolean active,
+            Set<DayOfWeek> workingDays) {
+
         this.id = id;
-        this.name = name;
-        this.category = category;
+        this.fullName = fullName;
         this.birthDate = birthDate;
-        this.availableDays = availableDays;
+        this.active = active;
+        this.workingDays = workingDays;
     }
 
-    public Long getId(){
+    public Long getId() {
         return id;
     }
 
-    public String getName() {
-        return name;
+    public String getFullName() {
+        return fullName;
     }
 
-    public Category getCategory() {
-        return category;
+    public String getNickName() {
+        return nickName;
     }
 
-    public LocalDate getBirthDate(){
+    public LocalDate getBirthDate() {
         return birthDate;
     }
+    
+    public boolean isActive() {
+        return active;
+    }
 
-    public Set<DayOfWeek> getAvailableDays() {
-        return availableDays;
+    public Set<DayOfWeek> getWorkingDays() {
+        return workingDays;
     }
 }

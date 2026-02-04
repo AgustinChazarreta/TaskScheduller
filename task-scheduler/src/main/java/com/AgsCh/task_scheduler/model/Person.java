@@ -58,9 +58,10 @@ public class Person {
     public Person() {
     }
 
-    public Person(String fullName, LocalDate birthDate) {
+    public Person(String fullName, LocalDate birthDate, Set<DayOfWeek> workingDays) {
         this.fullName = fullName;
         this.birthDate = birthDate;
+        this.workingDays = workingDays;
     }
 
     // ---- Getters ----

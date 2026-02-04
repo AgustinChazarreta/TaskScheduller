@@ -6,7 +6,7 @@ import com.AgsCh.task_scheduler.dto.ScheduleMapper;
 import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
 import com.AgsCh.task_scheduler.model.Schedule;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
-import com.AgsCh.task_scheduler.repository.TaskRepository;
+import com.AgsCh.task_scheduler.repository.FunctionRepository;
 import com.AgsCh.task_scheduler.service.solver.ScheduleService;
 
 @Service
@@ -14,13 +14,13 @@ public class AdminService {
 
     private final AdminScheduleService adminScheduleService;
     private final ScheduleService solverService;
-    private final TaskRepository taskRepository;
+    private final FunctionRepository taskRepository;
     private final PersonRepository personRepository;
 
     public AdminService(
             AdminScheduleService adminScheduleService,
             ScheduleService solverService,
-            TaskRepository taskRepository,
+            FunctionRepository taskRepository,
             PersonRepository personRepository) {
 
         this.adminScheduleService = adminScheduleService;

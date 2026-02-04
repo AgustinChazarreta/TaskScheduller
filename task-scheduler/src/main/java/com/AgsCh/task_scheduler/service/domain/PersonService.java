@@ -23,10 +23,9 @@ public class PersonService {
     // CREATE
     public Person create(PersonRequestDTO dto) {
         Person person = new Person(
-                dto.getName(),
-                dto.getCategory(),
+                dto.getFullName(),
                 dto.getBirthDate(),
-                dto.getAvailableDays());
+                dto.getWorkingDays());
         scheduleService.invalidate();
         return repository.save(person);
     }
@@ -45,10 +44,15 @@ public class PersonService {
     public void update(Long id, PersonRequestDTO dto) {
         Person person = findById(id);
 
-        person.setName(dto.getName());
-        person.setCategory(dto.getCategory());
+        person.setFullName(dto.getFullName());
+        person.setNickName(dto.getNickName());
         person.setBirthDate(dto.getBirthDate());
-        person.setAvailableDays(dto.getAvailableDays());
+        person.setWorkingDays(dto.getWorkingDays());
+        person.setEmail(dto.getEmail());
+        person.setEmailNotificationsEnabled(dto.isEmailNotificationsEnabled());
+        person.setActive(dto.isActive());
+        person.setEntryDate(dto.getEntryDate());
+        person.setExitDate(dto.getExitDate());
 
         scheduleService.invalidate();
         repository.save(person);

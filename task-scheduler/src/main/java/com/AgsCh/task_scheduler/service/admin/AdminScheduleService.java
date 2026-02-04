@@ -103,6 +103,10 @@ public class AdminScheduleService {
         return invalidated;
     }
 
+    public void invalidate() {
+        this.invalidated = true;
+    }
+
     public LocalDateTime getLastSolvedAt() {
         return lastSolvedAt;
     }

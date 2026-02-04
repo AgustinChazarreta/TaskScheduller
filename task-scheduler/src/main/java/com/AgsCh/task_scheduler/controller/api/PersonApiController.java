@@ -34,10 +34,10 @@ public class PersonApiController {
         return service.findAll().stream()
                 .map(p -> new PersonResponseDTO(
                         p.getId(),
-                        p.getName(),
-                        p.getCategory(),
+                        p.getFullName(),
                         p.getBirthDate(),
-                        p.getAvailableDays()))
+                        p.isActive(),
+                        p.getWorkingDays()))
                 .collect(Collectors.toList());
     }
 

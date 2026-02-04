@@ -8,33 +8,33 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.AgsCh.task_scheduler.dto.request.TaskRequestDTO;
+import com.AgsCh.task_scheduler.dto.request.FunctionRequestDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Function;
-import com.AgsCh.task_scheduler.repository.TaskRepository;
+import com.AgsCh.task_scheduler.repository.FunctionRepository;
 import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 import com.AgsCh.task_scheduler.util.normalizer.TaskRefactor;
 import com.AgsCh.task_scheduler.util.word.WordParser;
 
 @Service
-public class TaskService {
+public class FunctionService {
 
-    private final TaskRepository repository;
+    private final FunctionRepository repository;
     private final AdminScheduleService scheduleService;
 
-    public TaskService(TaskRepository repository, AdminScheduleService scheduleService) {
+    public FunctionService(FunctionRepository repository, AdminScheduleService scheduleService) {
         this.repository = repository;
         this.scheduleService = scheduleService;
     }
 
     // -------- CREATE --------
-    public Function create(TaskRequestDTO dto) {
-        Function task = new Function(
+    public Function create(FunctionRequestDTO dto) {
+        Function function = new Function(
                 dto.getName(),
-                dto.getAllowedCategories(),
+                dto.isSequential(),
                 dto.getAssignedDays());
         scheduleService.invalidate();
-        return repository.save(task);
+        return repository.save(function);
     }
     
     // -------- READ --------
@@ -44,19 +44,19 @@ public class TaskService {
     
     public Function findById(Long id) {
         return repository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Task not found"));
+        .orElseThrow(() -> new RuntimeException("Function not found"));
     }
     
     // -------- UPDATE --------
-    public void update(Long id, TaskRequestDTO dto) {
-        Function task = findById(id);
+    public void update(Long id, FunctionRequestDTO dto) {
+        Function function = findById(id);
         
-        task.setName(dto.getName());
-        task.setAllowedCategories(dto.getAllowedCategories());
-        task.setAssignedDays(dto.getAssignedDays());
+        function.setName(dto.getName());
+        function.setSequential(dto.isSequential());
+        function.setAssignedDays(dto.getAssignedDays());
         
         scheduleService.invalidate();
-        repository.save(task);
+        repository.save(function);
     }
     
     // -------- DELETE --------
@@ -76,8 +76,8 @@ public class TaskService {
         return TaskRefactor.refactorDays(raw);
     }
 
-    // -------- CREATE TASKS--------
-    public void createTasks(List<TaskRequestDTO> tasks) {
+    // -------- CREATE FUNCTIONS--------
+    public void createFunctions(List<FunctionRequestDTO> tasks) {
         tasks.forEach(this::create);
     }
 }

@@ -5,14 +5,14 @@ import java.time.LocalDate;
 import java.time.temporal.WeekFields;
 import java.util.Locale;
 
-public class TaskAssignmentResponseDTO {
+public class FunctionAssignmentResponseDTO {
 
     private int week;
     private DayOfWeek day;
     private String taskName;
     private String personName;
 
-    public TaskAssignmentResponseDTO(
+    public FunctionAssignmentResponseDTO(
             LocalDate date,
             String taskName,
             String personName) {

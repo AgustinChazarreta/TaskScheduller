@@ -18,7 +18,7 @@ public class ScheduleRequestDTO {
 
     @Valid
     @NotEmpty
-    private List<TaskRequestDTO> tasks;
+    private List<FunctionRequestDTO> functions;
 
     // getters & setters
 
@@ -38,12 +38,12 @@ public class ScheduleRequestDTO {
         this.persons = persons;
     }
 
-    public List<TaskRequestDTO> getTasks() {
-        return tasks;
+    public List<FunctionRequestDTO> getFunctions() {
+        return functions;
     }
 
-    public void setTasks(List<TaskRequestDTO> tasks) {
-        this.tasks = tasks;
+    public void setFunctions(List<FunctionRequestDTO> functions) {
+        this.functions = functions;
     }
 
     @Override
@@ -65,11 +65,11 @@ public class ScheduleRequestDTO {
         }
         sb.append("  ],\n");
 
-        // Tasks
-        sb.append("  tasks: [\n");
-        if (tasks != null) {
-            for (TaskRequestDTO t : tasks) {
-                sb.append("    ").append(t != null ? t.toString() : "null").append(",\n");
+        // Functions
+        sb.append("  functions: [\n");
+        if (functions != null) {
+            for (FunctionRequestDTO f : functions) {
+                sb.append("    ").append(f != null ? f.toString() : "null").append(",\n");
             }
         } else {
             sb.append("    null\n");

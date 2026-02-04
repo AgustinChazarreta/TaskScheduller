@@ -5,19 +5,19 @@ import java.util.List;
 public class ScheduleResponseDTO {
 
     private List<PersonResponseDTO> persons;
-    private List<TaskResponseDTO> tasks;
-    private List<TaskAssignmentResponseDTO> assignments;
+    private List<FunctionResponseDTO> tasks;
+    private List<FunctionAssignmentResponseDTO> assignments;
     private String score;
 
-    public ScheduleResponseDTO(List<TaskAssignmentResponseDTO> assignments,
+    public ScheduleResponseDTO(List<FunctionAssignmentResponseDTO> assignments,
             String score) {
         this.assignments = assignments;
         this.score = score;
     }
 
     public ScheduleResponseDTO(List<PersonResponseDTO> persons,
-            List<TaskResponseDTO> tasks,
-            List<TaskAssignmentResponseDTO> assignments,
+            List<FunctionResponseDTO> tasks,
+            List<FunctionAssignmentResponseDTO> assignments,
             String score) {
         this.persons = persons;
         this.tasks = tasks;
@@ -26,8 +26,8 @@ public class ScheduleResponseDTO {
     }
 
     public List<PersonResponseDTO> getPersons() { return persons; }
-    public List<TaskResponseDTO> getTasks() { return tasks; }
-    public List<TaskAssignmentResponseDTO> getAssignments() { return assignments; }
+    public List<FunctionResponseDTO> getTasks() { return tasks; }
+    public List<FunctionAssignmentResponseDTO> getAssignments() { return assignments; }
     public String getScore() { return score; }
     
 }
