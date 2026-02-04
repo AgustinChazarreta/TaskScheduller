@@ -20,6 +20,7 @@ public class FunctionAssignment {
 
     // ID SOLO para OptaPlanner (no DB)
     @PlanningId
+    @Column(nullable = false, updatable = false)
     private String planningId = UUID.randomUUID().toString();
 
     // ---- Qué función se está cubriendo ----
@@ -34,7 +35,6 @@ public class FunctionAssignment {
     private Person person;
 
     // ---- Cuándo ocurre ----
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LocalDate date;
 
@@ -45,7 +45,8 @@ public class FunctionAssignment {
 
     // ---- Constructores ----
 
-    public FunctionAssignment() {}
+    public FunctionAssignment() {
+    }
 
     public FunctionAssignment(Function function, LocalDate date) {
         this.function = function;
@@ -90,6 +91,10 @@ public class FunctionAssignment {
 
     public void setSchedule(Schedule schedule) {
         this.schedule = schedule;
+    }
+
+    public boolean isAssigned() {
+        return person != null;
     }
 
     @Override

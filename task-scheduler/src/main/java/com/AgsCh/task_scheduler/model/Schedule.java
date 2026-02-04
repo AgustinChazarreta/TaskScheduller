@@ -19,11 +19,10 @@ public class Schedule {
     private List<Person> personList;
 
     @ProblemFactCollectionProperty
-    @ValueRangeProvider(id = "taskRange")
-    private List<Function> taskList;
+    private List<Function> functionList;
 
     @PlanningEntityCollectionProperty
-    private List<FunctionAssignment> taskAssignmentList;
+    private List<FunctionAssignment> functionAssignmentList;
 
     @PlanningScore
     private HardSoftScore score;
@@ -33,14 +32,14 @@ public class Schedule {
     // --------- Constructores ---------
     public Schedule() {
         this.personList = new ArrayList<>();
-        this.taskList = new ArrayList<>();
-        this.taskAssignmentList = new ArrayList<>();
+        this.functionList = new ArrayList<>();
+        this.functionAssignmentList = new ArrayList<>();
     }
 
-    public Schedule(List<Person> personList, List<Function> taskList, List<FunctionAssignment> taskAssignmentList) {
+    public Schedule(List<Person> personList, List<Function> functionList, List<FunctionAssignment> functionAssignmentList) {
         this.personList = personList != null ? personList : new ArrayList<>();
-        this.taskList = taskList != null ? taskList : new ArrayList<>();
-        this.taskAssignmentList = taskAssignmentList != null ? taskAssignmentList : new ArrayList<>();
+        this.functionList = functionList != null ? functionList : new ArrayList<>();
+        this.functionAssignmentList = functionAssignmentList != null ? functionAssignmentList : new ArrayList<>();
     }
 
     // --------- Getters y setters ---------
@@ -48,12 +47,12 @@ public class Schedule {
         return personList;
     }
 
-    public List<Function> getTaskList() {
-        return taskList;
+    public List<Function> getFunctionList() {
+        return functionList;
     }
 
-    public List<FunctionAssignment> getTaskAssignmentList() {
-        return taskAssignmentList;
+    public List<FunctionAssignment> getFunctionAssignmentList() {
+        return functionAssignmentList;
     }
 
     public HardSoftScore getScore() {
