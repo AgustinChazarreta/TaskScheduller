@@ -10,20 +10,34 @@ public class PersonResponseDTO {
     private String fullName;
     private String nickName;
     private LocalDate birthDate;
+    private String email;
+    private boolean emailNotificationsEnabled;
     private boolean active;
+    private LocalDate entryDate;
+    private LocalDate exitDate;
     private Set<DayOfWeek> workingDays;
 
     public PersonResponseDTO(
             Long id,
             String fullName,
+            String nickName,
             LocalDate birthDate,
+            String email,
+            boolean emailNotificationsEnabled,
             boolean active,
+            LocalDate entryDate,
+            LocalDate exitDate,
             Set<DayOfWeek> workingDays) {
 
         this.id = id;
         this.fullName = fullName;
+        this.nickName = nickName;
         this.birthDate = birthDate;
+        this.email = email;
+        this.emailNotificationsEnabled = emailNotificationsEnabled;
         this.active = active;
+        this.entryDate = entryDate;
+        this.exitDate = exitDate;
         this.workingDays = workingDays;
     }
 
@@ -42,9 +56,25 @@ public class PersonResponseDTO {
     public LocalDate getBirthDate() {
         return birthDate;
     }
-    
+
+    public String getEmail() {
+        return email;
+    }
+
+    public boolean isEmailNotificationsEnabled() {
+        return emailNotificationsEnabled;
+    }
+
     public boolean isActive() {
         return active;
+    }
+
+    public LocalDate getEntryDate() {
+        return entryDate;
+    }
+
+    public LocalDate getExitDate() {
+        return exitDate;
     }
 
     public Set<DayOfWeek> getWorkingDays() {

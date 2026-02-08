@@ -35,8 +35,13 @@ public class PersonApiController {
                 .map(p -> new PersonResponseDTO(
                         p.getId(),
                         p.getFullName(),
+                        p.getNickName(),
                         p.getBirthDate(),
+                        p.getEmail(),
+                        p.isEmailNotificationsEnabled(),
                         p.isActive(),
+                        p.getEntryDate(),
+                        p.getExitDate(),
                         p.getWorkingDays()))
                 .collect(Collectors.toList());
     }

@@ -20,17 +20,17 @@ public class Person {
     @Column(nullable = false)
     private String fullName; // Nombre completo
 
-    @Column(nullable = false)
+    @Column
     private String nickName; // Nombre de guerra
 
     private LocalDate birthDate; // Fecha de nacimiento
 
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private boolean emailNotificationsEnabled = false;
 
-    @Column(nullable = false)
+    @Column
     private boolean active = true;
 
     private LocalDate entryDate;
@@ -40,28 +40,36 @@ public class Person {
     // Patrón semanal (normalmente)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "person_working_days", joinColumns = @JoinColumn(name = "person_id"))
-    @Column(name = "day_of_week", nullable = false)
+    @Column(name = "day_of_week")
     @Enumerated(EnumType.STRING)
     private Set<DayOfWeek> workingDays = EnumSet.noneOf(DayOfWeek.class);
 
     // ---- Relaciones ----
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PersonUnavailability> unavailabilities = new ArrayList<>();
-    
+
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PersonFunction> personFunctions = new ArrayList<>();
 
-    @OneToMany(mappedBy = "person")
+    @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FunctionAssignment> functionAssignments = new ArrayList<>();
 
     // --------- Constructores ---------
     public Person() {
     }
 
-    public Person(String fullName, LocalDate birthDate, Set<DayOfWeek> workingDays) {
+    public Person(String fullName, String nickName, LocalDate birthDate, String email,
+            boolean emailNotificationsEnabled, boolean active,
+            LocalDate entryDate, LocalDate exitDate, Set<DayOfWeek> workingDays) {
         this.fullName = fullName;
+        this.nickName = nickName;
         this.birthDate = birthDate;
-        this.workingDays = workingDays;
+        this.email = email;
+        this.emailNotificationsEnabled = emailNotificationsEnabled;
+        this.active = active;
+        this.entryDate = entryDate;
+        this.exitDate = exitDate;
+        this.workingDays = workingDays != null ? EnumSet.copyOf(workingDays) : EnumSet.noneOf(DayOfWeek.class);
     }
 
     // ---- Getters ----
@@ -183,7 +191,7 @@ public class Person {
         personFunctions.remove(pf);
         pf.setPerson(null);
     }
-    
+
     @Override
     public String toString() {
         return nickName;

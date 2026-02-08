@@ -5,21 +5,16 @@ import java.time.LocalDate;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 public class PersonRequestDTO {
 
-    @NotNull
     private Long id;
 
     @NotBlank
     private String fullName;
 
-    @NotBlank
     private String nickName;
 
-    @NotNull
     private LocalDate birthDate;
 
     private String email;
@@ -31,8 +26,6 @@ public class PersonRequestDTO {
     private LocalDate entryDate;
     private LocalDate exitDate;
 
-    @NotNull
-    @NotEmpty
     private Set<DayOfWeek> workingDays;
 
     public PersonRequestDTO() {}

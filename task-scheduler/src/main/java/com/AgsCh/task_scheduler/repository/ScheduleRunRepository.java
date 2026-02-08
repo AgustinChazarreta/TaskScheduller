@@ -3,6 +3,7 @@ package com.AgsCh.task_scheduler.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.AgsCh.task_scheduler.model.ScheduleRun;
 
@@ -14,8 +15,11 @@ public interface ScheduleRunRepository extends JpaRepository<ScheduleRun, Long> 
     @Transactional
     @Query("""
         update ScheduleRun r
-        set r.status = com.AgsCh.task_scheduler.model.ScheduleRun.Status.ARCHIVED
-        where r.status = com.AgsCh.task_scheduler.model.ScheduleRun.Status.ACTIVE
+        set r.status = :archived
+        where r.status = :active
     """)
-    void archiveActiveRun();
+    void archiveActiveRun(
+        @Param("archived") ScheduleRun.Status archived,
+        @Param("active") ScheduleRun.Status active
+    );
 }

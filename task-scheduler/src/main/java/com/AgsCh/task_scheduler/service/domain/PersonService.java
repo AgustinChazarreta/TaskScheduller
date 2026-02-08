@@ -8,6 +8,8 @@ import com.AgsCh.task_scheduler.model.Person;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class PersonService {
 
@@ -24,8 +26,15 @@ public class PersonService {
     public Person create(PersonRequestDTO dto) {
         Person person = new Person(
                 dto.getFullName(),
+                dto.getNickName(),
                 dto.getBirthDate(),
+                dto.getEmail(),
+                dto.isEmailNotificationsEnabled(),
+                dto.isActive(),
+                dto.getEntryDate(),
+                dto.getExitDate(),
                 dto.getWorkingDays());
+
         scheduleService.invalidate();
         return repository.save(person);
     }
@@ -41,6 +50,7 @@ public class PersonService {
     }
 
     // UPDATE
+    @Transactional
     public void update(Long id, PersonRequestDTO dto) {
         Person person = findById(id);
 
@@ -53,11 +63,12 @@ public class PersonService {
         person.setActive(dto.isActive());
         person.setEntryDate(dto.getEntryDate());
         person.setExitDate(dto.getExitDate());
+        System.out.println("Updating person: " + person.getEmail());
 
         scheduleService.invalidate();
         repository.save(person);
     }
-    
+
     // DELETE
     public void delete(Long id) {
         repository.deleteById(id);

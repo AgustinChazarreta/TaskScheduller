@@ -65,7 +65,10 @@ public class AdminScheduleService {
         currentSchedule = solverService.solve(currentSchedule);
 
         // 2️⃣ archivar el run activo anterior
-        scheduleRunRepository.archiveActiveRun();
+        scheduleRunRepository.archiveActiveRun(
+                ScheduleRun.Status.ARCHIVED, // nuevo estado
+                ScheduleRun.Status.ACTIVE // estado a buscar
+        );
 
         // 3️⃣ crear nuevo ScheduleRun
         ScheduleRun run = new ScheduleRun(
