@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
+
+<section>
+
+    <h1 class="mb-4">
+        <i class="nav-icon bi bi-list-task me-2"></i>
+        Funciones
+    </h1>
+
+    <!-- ================= CARGA WORD ================= -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Cargar archivo de tareas</h3>
+        </div>
+        <div class="card-body">
+            <input type="file" class="form-control mb-2" id="wordFile" accept=".docx">
+            <button class="btn btn-primary" onclick="loadFunctionsFromWord()">
+                <i class="bi bi-upload me-1"></i>
+                Cargar tareas
+            </button>
+        </div>
+    </div>
+
+    <button class="btn btn-primary mb-3" onclick="addFunction()">
+        <i class="bi bi-plus"></i> Agregar función
+    </button>
+
+    <!-- ================= TABLA ================= -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Funciones</h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Función</th>
+                        <th>Tipo de Función</th>
+                        <th>Días</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody id="functionsBody">
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">Sin funciones</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <button class="btn btn-success mt-3" onclick="saveFunctions()">
+                <i class="bi bi-floppy me-1"></i>
+                Guardar funciones
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= MODAL ================= -->
+    <div class="modal fade" id="functionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="functionForm">
+                    <!-- Cambiado: título inicial a "Agregar función" -->
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitle">Agregar función</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-2">
+                            <label class="form-label">Nombre</label>
+                            <input id="functionName" class="form-control" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Tipo de función</label>
+                            <select id="sequential" class="form-select" required>
+                                <option value="" disabled selected>Seleccionar tipo</option>
+                                <option value=false>Una vez</option>
+                                <option value=true>Recurrente</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label">Días asignados</label>
+                            <select id="personDays" class="form-control select2" name="days[]" multiple required
+                                style="width: 100%;">
+                                <option value="MONDAY">Lunes</option>
+                                <option value="TUESDAY">Martes</option>
+                                <option value="WEDNESDAY">Miércoles</option>
+                                <option value="THURSDAY">Jueves</option>
+                                <option value="FRIDAY">Viernes</option>
+                                <option value="SATURDAY">Sábado</option>
+                                <option value="SUNDAY">Domingo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE LA PÁGINA -->
+    <script src="/js/csrf.js"></script>
+    <script src="/plugins/select2/js/select2.full.min.js"></script>
+    <script src="/js/select2-modal.js"></script>
+    <script src="/js/functions.js"></script>
+
+</section>
+
+</html>

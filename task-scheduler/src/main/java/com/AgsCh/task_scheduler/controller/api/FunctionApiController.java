@@ -39,6 +39,7 @@ public class FunctionApiController {
                 .map(f -> new FunctionResponseDTO(
                         f.getId(),
                         f.getName(),
+                        f.isSequential(),
                         f.getAssignedDays()))
                 .collect(Collectors.toList());
     }
