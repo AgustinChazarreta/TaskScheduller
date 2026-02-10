@@ -16,6 +16,7 @@ public class PersonResponseDTO {
     private LocalDate entryDate;
     private LocalDate exitDate;
     private Set<DayOfWeek> workingDays;
+    private Set<FunctionResponseDTO> functions;
 
     public PersonResponseDTO(
             Long id,
@@ -27,7 +28,8 @@ public class PersonResponseDTO {
             boolean active,
             LocalDate entryDate,
             LocalDate exitDate,
-            Set<DayOfWeek> workingDays) {
+            Set<DayOfWeek> workingDays,
+            Set<FunctionResponseDTO> functions) {
 
         this.id = id;
         this.fullName = fullName;
@@ -39,6 +41,7 @@ public class PersonResponseDTO {
         this.entryDate = entryDate;
         this.exitDate = exitDate;
         this.workingDays = workingDays;
+        this.functions = functions;
     }
 
     public Long getId() {
@@ -79,5 +82,9 @@ public class PersonResponseDTO {
 
     public Set<DayOfWeek> getWorkingDays() {
         return workingDays;
+    }
+
+    public Set<FunctionResponseDTO> getFunctions() {
+        return functions;
     }
 }

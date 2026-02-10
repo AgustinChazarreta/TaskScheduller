@@ -28,7 +28,10 @@ public class PersonRequestDTO {
 
     private Set<DayOfWeek> workingDays;
 
-    public PersonRequestDTO() {}
+    private Set<Long> functionIds;
+
+    public PersonRequestDTO() {
+    }
 
     // -------- getters & setters --------
 
@@ -110,5 +113,13 @@ public class PersonRequestDTO {
 
     public void setWorkingDays(Set<DayOfWeek> workingDays) {
         this.workingDays = workingDays;
+    }
+
+    public Set<Long> getFunctionIds() {
+        return functionIds;
+    }
+
+    public void setFunctionIds(Set<Long> functionIds) {
+        this.functionIds = functionIds;
     }
 }

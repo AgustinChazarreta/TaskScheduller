@@ -117,7 +117,8 @@ form.addEventListener("submit", async e => {
         emailNotificationsEnabled: document.getElementById("mailStatus").checked,
         entryDate: document.getElementById("personEntryDate").value,
         exitDate: document.getElementById("personExitDate").value || null,
-        workingDays: $('#personDays').val()
+        workingDays: $('#personDays').val(),
+        functionIds: $("#personFunctions").val().map(Number)
     };
 
 
@@ -167,7 +168,7 @@ function editPerson(id) {
     personEntryDate.value = p.entryDate;
     personExitDate.value = p.exitDate || "";
 
-    $("#personStates").val(p.states).trigger("change");
+    $("#personFunctions").val(p.functions.map(f => f.id)).trigger("change");
     $("#personDays").val(p.workingDays).trigger("change");
 
     if (p.photoUrl) {
@@ -206,7 +207,7 @@ function resetForm() {
 
     form.reset();
 
-    $("#personStates").val(null).trigger("change");
+    $("#personFunctions").val(null).trigger("change");
     $("#personDays").val(null).trigger("change");
 
     photoPreview.src = "/user8-128x128.jpg";
@@ -220,18 +221,19 @@ function resetForm() {
 
 modalEl.addEventListener("shown.bs.modal", () => {
     [
-        { id: "#personStates", placeholder: "Seleccioná funciones" },
+        { id: "#personFunctions", placeholder: "Seleccioná funciones" },
         { id: "#personDays", placeholder: "Seleccioná días de trabajo" }
-    ].forEach(cfg => {
-        const $el = $(cfg.id);
-        if ($el.hasClass("select2-hidden-accessible")) return;
+    ]
+        .forEach(cfg => {
+            const $el = $(cfg.id);
+            if ($el.hasClass("select2-hidden-accessible")) return;
 
-        $el.select2({
-            placeholder: cfg.placeholder,
-            width: "100%",
-            dropdownAutoWidth: true
+            $el.select2({
+                placeholder: cfg.placeholder,
+                width: "100%",
+                dropdownAutoWidth: true
+            });
         });
-    });
 });
 
 modalEl.addEventListener("hidden.bs.modal", resetForm);
@@ -265,8 +267,26 @@ photoInput.addEventListener("change", function () {
 });
 
 
+async function loadFunctions() {
+    const res = await fetch("/api/functions");
+    const functions = await res.json();
+
+    const select = $("#personFunctions");
+    select.empty();
+
+    functions.forEach(f => {
+        select.append(
+            `<option value="${f.id}">${f.name}</option>`
+        );
+    });
+
+    select.trigger("change");
+}
+
+
+
 /* ===============================
    INIT
 ================================ */
-
+loadFunctions();
 loadPersons();

@@ -7,7 +7,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
+import com.AgsCh.task_scheduler.dto.response.FunctionResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonResponseDTO;
+import com.AgsCh.task_scheduler.model.PersonFunction;
 import com.AgsCh.task_scheduler.service.domain.PersonService;
 
 @RestController
@@ -32,24 +34,35 @@ public class PersonApiController {
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public List<PersonResponseDTO> list() {
         return service.findAll().stream()
-                .map(p -> new PersonResponseDTO(
-                        p.getId(),
-                        p.getFullName(),
-                        p.getNickName(),
-                        p.getBirthDate(),
-                        p.getEmail(),
-                        p.isEmailNotificationsEnabled(),
-                        p.isActive(),
-                        p.getEntryDate(),
-                        p.getExitDate(),
-                        p.getWorkingDays()))
-                .collect(Collectors.toList());
+            .map(p -> new PersonResponseDTO(
+                p.getId(),
+                p.getFullName(),
+                p.getNickName(),
+                p.getBirthDate(),
+                p.getEmail(),
+                p.isEmailNotificationsEnabled(),
+                p.isActive(),
+                p.getEntryDate(),
+                p.getExitDate(),
+                p.getWorkingDays(),
+                p.getPersonFunctions().stream()
+                    .filter(PersonFunction::isActive)
+                    .map(pf -> new FunctionResponseDTO(
+                        pf.getFunction().getId(),
+                        pf.getFunction().getName(),
+                        pf.getFunction().isSequential(),
+                        pf.getFunction().getAssignedDays()
+                    ))
+                    .collect(Collectors.toSet())
+            ))
+            .collect(Collectors.toList());
     }
 
     // -------- UPDATE --------
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public void update(@PathVariable Long id, @RequestBody PersonRequestDTO dto) {
+    public void update(@PathVariable Long id,
+                       @RequestBody PersonRequestDTO dto) {
         service.update(id, dto);
     }
 
