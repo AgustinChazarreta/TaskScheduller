@@ -41,7 +41,7 @@ function formatDays(days = []) {
 
     return order
         .filter(d => days.includes(d))
-        .map(d => `<span class="badge bg-warning text-dark me-1">${labels[d]}</span>`)
+        .map(d => `<span class="badge bg-danger bg-gradient me-1">${labels[d]}</span>`)
         .join("");
 }
 

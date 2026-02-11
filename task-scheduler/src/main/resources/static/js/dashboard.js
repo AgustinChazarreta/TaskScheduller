@@ -2,9 +2,8 @@
    ESTADO GLOBAL
 ===================================================== */
 
-let selectedPersons = [];
 const personsCache = {};
-const tasksCache = {};
+const functionsCache = {};
 
 /* =====================================================
    INIT
@@ -13,7 +12,7 @@ const tasksCache = {};
 document.addEventListener('DOMContentLoaded', () => {
     loadScheduleStatus();
     loadPersons();
-    loadTasks();
+    loadFunctions();
     bindForm();
     bindPersonSelection();
     bindSelectionButtons();
@@ -66,16 +65,9 @@ function bindForm() {
             return;
         }
 
-        if (selectedPersons.length === 0) {
-            showAlert('Debe seleccionar al menos una persona', 'warning');
-            return;
-        }
-
-        const persons = selectedPersons
-            .map(id => personsCache[id])
-            .filter(Boolean);
-
-        const tasks = Object.values(tasksCache);
+        const activePersonIds = Object.values(personsCache)
+            .filter(p => p.active)
+            .map(p => p.id);
 
         try {
             // 👇 ACA MOSTRAMOS EL SPINNER
@@ -85,11 +77,16 @@ function bindForm() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    period: { startDate, endDate },
-                    persons,
-                    tasks
+                    period: {
+                        startDate: startDate,
+                        endDate: endDate
+                    },
+                    personIds: activePersonIds,
+                    functionIds: Object.values(functionsCache).map(f => f.id)
                 })
+
             });
+
 
             if (!response.ok) {
                 throw new Error('Error al resolver el schedule');
@@ -174,24 +171,30 @@ async function loadPersons() {
     }
 }
 
-async function loadTasks() {
+async function loadFunctions() {
     try {
-        const response = await fetch('/api/tasks');
-        if (!response.ok) throw new Error();
+        const response = await fetch('/api/functions');
+        console.log('functions response status:', response.status);
+
+        if (!response.ok) throw new Error('HTTP ' + response.status);
 
         const data = await response.json();
-        const tasks = Array.isArray(data) ? data : Object.values(data);
+        console.log('functions raw data:', data);
 
-        tasks.forEach(t => tasksCache[t.name] = t);
-        renderTasks(tasks);
+        const functions = Array.isArray(data) ? data : Object.values(data);
+        console.log('functions parsed:', functions);
 
-    } catch {
-        showAlert('No se pudieron cargar las tareas', 'danger');
+        functions.forEach(f => functionsCache[f.id] = f);
+        renderFunctions(functions);
+
+    } catch (e) {
+        console.error('loadFunctions error:', e);
+        showAlert('No se pudieron cargar las funciones', 'danger');
     }
 }
 
 /* =====================================================
-   RENDER
+RENDER
 ===================================================== */
 
 function renderPersons(persons) {
@@ -207,29 +210,25 @@ function renderPersons(persons) {
         <table class="table table-striped align-middle">
             <thead>
                 <tr>
-                    <th></th>
                     <th>Nombre</th>
-                    <th>Categoría</th>
-                    <th>Nacimiento</th>
-                    <th>Días disponibles</th>
+                    <th>Cumpleaños</th>
+                    <th>Email</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Días disponibles</th>
                 </tr>
             </thead>
             <tbody>
                 ${persons.map(p => `
                     <tr>
-                        <td>
-                            <input type="checkbox"
-                                   class="person-checkbox"
-                                   value="${p.id}">
-                        </td>
-                        <td>${p.name}</td>
-                        <td>
-                            <span class="badge bg-warning text-dark">
-                                ${formatCategory(p.category)}
+                        <td>${p.fullName}${p.nickName ? ` (${p.nickName})` : ""}</td>
+                        <td>${p.birthDate}</td>
+                        <td>${p.email}</td>
+                        <td class="text-center">
+                            <span class="badge ${p.active ? "bg-success" : "bg-secondary"}">
+                                ${p.active ? "Activo" : "Inactivo"}
                             </span>
                         </td>
-                        <td>${p.birthDate}</td>
-                        <td>${formatDays(p.availableDays)}</td>
+                        <td class = "text-center">${formatDays(p.workingDays)}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -237,12 +236,12 @@ function renderPersons(persons) {
     `;
 }
 
-function renderTasks(tasks) {
-    const container = document.getElementById('tasksContainer');
+function renderFunctions(functions) {
+    const container = document.getElementById('functionsContainer');
 
-    if (!tasks.length) {
+    if (!functions.length) {
         container.innerHTML =
-            '<p class="text-muted mb-0">No hay tareas cargadas</p>';
+            '<p class="text-muted mb-0">No hay funciones cargadas</p>';
         return;
     }
 
@@ -250,17 +249,21 @@ function renderTasks(tasks) {
         <table class="table table-striped align-middle">
             <thead>
                 <tr>
-                    <th>Tarea</th>
+                    <th>Función</th>
+                    <th>Tipo de Función</th>
                     <th>Días asignados</th>
-                    <th>Categorías</th>
                 </tr>
             </thead>
             <tbody>
-                ${tasks.map(t => `
+                ${functions.map(f => `
                     <tr>
-                        <td>${t.name}</td>
-                        <td>${formatDays(t.assignedDays)}</td>
-                        <td>${formatCategories(t.allowedCategories)}</td>
+                        <td>${f.name}</td>
+                        <td>
+                            <span class="badge ${f.sequential ? "bg-warning text-dark" : "bg-secondary"} bg-gradient me-1">
+                            ${f.sequential ? "Recurrente" : "Una vez"}
+                            </span>
+                        </td>
+                        <td>${formatDays(f.assignedDays)}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -271,16 +274,6 @@ function renderTasks(tasks) {
 /* =====================================================
    UTILS
 ===================================================== */
-
-function formatCategory(cat) {
-    return {
-        CATEGORY_1: 'Categoría 1',
-        CATEGORY_2: 'Categoría 2',
-        CATEGORY_3: 'Categoría 3',
-        CATEGORY_4: 'Categoría 4'
-    }[cat] ?? cat;
-}
-
 function formatDays(days = []) {
     const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
     const labels = {
@@ -296,21 +289,6 @@ function formatDays(days = []) {
     return order
         .filter(d => days.includes(d))
         .map(d => `<span class="badge bg-danger bg-gradient me-1">${labels[d]}</span>`)
-        .join("");
-}
-
-function formatCategories(categories = []) {
-    const order = ["CATEGORY_1", "CATEGORY_2", "CATEGORY_3", "CATEGORY_4"];
-    const labels = {
-        CATEGORY_1: "Categoría 1",
-        CATEGORY_2: "Categoría 2",
-        CATEGORY_3: "Categoría 3",
-        CATEGORY_4: "Categoría 4"
-    };
-
-    return order
-        .filter(c => categories.includes(c))
-        .map(c => `<span class="badge bg-warning bg-gradient text-dark me-1">${labels[c]}</span>`)
         .join("");
 }
 

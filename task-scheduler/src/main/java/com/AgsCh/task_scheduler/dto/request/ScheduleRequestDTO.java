@@ -14,11 +14,11 @@ public class ScheduleRequestDTO {
 
     @Valid
     @NotEmpty
-    private List<PersonRequestDTO> persons;
+    private List<Long> personIds;
 
     @Valid
     @NotEmpty
-    private List<FunctionRequestDTO> functions;
+    private List<Long> functionIds;
 
     // getters & setters
 
@@ -30,20 +30,20 @@ public class ScheduleRequestDTO {
         this.period = period;
     }
 
-    public List<PersonRequestDTO> getPersons() {
-        return persons;
+    public List<Long> getPersonIds() {
+        return personIds;
     }
 
-    public void setPersons(List<PersonRequestDTO> persons) {
-        this.persons = persons;
+    public void setPersonIds(List<Long> personIds) {
+        this.personIds = personIds;
     }
 
-    public List<FunctionRequestDTO> getFunctions() {
-        return functions;
+    public List<Long> getFunctionIds() {
+        return functionIds;
     }
 
-    public void setFunctions(List<FunctionRequestDTO> functions) {
-        this.functions = functions;
+    public void setFunctionIds(List<Long> functionIds) {
+        this.functionIds = functionIds;
     }
 
     @Override
@@ -56,9 +56,9 @@ public class ScheduleRequestDTO {
 
         // Persons
         sb.append("  persons: [\n");
-        if (persons != null) {
-            for (PersonRequestDTO p : persons) {
-                sb.append("    ").append(p != null ? p.toString() : "null").append(",\n");
+        if (personIds != null) {
+            for (Long id : personIds) {
+                sb.append("    ").append(id != null ? id.toString() : "null").append(",\n");
             }
         } else {
             sb.append("    null\n");
@@ -67,9 +67,9 @@ public class ScheduleRequestDTO {
 
         // Functions
         sb.append("  functions: [\n");
-        if (functions != null) {
-            for (FunctionRequestDTO f : functions) {
-                sb.append("    ").append(f != null ? f.toString() : "null").append(",\n");
+        if (functionIds != null) {
+            for (Long id : functionIds) {
+                sb.append("    ").append(id != null ? id.toString() : "null").append(",\n");
             }
         } else {
             sb.append("    null\n");

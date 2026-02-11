@@ -9,17 +9,20 @@ public class FunctionAssignmentResponseDTO {
 
     private int week;
     private DayOfWeek day;
-    private String taskName;
+    private String functionName;
     private String personName;
+    private String personNickname;
 
     public FunctionAssignmentResponseDTO(
             LocalDate date,
-            String taskName,
-            String personName) {
+            String functionName,
+            String personName,
+            String personNickname) {
 
         this.day = date.getDayOfWeek();
-        this.taskName = taskName;
+        this.functionName = functionName;
         this.personName = personName;
+        this.personNickname = personNickname;
         this.week = date.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
     }
 
@@ -31,11 +34,15 @@ public class FunctionAssignmentResponseDTO {
         return day;
     }
 
-    public String getTaskName() {
-        return taskName;
+    public String getFunctionName() {
+        return functionName;
     }
 
     public String getPersonName() {
         return personName;
+    }
+
+    public String getPersonNickname() {
+        return personNickname;
     }
 }

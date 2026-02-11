@@ -8,7 +8,6 @@ import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.FunctionAssignment;
 import com.AgsCh.task_scheduler.model.Schedule;
 import com.AgsCh.task_scheduler.model.ScheduleRun;
-import com.AgsCh.task_scheduler.repository.FunctionAssignmentRepository;
 import com.AgsCh.task_scheduler.repository.ScheduleRunRepository;
 import com.AgsCh.task_scheduler.service.solver.ScheduleService;
 
@@ -19,7 +18,6 @@ public class AdminScheduleService {
 
     private final ScheduleService solverService;
     private final ScheduleRunRepository scheduleRunRepository;
-    private final FunctionAssignmentRepository assignmentRepository;
 
     private Schedule currentSchedule;
     private boolean invalidated = true;
@@ -27,12 +25,10 @@ public class AdminScheduleService {
 
     public AdminScheduleService(
             ScheduleService solverService,
-            ScheduleRunRepository scheduleRunRepository,
-            FunctionAssignmentRepository assignmentRepository) {
+            ScheduleRunRepository scheduleRunRepository) {
 
         this.solverService = solverService;
         this.scheduleRunRepository = scheduleRunRepository;
-        this.assignmentRepository = assignmentRepository;
     }
 
     /*
@@ -61,30 +57,33 @@ public class AdminScheduleService {
             throw new BusinessException("El Schedule no tiene rango de fechas definido");
         }
 
-        // 1️⃣ resolver con OptaPlanner
+        // 1️⃣ Archivar run activo anterior (si existe)
+        scheduleRunRepository.archiveActiveRun(
+                ScheduleRun.Status.ARCHIVED,
+                ScheduleRun.Status.ACTIVE);
+
+        // 2️⃣ Resolver con OptaPlanner
         currentSchedule = solverService.solve(currentSchedule);
 
-        // 2️⃣ archivar el run activo anterior
-        scheduleRunRepository.archiveActiveRun(
-                ScheduleRun.Status.ARCHIVED, // nuevo estado
-                ScheduleRun.Status.ACTIVE // estado a buscar
-        );
-
-        // 3️⃣ crear nuevo ScheduleRun
-        ScheduleRun run = new ScheduleRun(
-                currentSchedule.getStartDate(),
-                currentSchedule.getEndDate(),
-                currentSchedule.getScore().toString());
-        run.activate();
-        scheduleRunRepository.save(run);
-
-        // 4️⃣ asociar assignments al run
-        for (FunctionAssignment assignment : currentSchedule.getFunctionAssignmentList()) {
-            assignment.setScheduleRun(run);
+        if (currentSchedule.getScore() == null) {
+            throw new BusinessException("El solver no devolvió score");
         }
 
-        // 5️⃣ persistir resultados
-        assignmentRepository.saveAll(currentSchedule.getFunctionAssignmentList());
+        // 3️⃣ Crear nuevo run (queda ACTIVE por defecto)
+        ScheduleRun run = new ScheduleRun(
+                currentSchedule.getStartDate(),
+                currentSchedule.getEndDate());
+
+        run.setStatus(ScheduleRun.Status.ACTIVE);
+        run.setScore(currentSchedule.getScore().toString());
+
+        // 4️⃣ Asociar assignments
+        for (FunctionAssignment assignment : currentSchedule.getFunctionAssignmentList()) {
+            run.addAssignment(assignment);
+        }
+
+        // 5️⃣ Guardar
+        scheduleRunRepository.save(run);
 
         invalidated = false;
         lastSolvedAt = LocalDateTime.now();
@@ -106,7 +105,13 @@ public class AdminScheduleService {
         return invalidated;
     }
 
+    @Transactional
     public void invalidate() {
+
+        scheduleRunRepository.archiveActiveRun(
+                ScheduleRun.Status.ARCHIVED,
+                ScheduleRun.Status.ACTIVE);
+
         this.invalidated = true;
     }
 

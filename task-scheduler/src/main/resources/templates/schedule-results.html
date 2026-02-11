@@ -130,12 +130,12 @@
             let html = "";
 
             order.forEach(day => {
-                // Filtrar tareas de este día
-                const tasksOfDay = assignments
+                // Filtrar funciones de este día
+                const functionsOfDay = assignments
                     .filter(a => a.week === realWeek)
                     .filter(a => (Array.isArray(a.day) ? a.day : [a.day]).includes(day));
 
-                if (tasksOfDay.length > 0) {
+                if (functionsOfDay.length > 0) {
                     // Bloque del día: columna flexible, cards apilados verticalmente
                     html += `<div class="day-block d-flex flex-column align-items-center"
                         style="flex: 1 1 250px; max-width: 300px; min-width: 200px; gap: 0.5rem; margin: 0.5rem;">`;
@@ -148,8 +148,8 @@
                         </span>
                     </h5>`;
 
-                    // Cards de tareas
-                    tasksOfDay.forEach(a => {
+                    // Cards de funciones
+                    functionsOfDay.forEach(a => {
                         html += `
                         <div class="card shadow-sm" style="width: 80%; padding: 0.5rem 1rem;">
                             <div class="card-body d-grid" style="
@@ -157,8 +157,9 @@
                                 gap: 0.5rem; 
                                 font-size: clamp(0.7rem, 1.5vw, 1rem); 
                                 padding: 0.5rem;">
-                                <div><strong>${a.personName}</strong></div>
-                                <div class="badge bg-success bg-gradient px-3 py-2 text-truncate">${a.taskName}</div>
+                                <div><strong>${a.personName}${a.personNickname ? ` (${a.personNickname})` : ""}</strong></div>
+                                <div class="badge bg-success bg-gradient px-2 py-2 text-truncate" 
+                                style="font-size: clamp(0.5rem, 1.3vw, 0.9rem);">${a.functionName}</div>
                             </div>
                         </div>`;
                     });
@@ -168,7 +169,7 @@
                 }
             });
 
-            container.innerHTML = html || `<p class="text-muted text-center">No hay tareas para esta semana</p>`;
+            container.innerHTML = html || `<p class="text-muted text-center">No hay funciones para esta semana</p>`;
 
             // Botones de navegación
             document.querySelector('button[onclick="prevWeek()"]').disabled = currentWeek === 1;

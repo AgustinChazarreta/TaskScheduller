@@ -36,21 +36,21 @@ function render(tasks) {
 
     Object.values(tasks)
         .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
-        .forEach(t => {
+        .forEach(f => {
             tbody.insertAdjacentHTML("beforeend", `
                 <tr>
-                    <td>${t.name}</td>
+                    <td>${f.name}</td>
                     <td>
-                        <span class="badge ${t.sequential ? "bg-warning text-dark" : "bg-secondary"} bg-gradient me-1">
-                            ${t.sequential ? "Recurrente" : "Una vez"}
+                        <span class="badge ${f.sequential ? "bg-warning text-dark" : "bg-secondary"} bg-gradient me-1">
+                            ${f.sequential ? "Recurrente" : "Una vez"}
                         </span>
                     </td>
-                    <td>${formatDays(t.assignedDays || [])}</td>
+                    <td>${formatDays(f.assignedDays || [])}</td>
                     <td class="text-end">
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editFunction('${t.id || t.name}')">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editFunction('${f.id || f.name}')">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteFunction('${t.id || t.name}')">
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteFunction('${f.id || f.name}')">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>

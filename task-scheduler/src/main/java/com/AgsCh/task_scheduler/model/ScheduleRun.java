@@ -41,11 +41,7 @@ public class ScheduleRun {
     /**
      * Resultados concretos de esta corrida
      */
-    @OneToMany(
-        mappedBy = "scheduleRun",
-        cascade = CascadeType.ALL,
-        orphanRemoval = true
-    )
+    @OneToMany(mappedBy = "scheduleRun", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FunctionAssignment> assignments = new ArrayList<>();
 
     // =========================
@@ -56,11 +52,10 @@ public class ScheduleRun {
         // requerido por JPA
     }
 
-    public ScheduleRun(LocalDate startDate, LocalDate endDate, String score) {
+    public ScheduleRun(LocalDate startDate, LocalDate endDate) {
         this.startDate = startDate;
         this.endDate = endDate;
-        this.score = score;
-        this.status = Status.ARCHIVED;
+        this.status = Status.ACTIVE;
     }
 
     @PrePersist
@@ -89,6 +84,11 @@ public class ScheduleRun {
         this.assignments.add(assignment);
     }
 
+    public void finish(String score) {
+        this.score = score;
+        this.status = Status.ARCHIVED;
+    }
+
     // =========================
     // GETTERS
     // =========================
@@ -111,6 +111,14 @@ public class ScheduleRun {
 
     public String getScore() {
         return score;
+    }
+
+    public void setScore(String score) {
+        this.score = score;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     public Status getStatus() {

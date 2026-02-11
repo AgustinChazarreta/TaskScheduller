@@ -25,12 +25,12 @@ public final class ScheduleMapper {
 
     public static Schedule toModel(
             ScheduleRequestDTO request,
-            FunctionRepository taskRepository,
+            FunctionRepository functionRepository,
             PersonRepository personRepository) {
 
         // 1️⃣ Traer Functions y Persons existentes de la DB
-        List<Function> functions = loadTasks(request.getFunctions(), taskRepository);
-        List<Person> persons = loadPersons(request.getPersons(), personRepository);
+        List<Function> functions = loadFunctions(request.getFunctionIds(), functionRepository);
+        List<Person> persons = loadPersons(request.getPersonIds(), personRepository);
 
         // 2️⃣ Fechas
         LocalDate start = request.getPeriod().getStartDate();
@@ -42,32 +42,32 @@ public final class ScheduleMapper {
         return new Schedule(persons, functions, assignments, start, end);
     }
 
-    private static List<Function> loadTasks(List<FunctionRequestDTO> dtos, FunctionRepository repo) {
-        List<Function> tasks = new ArrayList<>();
-        for (FunctionRequestDTO dto : dtos) {
-            // Asume que cada FunctionRequestDTO tiene un campo id que ya existe en la DB
-            Function task = repo.findById(dto.getId())
+    private static List<Function> loadFunctions(List<Long> ids, FunctionRepository repo) {
+        List<Function> functions = new ArrayList<>();
+        for (Long id : ids) {
+            // Asume que cada id ya existe en la DB
+            Function function = repo.findById(id)
                     .orElseThrow(() -> new BusinessException(
-                            "Function no encontrada en DB: " + dto.getId()));
-            tasks.add(task);
+                            "Function no encontrada en DB: " + id));
+            functions.add(function);
         }
-        return tasks;
+        return functions;
     }
 
-    private static List<Person> loadPersons(List<PersonRequestDTO> dtos, PersonRepository repo) {
+    private static List<Person> loadPersons(List<Long> ids, PersonRepository repo) {
         List<Person> persons = new ArrayList<>();
-        for (PersonRequestDTO dto : dtos) {
-            // Asume que cada PersonRequestDTO tiene un id válido
-            Person person = repo.findById(dto.getId())
+        for (Long id : ids) {
+            // Asume que cada id ya existe en la DB
+            Person person = repo.findById(id)
                     .orElseThrow(() -> new BusinessException(
-                            "Person no encontrada en DB: " + dto.getId()));
+                            "Person no encontrada en DB: " + id));
             persons.add(person);
         }
         return persons;
     }
 
     private static List<FunctionAssignment> createAssignments(
-            List<Function> tasks,
+            List<Function> functions,
             LocalDate startDate,
             LocalDate endDate) {
 
@@ -77,11 +77,11 @@ public final class ScheduleMapper {
 
         List<FunctionAssignment> assignments = new ArrayList<>();
 
-        for (Function task : tasks) {
+        for (Function function : functions) {
             for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-                if (task.getAssignedDays().contains(date.getDayOfWeek())) {
-                    FunctionAssignment ta = new FunctionAssignment(task, date); // planningId generado automáticamente
-                    ta.setPerson(null); // UNASSIGNED
+                if (function.getAssignedDays().contains(date.getDayOfWeek())) {
+                    FunctionAssignment ta = new FunctionAssignment(function, date); // planningId generado
+                                                                                    // automáticamente
                     assignments.add(ta);
                 }
             }
@@ -97,24 +97,32 @@ public final class ScheduleMapper {
 
     public static ScheduleResponseDTO toResponse(Schedule solution) {
 
-        List<FunctionAssignmentResponseDTO> assignmentResponses = new ArrayList<>();
+        List<FunctionAssignmentResponseDTO> responses = new ArrayList<>();
 
         for (FunctionAssignment assignment : solution.getFunctionAssignmentList()) {
 
-            String personName = assignment.getPerson() != null
-                    ? assignment.getPerson().getFullName()
+            Person person = assignment.getPerson();
+
+            String personName = person != null
+                    ? person.getFullName()
                     : "UNASSIGNED";
 
-            assignmentResponses.add(new FunctionAssignmentResponseDTO(
+            String personNickname = person != null
+                    ? person.getNickName()
+                    : "";
+
+            responses.add(new FunctionAssignmentResponseDTO(
                     assignment.getDate(),
                     assignment.getFunction().getName(),
-                    personName));
+                    personName,
+                    personNickname));
         }
 
         String score = solution.getScore() != null
                 ? solution.getScore().toString()
                 : "NO_SCORE";
 
-        return new ScheduleResponseDTO(assignmentResponses, score);
+        return new ScheduleResponseDTO(responses, score);
     }
+
 }

@@ -19,13 +19,13 @@ import jakarta.validation.Valid;
 public class ScheduleController {
 
         private final AdminScheduleService scheduleService;
-        private final FunctionRepository taskRepository;
+        private final FunctionRepository functionRepository;
         private final PersonRepository personRepository;
 
-        public ScheduleController(AdminScheduleService scheduleService, FunctionRepository taskRepository,
+        public ScheduleController(AdminScheduleService scheduleService, FunctionRepository functionRepository,
                         PersonRepository personRepository) {
                 this.scheduleService = scheduleService;
-                this.taskRepository = taskRepository;
+                this.functionRepository = functionRepository;
                 this.personRepository = personRepository;
         }
 
@@ -37,7 +37,7 @@ public class ScheduleController {
         public ScheduleResponseDTO solve(@Valid @RequestBody ScheduleRequestDTO request) {
                 try {
                         // 1️⃣ Convertir DTO a Schedule de dominio con entidades persistidas
-                        Schedule schedule = ScheduleMapper.toModel(request, taskRepository, personRepository);
+                        Schedule schedule = ScheduleMapper.toModel(request, functionRepository, personRepository);
 
                         // 2️⃣ Resolver con OptaPlanner
                         scheduleService.loadSchedule(schedule);
