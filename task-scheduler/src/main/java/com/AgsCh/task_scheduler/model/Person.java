@@ -37,6 +37,11 @@ public class Person {
 
     private LocalDate exitDate;
 
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
+    private String profileImagePublicId;
+
     // Patrón semanal (normalmente)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "person_working_days", joinColumns = @JoinColumn(name = "person_id"))
@@ -190,6 +195,22 @@ public class Person {
     public void removePersonFunction(PersonFunction pf) {
         personFunctions.remove(pf);
         pf.setPerson(null);
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImagePublicId(String profileImagePublicId) {
+        this.profileImagePublicId = profileImagePublicId;
+    }
+
+    public String getProfileImagePublicId() {
+        return profileImagePublicId;
     }
 
     @Override

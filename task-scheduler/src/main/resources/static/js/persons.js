@@ -121,18 +121,14 @@ form.addEventListener("submit", async e => {
         functionIds: $("#personFunctions").val().map(Number)
     };
 
-
     const url = editingPersonId
         ? `/api/persons/${editingPersonId}`
         : "/api/persons";
 
     const method = editingPersonId ? "PUT" : "POST";
 
-    console.log("payload object:", payload);
-    console.log("payload json:", JSON.stringify(payload, null, 2));
-
-
-    await secureFetch(url, {
+    // 🔥 GUARDAMOS EL RESPONSE
+    const res = await secureFetch(url, {
         method,
         headers: {
             "Content-Type": "application/json"
@@ -140,10 +136,30 @@ form.addEventListener("submit", async e => {
         body: JSON.stringify(payload)
     });
 
+    if (!res.ok) {
+        alert("Error al guardar persona");
+        return;
+    }
+
+    let personId = editingPersonId;
+
+    if (!editingPersonId) {
+        personId = await res.json();
+    }
+
+    // Subida de imagen
+    const file = photoInput.files[0];
+    if (file) {
+        await uploadProfileImage(personId, file);
+    }
+
     bootstrap.Modal.getInstance(modalEl).hide();
     resetForm();
     loadPersons();
+
 });
+
+
 
 
 /* ===============================
@@ -171,9 +187,10 @@ function editPerson(id) {
     $("#personFunctions").val(p.functions.map(f => f.id)).trigger("change");
     $("#personDays").val(p.workingDays).trigger("change");
 
-    if (p.photoUrl) {
-        photoPreview.src = p.photoUrl;
-    }
+    photoPreview.src = p.profileImageUrl
+        ? p.profileImageUrl
+        : "/user8-128x128.jpg";
+
 
     new bootstrap.Modal(modalEl).show();
 }
@@ -201,9 +218,7 @@ async function deletePerson(id, name) {
 function resetForm() {
     editingPersonId = null;
 
-    modalTitle.innerHTML = `
-        <i class="bi bi-person-plus me-2"></i>Agregar persona
-    `;
+    modalTitle.innerHTML = `<i class="bi bi-person-plus me-2"></i>Agregar persona`;
 
     form.reset();
 
@@ -211,7 +226,7 @@ function resetForm() {
     $("#personDays").val(null).trigger("change");
 
     photoPreview.src = "/user8-128x128.jpg";
-    photoInput.value = "";
+    if (photoInput) { photoInput.value = ""; }
 }
 
 
@@ -282,6 +297,25 @@ async function loadFunctions() {
 
     select.trigger("change");
 }
+
+/* ===============================
+   UPLOAD PROFILE IMAGE
+================================ */
+async function uploadProfileImage(personId, file) {
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await secureFetch(`/api/persons/${personId}/profile-image`, {
+        method: "POST",
+        body: formData
+    });
+
+    if (!res.ok) {
+        alert("Error al subir la imagen");
+    }
+}
+
 
 
 

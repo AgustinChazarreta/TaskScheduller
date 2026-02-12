@@ -3,8 +3,10 @@ package com.AgsCh.task_scheduler.controller.api;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
 import com.AgsCh.task_scheduler.dto.response.FunctionResponseDTO;
@@ -34,35 +36,34 @@ public class PersonApiController {
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public List<PersonResponseDTO> list() {
         return service.findAll().stream()
-            .map(p -> new PersonResponseDTO(
-                p.getId(),
-                p.getFullName(),
-                p.getNickName(),
-                p.getBirthDate(),
-                p.getEmail(),
-                p.isEmailNotificationsEnabled(),
-                p.isActive(),
-                p.getEntryDate(),
-                p.getExitDate(),
-                p.getWorkingDays(),
-                p.getPersonFunctions().stream()
-                    .filter(PersonFunction::isActive)
-                    .map(pf -> new FunctionResponseDTO(
-                        pf.getFunction().getId(),
-                        pf.getFunction().getName(),
-                        pf.getFunction().isSequential(),
-                        pf.getFunction().getAssignedDays()
-                    ))
-                    .collect(Collectors.toSet())
-            ))
-            .collect(Collectors.toList());
+                .map(p -> new PersonResponseDTO(
+                        p.getId(),
+                        p.getFullName(),
+                        p.getNickName(),
+                        p.getBirthDate(),
+                        p.getEmail(),
+                        p.isEmailNotificationsEnabled(),
+                        p.isActive(),
+                        p.getEntryDate(),
+                        p.getExitDate(),
+                        p.getWorkingDays(),
+                        p.getPersonFunctions().stream()
+                                .filter(PersonFunction::isActive)
+                                .map(pf -> new FunctionResponseDTO(
+                                        pf.getFunction().getId(),
+                                        pf.getFunction().getName(),
+                                        pf.getFunction().isSequential(),
+                                        pf.getFunction().getAssignedDays()))
+                                .collect(Collectors.toSet()),
+                        p.getProfileImageUrl()))
+                .collect(Collectors.toList());
     }
 
     // -------- UPDATE --------
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public void update(@PathVariable Long id,
-                       @RequestBody PersonRequestDTO dto) {
+            @RequestBody PersonRequestDTO dto) {
         service.update(id, dto);
     }
 
@@ -71,5 +72,15 @@ public class PersonApiController {
     @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {
         service.delete(id);
+    }
+
+    // -------- UPLOAD PROFILE IMAGE --------
+    @PostMapping("/{id}/profile-image")
+    public ResponseEntity<String> uploadProfileImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+
+        String url = service.uploadProfileImage(id, file);
+        return ResponseEntity.ok(url);
     }
 }

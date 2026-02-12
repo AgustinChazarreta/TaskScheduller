@@ -17,6 +17,7 @@ public class PersonResponseDTO {
     private LocalDate exitDate;
     private Set<DayOfWeek> workingDays;
     private Set<FunctionResponseDTO> functions;
+    private String profileImageUrl;
 
     public PersonResponseDTO(
             Long id,
@@ -29,7 +30,8 @@ public class PersonResponseDTO {
             LocalDate entryDate,
             LocalDate exitDate,
             Set<DayOfWeek> workingDays,
-            Set<FunctionResponseDTO> functions) {
+            Set<FunctionResponseDTO> functions,
+            String profileImageUrl) {
 
         this.id = id;
         this.fullName = fullName;
@@ -42,6 +44,7 @@ public class PersonResponseDTO {
         this.exitDate = exitDate;
         this.workingDays = workingDays;
         this.functions = functions;
+        this.profileImageUrl = profileImageUrl;
     }
 
     public Long getId() {
@@ -86,5 +89,9 @@ public class PersonResponseDTO {
 
     public Set<FunctionResponseDTO> getFunctions() {
         return functions;
+    }  
+    
+    public String getProfileImageUrl() {
+        return profileImageUrl;
     }
 }

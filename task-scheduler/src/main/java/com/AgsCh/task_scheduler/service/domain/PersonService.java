@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
 import com.AgsCh.task_scheduler.model.Function;
@@ -12,6 +13,7 @@ import com.AgsCh.task_scheduler.model.PersonFunction;
 import com.AgsCh.task_scheduler.repository.FunctionRepository;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
+import com.AgsCh.task_scheduler.service.storage.FileStorageService;
 
 import jakarta.transaction.Transactional;
 
@@ -21,15 +23,18 @@ public class PersonService {
     private final PersonRepository repository;
     private final FunctionRepository functionRepository;
     private final AdminScheduleService scheduleService;
+    private final FileStorageService fileStorageService;
 
     public PersonService(
             PersonRepository repository,
             FunctionRepository functionRepository,
-            AdminScheduleService scheduleService) {
+            AdminScheduleService scheduleService,
+            FileStorageService fileStorageService) {
 
         this.repository = repository;
         this.functionRepository = functionRepository;
         this.scheduleService = scheduleService;
+        this.fileStorageService = fileStorageService;
     }
 
     // -------- CREATE --------
@@ -45,12 +50,10 @@ public class PersonService {
                 dto.isActive(),
                 dto.getEntryDate(),
                 dto.getExitDate(),
-                dto.getWorkingDays()
-        );
+                dto.getWorkingDays());
 
         if (dto.getFunctionIds() != null && !dto.getFunctionIds().isEmpty()) {
-            List<Function> functions =
-                    functionRepository.findAllById(dto.getFunctionIds());
+            List<Function> functions = functionRepository.findAllById(dto.getFunctionIds());
 
             for (Function f : functions) {
                 person.addPersonFunction(new PersonFunction(person, f));
@@ -88,15 +91,12 @@ public class PersonService {
         person.setWorkingDays(dto.getWorkingDays());
 
         // ---- FUNCIONES (sync real con DELETE) ----
-        Set<Long> newFunctionIds =
-                dto.getFunctionIds() != null ? dto.getFunctionIds() : Set.of();
+        Set<Long> newFunctionIds = dto.getFunctionIds() != null ? dto.getFunctionIds() : Set.of();
 
-        //eliminar relaciones que ya no estén
-        person.getPersonFunctions().removeIf(pf ->
-                !newFunctionIds.contains(pf.getFunction().getId())
-        );
+        // eliminar relaciones que ya no estén
+        person.getPersonFunctions().removeIf(pf -> !newFunctionIds.contains(pf.getFunction().getId()));
 
-        //agregar nuevas relaciones
+        // agregar nuevas relaciones
         for (Long functionId : newFunctionIds) {
 
             boolean exists = person.getPersonFunctions().stream()
@@ -118,4 +118,36 @@ public class PersonService {
         repository.deleteById(id);
         scheduleService.invalidate();
     }
+
+    // -------- UPLOAD / REPLACE PROFILE IMAGE --------
+    @Transactional
+    public String uploadProfileImage(Long personId, MultipartFile file) {
+
+        Person person = repository.findById(personId)
+                .orElseThrow(() -> new RuntimeException("Person not found"));
+
+        try {
+            // 1️⃣ borrar imagen anterior si existe
+            if (person.getProfileImagePublicId() != null) {
+                fileStorageService.deleteFile(person.getProfileImagePublicId());
+            }
+
+            // 2️⃣ subir nueva imagen usando FileStorageService
+            String newUrl = fileStorageService.uploadFile(file);
+            String newPublicId = fileStorageService.getLastUploadedPublicId(); // si tu servicio guarda el último
+                                                                               // publicId
+
+            // 3️⃣ guardar info en la entidad
+            person.setProfileImageUrl(newUrl);
+            person.setProfileImagePublicId(newPublicId);
+
+            repository.save(person);
+
+            return newUrl;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error uploading profile image", e);
+        }
+    }
+
 }
