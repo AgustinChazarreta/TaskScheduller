@@ -125,4 +125,44 @@ public final class ScheduleMapper {
         return new ScheduleResponseDTO(responses, score);
     }
 
+    /*
+     * ======================
+     * RUN → RESPONSE
+     * ======================
+     */
+
+    public static ScheduleResponseDTO toResponse(ScheduleRun run) {
+
+        if (run == null) {
+            throw new BusinessException("ScheduleRun es null");
+        }
+
+        List<FunctionAssignmentResponseDTO> responses = new ArrayList<>();
+
+        for (FunctionAssignment assignment : run.getAssignments()) {
+
+            Person person = assignment.getPerson();
+
+            String personName = person != null
+                    ? person.getFullName()
+                    : "UNASSIGNED";
+
+            String personNickname = person != null
+                    ? person.getNickName()
+                    : "";
+
+            responses.add(new FunctionAssignmentResponseDTO(
+                    assignment.getDate(),
+                    assignment.getFunction().getName(),
+                    personName,
+                    personNickname));
+        }
+
+        String score = run.getScore() != null
+                ? run.getScore()
+                : "NO_SCORE";
+
+        return new ScheduleResponseDTO(responses, score);
+    }
+
 }

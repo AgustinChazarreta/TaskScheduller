@@ -144,7 +144,14 @@ form.addEventListener("submit", async e => {
     let personId = editingPersonId;
 
     if (!editingPersonId) {
-        personId = await res.json();
+        const result = await res.json();
+        personId = result.personId;
+
+        // 🔥 Mostrar password temporal al admin
+        alert(`Usuario creado correctamente.
+        Email: ${payload.email}
+        Password temporal: ${result.temporaryPassword}
+        El usuario deberá cambiarla al ingresar.`);
     }
 
     // Subida de imagen

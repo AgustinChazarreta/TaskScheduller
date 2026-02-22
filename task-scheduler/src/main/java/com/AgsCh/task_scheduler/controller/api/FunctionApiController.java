@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,15 +28,17 @@ public class FunctionApiController {
     // -------- CREATE --------
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public void createFunctions(@RequestBody List<FunctionRequestDTO> functions) {
-        service.createFunctions(functions);
+    public void createFunctions(@RequestBody List<FunctionRequestDTO> functions, Authentication authentication) {
+        service.createFunctions(functions, authentication.getName());
     }
 
     // -------- READ --------
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public List<FunctionResponseDTO> list() {
-        return service.findAll().stream()
+
+        return service.findAll()
+                .stream()
                 .map(f -> new FunctionResponseDTO(
                         f.getId(),
                         f.getName(),

@@ -24,6 +24,8 @@ public class FunctionRequestDTO {
     @NotNull
     private boolean sequential;
 
+    public FunctionRequestDTO() {}
+
     // getters & setters
     public Long getId() {
         return id;

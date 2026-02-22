@@ -40,6 +40,10 @@ public class Function {
     @OneToMany(mappedBy = "function")
     private List<FunctionAssignment> functionAssignments = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "house_id", nullable = false)
+    private House house;
+
     // --------- Constructores ---------
     public Function() {
     }
@@ -63,10 +67,10 @@ public class Function {
         return sequential;
     }
 
-    public Set<DayOfWeek> getAssignedDays(){
+    public Set<DayOfWeek> getAssignedDays() {
         return assignedDays;
     }
-    
+
     public List<PersonFunction> getPersonFunctions() {
         return personFunctions;
     }
@@ -74,17 +78,25 @@ public class Function {
     public List<FunctionAssignment> getFunctionAssignments() {
         return functionAssignments;
     }
-    
+
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public void setSequential(boolean sequential) {
         this.sequential = sequential;
     }
-    
-    public void setAssignedDays(Set<DayOfWeek> assignedDays){
+
+    public void setAssignedDays(Set<DayOfWeek> assignedDays) {
         this.assignedDays = assignedDays;
+    }
+
+    public House getHouse() {
+        return house;
+    }
+
+    public void setHouse(House house) {
+        this.house = house;
     }
 
     @Override

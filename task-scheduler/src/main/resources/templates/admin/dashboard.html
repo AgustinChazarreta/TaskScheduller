@@ -8,16 +8,51 @@
         Admin Dashboard
     </h1>
 
+    <!-- ================= INFORMACIÓN DEL ADMIN ================= -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <h4>Información del Administrador</h4>
+        </div>
+
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
+
+            <!-- DATOS PERSONALES -->
+            <div>
+                <div class="mb-2">
+                    <strong>Usuario:</strong>
+                    <span th:text="${adminName}">Admin</span>
+                </div>
+
+                <div>
+                    <strong>Rol:</strong>
+                    <span class="badge bg-info text-dark" th:text="${role}">ADMIN</span>
+                </div>
+            </div>
+
+            <!-- CASA -->
+            <div class="text-end">
+                <strong>Casa:</strong>
+                <span class="badge bg-dark fs-6 px-3 py-2 ms-2">
+                    <span th:text="${houseName}">House Name</span>
+                </span>
+            </div>
+
+        </div>
+    </div>
+
+
     <!-- ================= ESTADO DEL SCHEDULE ================= -->
     <div class="card mb-4 shadow-sm">
         <div class="card-header">
             <h4>Estado del Schedule</h4>
         </div>
         <div class="card-body d-flex gap-4 align-items-center">
+
             <div class="me-3">
                 <strong>Última resolución:</strong>
-                <span id="lastSolvedAt">Nunca</span>
+                <span id="lastSolvedAt">Cargando...</span>
             </div>
+
             <div>
                 <strong class="me-1">Estado:</strong>
                 <span id="scheduleStatus" class="badge bg-secondary fs-5 px-2 py-1">
@@ -25,6 +60,7 @@
                 </span>
             </div>
         </div>
+
     </div>
 
     <!-- ================= ALERTAS ================= -->

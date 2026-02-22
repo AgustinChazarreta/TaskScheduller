@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.time.temporal.WeekFields;
 import java.util.Locale;
 
+import com.AgsCh.task_scheduler.model.FunctionAssignment;
+
 public class FunctionAssignmentResponseDTO {
 
     private int week;
@@ -44,5 +46,14 @@ public class FunctionAssignmentResponseDTO {
 
     public String getPersonNickname() {
         return personNickname;
+    }
+
+    public static FunctionAssignmentResponseDTO fromEntity(FunctionAssignment entity) {
+
+        return new FunctionAssignmentResponseDTO(
+                entity.getDate(),
+                entity.getFunction().getName(),
+                entity.getPerson().getFullName(),
+                entity.getPerson().getNickName());
     }
 }

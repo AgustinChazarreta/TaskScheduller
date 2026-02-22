@@ -1,48 +1,93 @@
 package com.AgsCh.task_scheduler.controller.api;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.AgsCh.task_scheduler.dto.ScheduleMapper;
 import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
-import com.AgsCh.task_scheduler.model.Schedule;
+import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
+import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.service.admin.AdminService;
+import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasRole('ADMIN')") // Toda la clase solo accesible por ADMIN
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminApiController {
 
     private final AdminService adminService;
+    private final AdminScheduleService scheduleService;
 
-    public AdminApiController(AdminService adminService) {
+    public AdminApiController(AdminService adminService,
+            AdminScheduleService scheduleService) {
         this.adminService = adminService;
+        this.scheduleService = scheduleService;
     }
 
-    // -------------------- SCHEDULE --------------------
+    /*
+     * =========================
+     * GENERAR Y RESOLVER
+     * =========================
+     */
     @PostMapping("/schedule/solve")
-    public Schedule solveSchedule(@RequestBody ScheduleRequestDTO request) {
-        return adminService.generateAndSolve(request);
+    public ScheduleResponseDTO solveSchedule(
+            @RequestBody ScheduleRequestDTO request,
+            @AuthenticationPrincipal User user) {
+
+        var solved = adminService.generateAndSolve(request, user);
+
+        return ScheduleMapper.toResponse(solved);
     }
 
-    @PostMapping("/schedule/reset")
-    public void resetSchedule() {
-        adminService.resetSchedule();
+    /*
+     * =========================
+     * VER ACTIVO
+     * =========================
+     */
+    @GetMapping("/schedule/current")
+    public ScheduleResponseDTO current(@AuthenticationPrincipal User user) {
+
+        var run = scheduleService.getActiveRunByHouse(user.getHouse().getId());
+
+        if (run == null) {
+            return null;
+        }
+
+        return ScheduleMapper.toResponse(run);
+    }
+
+    /*
+     * =========================
+     * INVALIDAR
+     * =========================
+     */
+    @PostMapping("/schedule/invalidate")
+    public void invalidate(@AuthenticationPrincipal User user) {
+        scheduleService.invalidate(user.getHouse());
     }
 
     @GetMapping("/schedule/status")
-    public ScheduleStatus getStatus() {
-        return new ScheduleStatus(adminService.isScheduleInvalidated());
+    public ResponseEntity<?> getScheduleStatus(Authentication authentication) {
+        // Obtener el nombre de usuario
+        String username = authentication.getName();
+        User user = adminService.findByUsername(username);
+
+        // Obtener el schedule activo para la casa del usuario
+        var activeRun = scheduleService.getActiveRunByHouse(user.getHouse().getId());
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("invalidated", activeRun == null);
+        response.put("lastSolvedAt",
+                activeRun != null ? activeRun.getCreatedAt() : null);
+
+        return ResponseEntity.ok(response);
     }
 
-    public static class ScheduleStatus {
-        private final boolean invalidated;
-
-        public ScheduleStatus(boolean invalidated) {
-            this.invalidated = invalidated;
-        }
-
-        public boolean isInvalidated() {
-            return invalidated;
-        }
-    }
 }

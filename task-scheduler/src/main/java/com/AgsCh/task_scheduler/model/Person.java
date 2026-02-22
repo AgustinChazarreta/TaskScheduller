@@ -59,6 +59,13 @@ public class Person {
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FunctionAssignment> functionAssignments = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "house_id", nullable = false)
+    private House house;
+
+    @OneToOne(mappedBy = "person")
+    private User user;
+
     // --------- Constructores ---------
     public Person() {
     }
@@ -211,6 +218,22 @@ public class Person {
 
     public String getProfileImagePublicId() {
         return profileImagePublicId;
+    }
+
+    public void setHouse(House house) {
+        this.house = house;
+    }
+
+    public House getHouse() {
+        return house;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     @Override

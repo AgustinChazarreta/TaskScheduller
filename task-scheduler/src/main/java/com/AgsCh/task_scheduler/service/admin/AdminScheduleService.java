@@ -1,11 +1,12 @@
 package com.AgsCh.task_scheduler.service.admin;
 
-import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.FunctionAssignment;
+import com.AgsCh.task_scheduler.model.House;
 import com.AgsCh.task_scheduler.model.Schedule;
 import com.AgsCh.task_scheduler.model.ScheduleRun;
 import com.AgsCh.task_scheduler.repository.ScheduleRunRepository;
@@ -19,10 +20,6 @@ public class AdminScheduleService {
     private final ScheduleService solverService;
     private final ScheduleRunRepository scheduleRunRepository;
 
-    private Schedule currentSchedule;
-    private boolean invalidated = true;
-    private LocalDateTime lastSolvedAt;
-
     public AdminScheduleService(
             ScheduleService solverService,
             ScheduleRunRepository scheduleRunRepository) {
@@ -33,89 +30,80 @@ public class AdminScheduleService {
 
     /*
      * =========================
-     * LIFECYCLE
+     * GENERAR Y RESOLVER
      * =========================
      */
 
-    public void loadSchedule(Schedule schedule) {
-        if (schedule == null) {
-            throw new BusinessException("No se puede cargar un Schedule nulo");
-        }
-        this.currentSchedule = schedule;
-        this.invalidated = true;
-        this.lastSolvedAt = null;
-    }
-
     @Transactional
-    public Schedule solve() {
+    public Schedule solve(Schedule schedule, House house) {
 
-        if (currentSchedule == null) {
-            throw new BusinessException("No hay un Schedule cargado para resolver");
+        if (schedule == null) {
+            throw new BusinessException("No hay Schedule para resolver");
         }
 
-        if (currentSchedule.getStartDate() == null || currentSchedule.getEndDate() == null) {
+        if (schedule.getStartDate() == null || schedule.getEndDate() == null) {
             throw new BusinessException("El Schedule no tiene rango de fechas definido");
         }
 
-        // 1️⃣ Archivar run activo anterior (si existe)
-        scheduleRunRepository.archiveActiveRun(
+        // 1️⃣ Archivar run activo de esa house (si existe)
+        scheduleRunRepository.archiveActiveRunByHouse(
                 ScheduleRun.Status.ARCHIVED,
-                ScheduleRun.Status.ACTIVE);
+                ScheduleRun.Status.ACTIVE,
+                house.getId());
 
         // 2️⃣ Resolver con OptaPlanner
-        currentSchedule = solverService.solve(currentSchedule);
+        Schedule solvedSchedule = solverService.solve(schedule);
 
-        if (currentSchedule.getScore() == null) {
+        if (solvedSchedule.getScore() == null) {
             throw new BusinessException("El solver no devolvió score");
         }
 
-        // 3️⃣ Crear nuevo run (queda ACTIVE por defecto)
+        // 3️⃣ Crear nuevo run
         ScheduleRun run = new ScheduleRun(
-                currentSchedule.getStartDate(),
-                currentSchedule.getEndDate());
+                solvedSchedule.getStartDate(),
+                solvedSchedule.getEndDate(),
+                solvedSchedule.getScore().toString(),
+                house);
 
+        run.setHouse(house); // 🔥 AISLAMIENTO MULTI-HOUSE
         run.setStatus(ScheduleRun.Status.ACTIVE);
-        run.setScore(currentSchedule.getScore().toString());
+        run.setScore(solvedSchedule.getScore().toString());
 
         // 4️⃣ Asociar assignments
-        for (FunctionAssignment assignment : currentSchedule.getFunctionAssignmentList()) {
+        for (FunctionAssignment assignment : solvedSchedule.getFunctionAssignmentList()) {
             run.addAssignment(assignment);
         }
 
         // 5️⃣ Guardar
         scheduleRunRepository.save(run);
 
-        invalidated = false;
-        lastSolvedAt = LocalDateTime.now();
-
-        return currentSchedule;
+        return solvedSchedule;
     }
 
-    public void reset() {
-        currentSchedule = null;
-        invalidated = true;
-        lastSolvedAt = null;
+    /*
+     * =========================
+     * OBTENER RUN ACTIVO
+     * =========================
+     */
+
+    public ScheduleRun getActiveRunByHouse(Long houseId) {
+        Optional<ScheduleRun> run = scheduleRunRepository
+                .findByHouseIdAndStatus(houseId, ScheduleRun.Status.ACTIVE);
+
+        return run.orElse(null);
     }
 
-    public Schedule getCurrentSchedule() {
-        return currentSchedule;
-    }
-
-    public boolean isInvalidated() {
-        return invalidated;
-    }
+    /*
+     * =========================
+     * INVALIDAR (archivar activo)
+     * =========================
+     */
 
     @Transactional
-    public void invalidate() {
-
-        scheduleRunRepository.archiveActiveRun(
+    public void invalidate(House house) {
+        scheduleRunRepository.archiveActiveRunByHouse(
                 ScheduleRun.Status.ARCHIVED,
-                ScheduleRun.Status.ACTIVE);
-
-        this.invalidated = true;
-    }
-
-    public LocalDateTime getLastSolvedAt() {
-        return lastSolvedAt;
+                ScheduleRun.Status.ACTIVE,
+                house.getId());
     }
 }

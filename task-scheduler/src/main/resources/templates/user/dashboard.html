@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout(~{::section})}">
+
+<section>
+
+    <h1 class="mb-4">
+        <i class="bi bi-person-circle me-2"></i>
+        Mi Panel
+    </h1>
+
+    <!-- ALERTAS -->
+    <div id="alertContainer"></div>
+
+    <!-- ========================= -->
+    <!-- PERFIL -->
+    <!-- ========================= -->
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Mi Perfil</h3>
+            <button class="btn btn-sm btn-outline-primary" onclick="enableEdit()">
+                Editar
+            </button>
+        </div>
+
+        <div class="card-body" id="profileContainer">
+            <p class="text-muted">Cargando datos...</p>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- SCHEDULE -->
+    <!-- ========================= -->
+
+    <h2 class="mb-3">
+        <i class="bi bi-calendar-week me-2"></i>
+        Mi Agenda
+    </h2>
+
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header text-center fw-bold" id="weekLabel">
+            Cargando semana...
+        </div>
+    </div>
+
+    <div id="assignmentsContainer"
+         class="d-flex flex-wrap justify-content-center"
+         style="gap: 1.5rem;">
+    </div>
+
+    <script src="/js/csrf.js"></script>
+    <script src="/js/user-dashboard.js"></script>
+
+</section>
+
+</html>

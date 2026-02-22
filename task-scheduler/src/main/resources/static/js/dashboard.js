@@ -25,7 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadScheduleStatus() {
     try {
         const response = await fetch('/api/admin/schedule/status');
-        if (!response.ok) throw new Error();
+
+        // Si el backend devuelve 404, lo tratamos como estado inicial
+        if (response.status === 404) {
+            setScheduleInvalid();
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error('Error HTTP ' + response.status);
+        }
 
         const data = await response.json();
 
@@ -38,12 +47,31 @@ async function loadScheduleStatus() {
             : 'badge bg-success bg-gradient fs-5 px-2 py-1';
 
         lastSolved.textContent =
-            sessionStorage.getItem('lastSolvedAt') || 'Nunca';
+            data.lastSolvedAt
+                ? new Date(data.lastSolvedAt).toLocaleString()
+                : 'Nunca';
 
-    } catch {
-        showAlert('No se pudo cargar el estado del schedule', 'danger');
+    } catch (error) {
+        console.error('Error real cargando schedule:', error);
+
+        // 👇 En vez de mostrar alerta roja,
+        // simplemente lo tratamos como estado inicial
+        setScheduleInvalid();
     }
 }
+
+function setScheduleInvalid() {
+    const statusBadge = document.getElementById('scheduleStatus');
+    const lastSolved = document.getElementById('lastSolvedAt');
+
+    statusBadge.textContent = 'Inválido';
+    statusBadge.className =
+        'badge bg-danger bg-gradient fs-5 px-2 py-1';
+
+    lastSolved.textContent = 'Nunca';
+}
+
+
 
 /* =====================================================
    FORMULARIO

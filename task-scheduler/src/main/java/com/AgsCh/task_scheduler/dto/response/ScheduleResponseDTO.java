@@ -5,7 +5,7 @@ import java.util.List;
 public class ScheduleResponseDTO {
 
     private List<PersonResponseDTO> persons;
-    private List<FunctionResponseDTO> tasks;
+    private List<FunctionResponseDTO> functions;
     private List<FunctionAssignmentResponseDTO> assignments;
     private String score;
 
@@ -16,17 +16,17 @@ public class ScheduleResponseDTO {
     }
 
     public ScheduleResponseDTO(List<PersonResponseDTO> persons,
-            List<FunctionResponseDTO> tasks,
+            List<FunctionResponseDTO> functions,
             List<FunctionAssignmentResponseDTO> assignments,
             String score) {
         this.persons = persons;
-        this.tasks = tasks;
+        this.functions = functions;
         this.assignments = assignments;
         this.score = score;
     }
 
     public List<PersonResponseDTO> getPersons() { return persons; }
-    public List<FunctionResponseDTO> getTasks() { return tasks; }
+    public List<FunctionResponseDTO> getFunctions() { return functions; }
     public List<FunctionAssignmentResponseDTO> getAssignments() { return assignments; }
     public String getScore() { return score; }
     

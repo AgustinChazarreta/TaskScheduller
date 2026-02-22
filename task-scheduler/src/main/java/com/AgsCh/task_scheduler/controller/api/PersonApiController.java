@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
 import com.AgsCh.task_scheduler.dto.response.FunctionResponseDTO;
+import com.AgsCh.task_scheduler.dto.response.PersonCreatedResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonResponseDTO;
 import com.AgsCh.task_scheduler.model.PersonFunction;
 import com.AgsCh.task_scheduler.service.domain.PersonService;
@@ -27,8 +28,8 @@ public class PersonApiController {
     // -------- CREATE --------
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Long create(@RequestBody PersonRequestDTO dto) {
-        return service.create(dto).getId();
+    public PersonCreatedResponseDTO create(@RequestBody PersonRequestDTO dto) {
+        return service.create(dto);
     }
 
     // -------- READ --------

@@ -227,7 +227,12 @@ async function saveFunctions() {
         });
 
 
-        if (!res.ok) return alert("Error guardando funciones");
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("Error backend:", text);
+            return alert("Error guardando funciones");
+        }
+
 
         // Limpiar draft
         Object.keys(draftFunctions).forEach(k => delete draftFunctions[k]);

@@ -4,81 +4,83 @@ import org.springframework.stereotype.Service;
 
 import com.AgsCh.task_scheduler.dto.ScheduleMapper;
 import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
+import com.AgsCh.task_scheduler.model.Role;
 import com.AgsCh.task_scheduler.model.Schedule;
+import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
+import com.AgsCh.task_scheduler.repository.UserRepository;
 import com.AgsCh.task_scheduler.repository.FunctionRepository;
-import com.AgsCh.task_scheduler.service.solver.ScheduleService;
 
 @Service
 public class AdminService {
 
     private final AdminScheduleService adminScheduleService;
-    private final ScheduleService solverService;
-    private final FunctionRepository taskRepository;
+    private final FunctionRepository functionRepository;
     private final PersonRepository personRepository;
+    private final UserRepository userRepository;
 
     public AdminService(
             AdminScheduleService adminScheduleService,
-            ScheduleService solverService,
-            FunctionRepository taskRepository,
+            FunctionRepository functionRepository,
+            UserRepository userRepository,
             PersonRepository personRepository) {
 
         this.adminScheduleService = adminScheduleService;
-        this.solverService = solverService;
-        this.taskRepository = taskRepository;
+        this.functionRepository = functionRepository;
         this.personRepository = personRepository;
+        this.userRepository = userRepository;
     }
 
-    /* =========================
-     * SCHEDULE
-     * ========================= */
-
-    /**
-     * Genera y resuelve un nuevo Schedule
+    /*
+     * =========================
+     * GENERAR Y RESOLVER
+     * =========================
      */
-    public Schedule generateAndSolve(ScheduleRequestDTO request) {
+    public Schedule generateAndSolve(ScheduleRequestDTO request, User user) {
 
         // 1️⃣ DTO → dominio
         Schedule schedule = ScheduleMapper.toModel(
                 request,
-                taskRepository,
-                personRepository
-        );
+                functionRepository,
+                personRepository);
 
-        // 2️⃣ cargar en memoria
-        adminScheduleService.loadSchedule(schedule);
-
-        // 3️⃣ resolver
-        Schedule solved = solverService.solve(schedule);
-
-        return solved;
+        // 2️⃣ Resolver y persistir por house
+        return adminScheduleService.solve(schedule, user.getHouse());
     }
 
-    /**
-     * Obtiene el schedule actual (si existe)
-     */
-    public Schedule getCurrentSchedule() {
-        return adminScheduleService.getCurrentSchedule();
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    /**
-     * Resuelve nuevamente el schedule cargado
-     */
-    public Schedule resolveCurrent() {
-        return adminScheduleService.solve();
+    // actualizar admin
+    public User updateAdmin(Long id, String username, boolean active) {
+        User admin = getAdminById(id); // buscar admin por id
+        admin.setUsername(username); // actualizar username
+        admin.setActive(active); // actualizar estado
+        return userRepository.save(admin); // guardar cambios
     }
 
-    /**
-     * Borra el schedule actual
-     */
-    public void resetSchedule() {
-        adminScheduleService.reset();
+    // eliminar admin
+    public void deleteAdmin(Long id) {
+        User admin = getAdminById(id); // verificar que exista
+        userRepository.delete(admin);
     }
 
-    /**
-     * Estado de validez
-     */
-    public boolean isScheduleInvalidated() {
-        return adminScheduleService.isInvalidated();
+    // obtener admin por id
+    public User getAdminById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        if (!user.getRole().equals(Role.ADMIN)) {
+            throw new RuntimeException("User is not an admin");
+        }
+        return user;
+    }
+
+    // opcional: obtener houseId del admin (para redirección)
+    public Long getHouseIdByAdmin(Long id) {
+        User admin = getAdminById(id);
+        return admin.getHouse().getId();
     }
 }

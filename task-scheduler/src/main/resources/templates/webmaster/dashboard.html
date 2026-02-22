@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+    th:replace="~{layout/main :: layout(~{::section})}">
+
+<section class="container-fluid py-3 dashboard-bg">
+
+    <!-- ================= HEADER ================= -->
+    <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+                <h2 class="fw-bold mb-1">Panel Global</h2>
+                <p class="text-muted mb-0">Vista general del sistema</p>
+            </div>
+
+            <div>
+                <div class="d-flex align-items-center gap-2 bg-dark px-3 py-2 rounded-pill text-white">
+                    <i class="bi bi-person-circle fs-5"></i>
+                    <span class="fw-semibold" sec:authentication="name"></span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ================= KPIs ================= -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-3">
+            <div class="card kpi-card kpi-compact h-100">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-3">
+
+                    <div class="text-primary fs-4 mb-2">
+                        <i class="bi bi-house-door"></i>
+                    </div>
+
+                    <div class="text-muted small fw-bold">Houses</div>
+
+                    <div class="fs-4 fw-bold my-1" th:text="${totalHouses}">0</div>
+
+                    <small class="text-muted">
+                        Registradas en el sistema
+                    </small>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card kpi-card kpi-compact h-100">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-3">
+
+                    <div class="text-success fs-4 mb-2">
+                        <i class="bi bi-people"></i>
+                    </div>
+
+                    <div class="text-muted small fw-bold">Usuarios</div>
+
+                    <div class="fs-4 fw-bold my-1" th:text="${totalUsers}">0</div>
+
+                    <small class="text-muted">
+                        Total de Usuarios registrados
+                    </small>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card kpi-card kpi-compact h-100">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-3">
+
+                    <div class="text-warning fs-4 mb-2">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+
+                    <div class="text-muted small fw-bold">Admins</div>
+
+                    <div class="fs-4 fw-bold my-1" th:text="${totalAdmins}">0</div>
+
+                    <small class="text-muted">
+                        Con permisos administrativos
+                    </small>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card kpi-card kpi-compact h-100">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-3">
+
+                    <div class="text-success fs-4 mb-2">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+
+                    <div class="text-muted small fw-bold">Estado</div>
+
+                    <div class="fs-5 fw-bold text-success my-1">
+                        Operativo
+                    </div>
+
+                    <small class="text-muted">
+                        Sistema funcionando correctamente
+                    </small>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ================= MODULOS PRINCIPALES ================= -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-4">Módulos del Sistema</h5>
+
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <a th:href="@{/webmaster/houses}" class="text-decoration-none text-dark">
+                        <div class="p-4 bg-light rounded-4 h-100 module-hover">
+                            <i class="bi bi-house-door fs-3 text-primary mb-3 d-block"></i>
+                            <h6 class="fw-semibold">Gestión de Houses</h6>
+                            <small class="text-muted">Administrar estructuras del sistema</small>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="/webmaster/users" class="text-decoration-none text-dark">
+                        <div class="p-4 bg-light rounded-4 h-100 module-hover">
+                            <i class="bi bi-people fs-3 text-success mb-3 d-block"></i>
+                            <h6 class="fw-semibold">Cuentas</h6>
+                            <small class="text-muted">Control de usuarios y admins</small>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="/webmaster/roles" class="text-decoration-none text-dark">
+                        <div class="p-4 bg-light rounded-4 h-100 module-hover">
+                            <i class="bi bi-shield-lock fs-3 text-warning mb-3 d-block"></i>
+                            <h6 class="fw-semibold">Roles & Permisos</h6>
+                            <small class="text-muted">Configuración de seguridad</small>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="/webmaster/settings" class="text-decoration-none text-dark">
+                        <div class="p-4 bg-light rounded-4 h-100 module-hover">
+                            <i class="bi bi-sliders fs-3 text-info mb-3 d-block"></i>
+                            <h6 class="fw-semibold">Configuración</h6>
+                            <small class="text-muted">Parámetros generales del sistema</small>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="/webmaster/logs" class="text-decoration-none text-dark">
+                        <div class="p-4 bg-light rounded-4 h-100 module-hover">
+                            <i class="bi bi-file-earmark-text fs-3 text-secondary mb-3 d-block"></i>
+                            <h6 class="fw-semibold">Logs</h6>
+                            <small class="text-muted">Auditoría y seguimiento</small>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <a href="/webmaster/backup" class="text-decoration-none text-dark">
+                        <div class="p-4 bg-light rounded-4 h-100 module-hover">
+                            <i class="bi bi-database-check fs-3 text-danger mb-3 d-block"></i>
+                            <h6 class="fw-semibold">Backup</h6>
+                            <small class="text-muted">Respaldo y restauración</small>
+                        </div>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= ACTIVIDAD RECIENTE ================= -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-4">Actividad Reciente</h5>
+
+            <div th:if="${#lists.isEmpty(recentEvents)}">
+                <p class="text-muted mb-0">No hay actividad reciente.</p>
+            </div>
+
+            <ul class="list-group list-group-flush" th:if="${!#lists.isEmpty(recentEvents)}">
+
+                <li class="list-group-item px-0" th:each="event : ${recentEvents}">
+                    <small class="text-muted" th:text="${event.date}"></small>
+                    <div class="fw-semibold" th:text="${event.description}"></div>
+                </li>
+
+            </ul>
+
+        </div>
+    </div>
+
+</section>
+
+</html>

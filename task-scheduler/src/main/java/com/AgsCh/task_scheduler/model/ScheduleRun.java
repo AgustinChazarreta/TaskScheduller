@@ -41,8 +41,12 @@ public class ScheduleRun {
     /**
      * Resultados concretos de esta corrida
      */
-    @OneToMany(mappedBy = "scheduleRun", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "scheduleRun", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<FunctionAssignment> assignments = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "house_id", nullable = false)
+    private House house;
 
     // =========================
     // CONSTRUCTORS
@@ -52,9 +56,11 @@ public class ScheduleRun {
         // requerido por JPA
     }
 
-    public ScheduleRun(LocalDate startDate, LocalDate endDate) {
+    public ScheduleRun(LocalDate startDate, LocalDate endDate, String score, House house) {
         this.startDate = startDate;
         this.endDate = endDate;
+        this.score = score;
+        this.house = house;
         this.status = Status.ACTIVE;
     }
 
@@ -82,11 +88,6 @@ public class ScheduleRun {
     public void addAssignment(FunctionAssignment assignment) {
         assignment.setScheduleRun(this);
         this.assignments.add(assignment);
-    }
-
-    public void finish(String score) {
-        this.score = score;
-        this.status = Status.ARCHIVED;
     }
 
     // =========================
@@ -127,6 +128,14 @@ public class ScheduleRun {
 
     public List<FunctionAssignment> getAssignments() {
         return assignments;
+    }
+
+    public House getHouse() {
+        return house;
+    }
+
+    public void setHouse(House house) {
+        this.house = house;
     }
 
     // =========================
