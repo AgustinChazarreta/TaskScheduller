@@ -159,6 +159,20 @@
         .kpi-compact small {
             font-size: 0.75rem;
         }
+
+        .dashboard-card {
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .dashboard-card:hover i {
+            transform: scale(1.05);
+            transition: transform 0.25s ease;
+        }
     </style>
 </head>
 

@@ -47,4 +47,5 @@ public interface ScheduleRunRepository extends JpaRepository<ScheduleRun, Long> 
     * =========================
     */
     List<ScheduleRun> findByHouse_IdOrderByCreatedAtDesc(Long houseId);
+    Optional<ScheduleRun> findTopByHouse_IdOrderByCreatedAtDesc(Long houseId);
 }

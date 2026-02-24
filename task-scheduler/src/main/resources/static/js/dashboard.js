@@ -26,7 +26,6 @@ async function loadScheduleStatus() {
     try {
         const response = await fetch('/api/admin/schedule/status');
 
-        // Si el backend devuelve 404, lo tratamos como estado inicial
         if (response.status === 404) {
             setScheduleInvalid();
             return;
@@ -42,20 +41,32 @@ async function loadScheduleStatus() {
         const lastSolved = document.getElementById('lastSolvedAt');
 
         statusBadge.textContent = data.invalidated ? 'Inválido' : 'Válido';
-        statusBadge.className = data.invalidated
-            ? 'badge bg-danger bg-gradient fs-5 px-2 py-1'
-            : 'badge bg-success bg-gradient fs-5 px-2 py-1';
+        // Mantiene tamaño y padding, solo cambia colores
+        statusBadge.classList.remove(
+            'bg-success-subtle',
+            'text-success',
+            'bg-danger-subtle',
+            'text-danger'
+        );
 
-        lastSolved.textContent =
-            data.lastSolvedAt
-                ? new Date(data.lastSolvedAt).toLocaleString()
-                : 'Nunca';
+        if (data.invalidated) {
+            statusBadge.classList.add('bg-danger-subtle', 'text-danger');
+        } else {
+            statusBadge.classList.add('bg-success-subtle', 'text-success');
+        }
+
+        const solvedText = data.lastSolvedAt
+            ? new Date(data.lastSolvedAt).toLocaleString()
+            : 'Nunca';
+
+        lastSolved.innerHTML = `
+            <span class="badge bg-secondary-subtle text-dark px-3 py-2 fs-6 fw-bold">
+                ${solvedText}
+            </span>
+        `;
 
     } catch (error) {
         console.error('Error real cargando schedule:', error);
-
-        // 👇 En vez de mostrar alerta roja,
-        // simplemente lo tratamos como estado inicial
         setScheduleInvalid();
     }
 }
@@ -65,13 +76,21 @@ function setScheduleInvalid() {
     const lastSolved = document.getElementById('lastSolvedAt');
 
     statusBadge.textContent = 'Inválido';
-    statusBadge.className =
-        'badge bg-danger bg-gradient fs-5 px-2 py-1';
+    statusBadge.classList.remove(
+        'bg-success-subtle',
+        'text-success',
+        'bg-danger-subtle',
+        'text-danger'
+    );
 
-    lastSolved.textContent = 'Nunca';
+    statusBadge.classList.add('bg-danger-subtle', 'text-danger');
+
+    lastSolved.innerHTML = `
+    <span class="badge bg-secondary-subtle text-dark px-3 py-2 fs-6 fw-bold">
+        Nunca
+    </span>
+`;
 }
-
-
 
 /* =====================================================
    FORMULARIO
@@ -98,7 +117,6 @@ function bindForm() {
             .map(p => p.id);
 
         try {
-            // 👇 ACA MOSTRAMOS EL SPINNER
             showSchedulerLoading();
 
             const response = await secureFetch('/api/schedule/solve', {
@@ -112,9 +130,7 @@ function bindForm() {
                     personIds: activePersonIds,
                     functionIds: Object.values(functionsCache).map(f => f.id)
                 })
-
             });
-
 
             if (!response.ok) {
                 throw new Error('Error al resolver el schedule');
@@ -132,11 +148,10 @@ function bindForm() {
                 new Date().toLocaleString()
             );
 
-            // ⛔ no hace falta ocultar spinner, redireccionás
             window.location.href = '/results';
 
         } catch (error) {
-            hideSchedulerLoading(); // 👈 SOLO si falla
+            hideSchedulerLoading();
             showAlert(error.message, 'danger');
             console.error(error);
         }
@@ -202,15 +217,10 @@ async function loadPersons() {
 async function loadFunctions() {
     try {
         const response = await fetch('/api/functions');
-        console.log('functions response status:', response.status);
-
         if (!response.ok) throw new Error('HTTP ' + response.status);
 
         const data = await response.json();
-        console.log('functions raw data:', data);
-
         const functions = Array.isArray(data) ? data : Object.values(data);
-        console.log('functions parsed:', functions);
 
         functions.forEach(f => functionsCache[f.id] = f);
         renderFunctions(functions);
@@ -222,7 +232,7 @@ async function loadFunctions() {
 }
 
 /* =====================================================
-RENDER
+   RENDER
 ===================================================== */
 
 function renderPersons(persons) {
@@ -235,32 +245,68 @@ function renderPersons(persons) {
     }
 
     container.innerHTML = `
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Cumpleaños</th>
-                    <th>Email</th>
-                    <th class="text-center">Estado</th>
-                    <th class="text-center">Días disponibles</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${persons.map(p => `
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <td>${p.fullName}${p.nickName ? ` (${p.nickName})` : ""}</td>
-                        <td>${p.birthDate}</td>
-                        <td>${p.email}</td>
-                        <td class="text-center">
-                            <span class="badge ${p.active ? "bg-success" : "bg-secondary"}">
-                                ${p.active ? "Activo" : "Inactivo"}
-                            </span>
-                        </td>
-                        <td class = "text-center">${formatDays(p.workingDays)}</td>
+                        <th style="width: 40px;"></th>
+                        <th>Nombre</th>
+                        <th>Cumpleaños</th>
+                        <th>Email</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-center">Días disponibles</th>
                     </tr>
-                `).join('')}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    ${persons.map(p => `
+                        <tr>
+
+                            <!-- Ícono -->
+                            <td class="text-center">
+                                <i class="bi bi-person-circle text-secondary fs-5"></i>
+                            </td>
+
+                            <!-- Nombre -->
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-semibold fs-6">
+                                    ${p.fullName}${p.nickName ? ` (${p.nickName})` : ""}
+                                </span>
+                            </td>
+
+                            <!-- Cumpleaños -->
+                            <td>
+                                <span class="badge bg-light text-dark px-3 py-2 fw-semibold border">
+                                    ${p.birthDate}
+                                </span>
+                            </td>
+
+                            <!-- Email -->
+                            <td>
+                                <span class="badge bg-secondary-subtle text-secondary px-3 py-2 fw-semibold">
+                                    ${p.email}
+                                </span>
+                            </td>
+
+                            <!-- Estado -->
+                            <td class="text-center">
+                                <span class="badge ${p.active
+                                    ? "bg-success-subtle text-success"
+                                    : "bg-danger-subtle text-danger"
+                                } px-3 py-2 fw-bold">
+                                    ${p.active ? "Activo" : "Inactivo"}
+                                </span>
+                            </td>
+
+                            <!-- Días -->
+                            <td class="text-center">
+                                ${formatDays(p.workingDays)}
+                            </td>
+
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
     `;
 }
 
@@ -274,34 +320,59 @@ function renderFunctions(functions) {
     }
 
     container.innerHTML = `
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th>Función</th>
-                    <th>Tipo de Función</th>
-                    <th>Días asignados</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${functions.map(f => `
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <td>${f.name}</td>
-                        <td>
-                            <span class="badge ${f.sequential ? "bg-warning text-dark" : "bg-secondary"} bg-gradient me-1">
-                            ${f.sequential ? "Recurrente" : "Una vez"}
-                            </span>
-                        </td>
-                        <td>${formatDays(f.assignedDays)}</td>
+                        <th style="width: 40px;"></th>
+                        <th>Función</th>
+                        <th>Tipo</th>
+                        <th>Días asignados</th>
                     </tr>
-                `).join('')}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    ${functions.map(f => `
+                        <tr>
+
+                            <!-- Ícono -->
+                            <td class="text-center">
+                                <i class="bi bi-gear text-secondary fs-5"></i>
+                            </td>
+
+                            <!-- Nombre -->
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-semibold fs-6">
+                                    ${f.name}
+                                </span>
+                            </td>
+
+                            <!-- Tipo -->
+                            <td>
+                                <span class="badge ${f.sequential
+                                    ? "bg-info-subtle text-primary"
+                                    : "bg-secondary-subtle text-secondary"
+                                } px-3 py-2 fw-bold">
+                                ${f.sequential ? "Recurrente" : "Una vez"}
+                                </span>
+                            </td>
+
+                            <!-- Días -->
+                            <td>
+                                ${formatDays(f.assignedDays)}
+                            </td>
+
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
     `;
 }
 
 /* =====================================================
    UTILS
 ===================================================== */
+
 function formatDays(days = []) {
     const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
     const labels = {
@@ -316,13 +387,13 @@ function formatDays(days = []) {
 
     return order
         .filter(d => days.includes(d))
-        .map(d => `<span class="badge bg-danger bg-gradient me-1">${labels[d]}</span>`)
+        .map(d => `<span class="badge bg-warning-subtle text-warning me-1">${labels[d]}</span>`)
         .join("");
 }
 
 function showAlert(message, type) {
     document.getElementById('alertContainer').innerHTML = `
-        <div class="alert alert-${type} alert-dismissible fade show">
+        <div class="alert alert-${type} alert-dismissible fade show rounded-3 shadow-sm">
             ${message}
             <button type="button"
                     class="btn-close"
@@ -338,6 +409,7 @@ function clearAlerts() {
 /* =====================================================
    OVERLAY
 ===================================================== */
+
 function showSchedulerLoading() {
     document.getElementById('resolveBtn').disabled = true;
     document.getElementById('resolveText').classList.add('d-none');

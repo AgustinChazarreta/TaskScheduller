@@ -26,6 +26,9 @@ public class Function {
     @Column(nullable = false)
     private boolean sequential;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "function_assigned_days", joinColumns = @JoinColumn(name = "function_id"))
     @Column(name = "assigned_day")
@@ -67,6 +70,10 @@ public class Function {
         return sequential;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
     public Set<DayOfWeek> getAssignedDays() {
         return assignedDays;
     }
@@ -89,6 +96,10 @@ public class Function {
 
     public void setAssignedDays(Set<DayOfWeek> assignedDays) {
         this.assignedDays = assignedDays;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public House getHouse() {

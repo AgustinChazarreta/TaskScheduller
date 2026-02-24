@@ -7,11 +7,7 @@ const modalEl = document.getElementById("functionModal");
 const modalTitle = document.getElementById("modalTitle");
 
 let editingFunctionId = null;
-
-// Tareas persistidas en DB
 const functionCache = {};
-
-// Tareas preliminares (solo en front, antes de guardar)
 const draftFunctions = {};
 
 /* ===========================================
@@ -20,37 +16,38 @@ const draftFunctions = {};
 function formatDays(days) {
     const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
     const labels = { MONDAY: "Lunes", TUESDAY: "Martes", WEDNESDAY: "Miércoles", THURSDAY: "Jueves", FRIDAY: "Viernes", SATURDAY: "Sábado", SUNDAY: "Domingo" };
-    return order.filter(d => days.includes(d)).map(d => `<span class="badge bg-danger bg-gradient me-1">${labels[d]}</span>`).join("");
+    return order.filter(d => days.includes(d)).map(d => `<span class="badge bg-primary-subtle text-primary me-1">${labels[d]}</span>`).join("");
 }
 
 /* ===========================================
-    RENDER (UNIFICADO)
+    RENDER
 =========================================== */
 function render(tasks) {
     tbody.innerHTML = "";
 
     if (!Object.keys(tasks).length) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Sin tareas</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">Sin funciones</td></tr>`;
         return;
     }
 
     Object.values(tasks)
         .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
-        .forEach(f => {
+        .forEach((f, index) => {
             tbody.insertAdjacentHTML("beforeend", `
                 <tr>
-                    <td>${f.name}</td>
+                    <td class="text-center fw-semibold">${index + 1}</td>
+                    <td class="fw-semibold">${f.name}</td>
                     <td>
-                        <span class="badge ${f.sequential ? "bg-warning text-dark" : "bg-secondary"} bg-gradient me-1">
+                        <span class="badge ${f.sequential ? "bg-warning text-dark" : "bg-secondary"} me-1">
                             ${f.sequential ? "Recurrente" : "Una vez"}
                         </span>
                     </td>
                     <td>${formatDays(f.assignedDays || [])}</td>
                     <td class="text-end">
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editFunction('${f.id || f.name}')">
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill me-1" onclick="editFunction('${f.id || f.name}')">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteFunction('${f.id || f.name}')">
+                        <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteFunction('${f.id || f.name}')">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -67,7 +64,6 @@ async function loadFunctions() {
     if (!res.ok) return;
 
     const data = await res.json();
-
     Object.keys(functionCache).forEach(k => delete functionCache[k]);
     data.forEach(t => functionCache[t.id] = t);
 
@@ -77,7 +73,7 @@ async function loadFunctions() {
 document.addEventListener("DOMContentLoaded", loadFunctions);
 
 /* ===========================================
-    LOAD WORD (PREVIEW)
+    LOAD WORD
 =========================================== */
 async function loadFunctionsFromWord() {
     const file = document.getElementById("wordFile").files[0];
@@ -94,7 +90,6 @@ async function loadFunctionsFromWord() {
     if (!res.ok) return alert("Error leyendo el Word");
 
     const data = await res.json();
-
     Object.entries(data).forEach(([name, days]) => {
         if (!functionCache[name] && !draftFunctions[name]) {
             draftFunctions[name] = { name, assignedDays: days, sequential: true };
@@ -122,17 +117,13 @@ function editFunction(key) {
 
     document.getElementById("functionName").value = functionData.name;
     document.getElementById("sequential").value = String(functionData.sequential);
-
-    // 🔥 días (Select2)
-    $("#personDays")
-        .val(functionData.assignedDays)
-        .trigger("change");
+    $("#personDays").val(functionData.assignedDays).trigger("change");
 
     new bootstrap.Modal(modalEl).show();
 }
 
 /* ===========================================
-    CREATE / UPDATE (FRONT ONLY)
+    CREATE / UPDATE
 =========================================== */
 form.addEventListener("submit", async e => {
     e.preventDefault();
@@ -143,28 +134,18 @@ form.addEventListener("submit", async e => {
 
     if (!days.length) return alert("Seleccioná al menos un día");
 
-    const functionData = {
-        name,
-        assignedDays: days,
-        sequential
-    };
+    const functionData = { name, assignedDays: days, sequential };
 
     if (editingFunctionId) {
-        if (draftFunctions[editingFunctionId]) {
-            draftFunctions[editingFunctionId] = functionData;
-        } else if (functionCache[editingFunctionId]) {
+        if (draftFunctions[editingFunctionId]) draftFunctions[editingFunctionId] = functionData;
+        else if (functionCache[editingFunctionId]) {
             try {
                 await secureFetch(`/api/functions/${editingFunctionId}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(functionData)
                 });
-
-                functionCache[editingFunctionId] = {
-                    ...functionCache[editingFunctionId],
-                    ...functionData,
-                    dirty: true
-                };
+                functionCache[editingFunctionId] = { ...functionCache[editingFunctionId], ...functionData, dirty: true };
             } catch {
                 return alert("Error actualizando la función");
             }
@@ -178,12 +159,10 @@ form.addEventListener("submit", async e => {
     render({ ...functionCache, ...draftFunctions });
 });
 
-
 function resetForm() {
     editingFunctionId = null;
-    modalTitle.textContent = "Agregar tarea";
+    modalTitle.textContent = "Agregar función";
     form.reset();
-    // 🔥 limpiar select2 de días
     $("#personDays").val(null).trigger("change");
 }
 
@@ -208,64 +187,35 @@ async function deleteFunction(key) {
 }
 
 /* ===========================================
-    SAVE (PERSISTIR DRAFTS)
+    SAVE
 =========================================== */
 async function saveFunctions() {
     const fdraft = Object.values(draftFunctions);
     const dirtyPersisted = Object.values(functionCache).some(t => t.dirty);
 
-    if (!fdraft.length && !dirtyPersisted) {
-        return alert("No hay funciones nuevas ni cambios pendientes para guardar.");
-    }
+    if (!fdraft.length && !dirtyPersisted) return alert("No hay funciones nuevas ni cambios pendientes para guardar.");
 
-    // Guardar solo drafts
     if (fdraft.length) {
         const res = await secureFetch("/api/functions", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(fdraft)
         });
-
-
-        if (!res.ok) {
-            const text = await res.text();
-            console.error("Error backend:", text);
-            return alert("Error guardando funciones");
-        }
-
-
-        // Limpiar draft
+        if (!res.ok) { const text = await res.text(); console.error("Error backend:", text); return alert("Error guardando funciones"); }
         Object.keys(draftFunctions).forEach(k => delete draftFunctions[k]);
     }
 
-    // Limpiar flags dirty de persistidas
     Object.values(functionCache).forEach(t => t.dirty = false);
-
-    // Recargar todo
     await loadFunctions();
-
     alert("Funciones guardadas correctamente");
 }
 
-/* ===============================
-   SELECT2 (MODAL SAFE)
-================================ */
-
+/* ===========================================
+    SELECT2 (MODAL SAFE)
+=========================================== */
 modalEl.addEventListener("shown.bs.modal", () => {
-    [
-        { id: "#personDays", placeholder: "Seleccioná días de trabajo" }
-    ].forEach(cfg => {
-        const $el = $(cfg.id);
-        if ($el.hasClass("select2-hidden-accessible")) return;
-
-        $el.select2({
-            placeholder: cfg.placeholder,
-            width: "100%",
-            dropdownAutoWidth: true
-        });
-    });
+    const $el = $("#personDays");
+    if (!$el.hasClass("select2-hidden-accessible")) {
+        $el.select2({ placeholder: "Seleccioná días de trabajo", width: "100%", dropdownAutoWidth: true });
+    }
 });
-
-modalEl.addEventListener("hidden.bs.modal", resetForm);
-
-

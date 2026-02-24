@@ -40,8 +40,12 @@ function formatDays(days = []) {
     };
 
     return order
-        .filter(d => days.includes(d))
-        .map(d => `<span class="badge bg-danger bg-gradient me-1">${labels[d]}</span>`)
+        .filter(d => days?.includes(d))
+        .map(d =>
+            `<span class="badge bg-primary-subtle text-primary me-1">
+                ${labels[d]}
+            </span>`
+        )
         .join("");
 }
 
@@ -59,8 +63,8 @@ async function loadPersons() {
     if (!data.length) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center text-muted">
-                    Sin personas
+                <td colspan="7" class="text-center py-5 text-muted">
+                    No hay personas registradas.
                 </td>
             </tr>`;
         return;
@@ -68,33 +72,64 @@ async function loadPersons() {
 
     data
         .sort((a, b) => a.fullName.localeCompare(b.fullName))
-        .forEach(p => {
+        .forEach((p, index) => {
+
             personsCache[p.id] = p;
 
             tbody.insertAdjacentHTML("beforeend", `
                 <tr>
-                    <td class="text-center">
-                        <i class="bi bi-person-fill"></i>
+
+                    <td class="ps-4 text-center fw-semibold">
+                        ${index + 1}
                     </td>
-                    <td>${p.fullName}${p.nickName ? ` (${p.nickName})` : ""}</td>
-                    <td>${p.birthDate}</td>
-                    <td>${p.email}</td>
-                    <td class="text-center">
-                        <span class="badge ${p.active ? "bg-success" : "bg-secondary"}">
+
+                    <td class="fw-semibold">
+                        ${p.fullName}
+                        ${p.nickName ? `<br><small class="text-muted">${p.nickName}</small>` : ""}
+                    </td>
+
+                    <td>
+    <div class="fw-semibold">
+        ${new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(p.birthDate + 'T00:00'))}
+    </div>
+</td>
+
+                    <td>
+                        ${p.email
+                    ? `<span class="badge bg-secondary-subtle text-secondary">
+                                      ${p.email}
+                                   </span>`
+                    : `<span class="text-muted">-</span>`
+                }
+                    </td>
+
+                    <td>
+                        <span class="badge ${p.active
+                    ? "bg-success-subtle text-success"
+                    : "bg-secondary-subtle text-secondary"
+                }">
                             ${p.active ? "Activo" : "Inactivo"}
                         </span>
                     </td>
-                    <td class = "text-center">${formatDays(p.workingDays)}</td>
-                    <td class="text-end">
-                        <button class="btn btn-sm btn-outline-primary me-1"
+
+                    <td>
+                        ${formatDays(p.workingDays)}
+                    </td>
+
+                    <td class="text-end pe-4">
+
+                        <button class="btn btn-sm btn-outline-secondary rounded-circle me-2"
                                 onclick="editPerson('${p.id}')">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger"
+
+                        <button class="btn btn-sm btn-outline-danger rounded-circle"
                                 onclick="deletePerson('${p.id}', '${p.fullName}')">
                             <i class="bi bi-trash"></i>
                         </button>
+
                     </td>
+
                 </tr>
             `);
         });
@@ -196,7 +231,7 @@ function editPerson(id) {
 
     photoPreview.src = p.profileImageUrl
         ? p.profileImageUrl
-        : "/user8-128x128.jpg";
+        : "/person-circle.svg";
 
 
     new bootstrap.Modal(modalEl).show();
@@ -232,7 +267,7 @@ function resetForm() {
     $("#personFunctions").val(null).trigger("change");
     $("#personDays").val(null).trigger("change");
 
-    photoPreview.src = "/user8-128x128.jpg";
+    photoPreview.src = "/person-circle.svg";
     if (photoInput) { photoInput.value = ""; }
 }
 

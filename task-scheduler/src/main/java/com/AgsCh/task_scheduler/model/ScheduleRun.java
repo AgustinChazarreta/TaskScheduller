@@ -143,7 +143,8 @@ public class ScheduleRun {
     // =========================
 
     public enum Status {
-        ACTIVE,
-        ARCHIVED
+        ACTIVE, // válido
+        INVALIDATED, // fue válido pero cambió algo
+        ARCHIVED // histórico viejo
     }
 }

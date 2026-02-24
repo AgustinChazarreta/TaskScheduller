@@ -44,7 +44,7 @@ function renderProfile() {
             <div class="row align-items-center">
 
                 <div class="col-md-3 text-center mb-3">
-                    <img src="${currentUser.profileImageUrl || '/user8-128x128.jpg'}"
+                    <img src="${currentUser.profileImageUrl || '/avatar-example.png'}"
                          class="img-fluid rounded-circle shadow-sm"
                          style="max-width:150px;">
                 </div>

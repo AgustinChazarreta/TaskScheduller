@@ -45,36 +45,33 @@ public class AdminScheduleService {
             throw new BusinessException("El Schedule no tiene rango de fechas definido");
         }
 
-        // 1️⃣ Archivar run activo de esa house (si existe)
-        scheduleRunRepository.archiveActiveRunByHouse(
-                ScheduleRun.Status.ARCHIVED,
-                ScheduleRun.Status.ACTIVE,
-                house.getId());
+        // 1️⃣ Archivar el último run (ACTIVE o INVALIDATED)
+        scheduleRunRepository.findTopByHouse_IdOrderByCreatedAtDesc(house.getId())
+                .ifPresent(run -> {
+                    if (run.getStatus() != ScheduleRun.Status.ARCHIVED) {
+                        run.setStatus(ScheduleRun.Status.ARCHIVED);
+                        scheduleRunRepository.save(run);
+                    }
+                });
 
-        // 2️⃣ Resolver con OptaPlanner
+        // 2️⃣ Resolver
         Schedule solvedSchedule = solverService.solve(schedule);
 
         if (solvedSchedule.getScore() == null) {
             throw new BusinessException("El solver no devolvió score");
         }
 
-        // 3️⃣ Crear nuevo run
+        // 3️⃣ Crear nuevo ACTIVE
         ScheduleRun run = new ScheduleRun(
                 solvedSchedule.getStartDate(),
                 solvedSchedule.getEndDate(),
                 solvedSchedule.getScore().toString(),
                 house);
 
-        run.setHouse(house); // 🔥 AISLAMIENTO MULTI-HOUSE
-        run.setStatus(ScheduleRun.Status.ACTIVE);
-        run.setScore(solvedSchedule.getScore().toString());
-
-        // 4️⃣ Asociar assignments
         for (FunctionAssignment assignment : solvedSchedule.getFunctionAssignmentList()) {
             run.addAssignment(assignment);
         }
 
-        // 5️⃣ Guardar
         scheduleRunRepository.save(run);
 
         return solvedSchedule;
@@ -101,9 +98,18 @@ public class AdminScheduleService {
 
     @Transactional
     public void invalidate(House house) {
-        scheduleRunRepository.archiveActiveRunByHouse(
-                ScheduleRun.Status.ARCHIVED,
-                ScheduleRun.Status.ACTIVE,
-                house.getId());
+
+        scheduleRunRepository
+                .findByHouseIdAndStatus(house.getId(), ScheduleRun.Status.ACTIVE)
+                .ifPresent(run -> {
+                    run.setStatus(ScheduleRun.Status.INVALIDATED);
+                    scheduleRunRepository.save(run);
+                });
+    }
+
+    public ScheduleRun getLastRunByHouse(Long houseId) {
+        return scheduleRunRepository
+                .findTopByHouse_IdOrderByCreatedAtDesc(houseId)
+                .orElse(null);
     }
 }

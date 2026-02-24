@@ -17,18 +17,24 @@ import com.AgsCh.task_scheduler.model.House;
 import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.repository.FunctionRepository;
 import com.AgsCh.task_scheduler.repository.UserRepository;
+import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 import com.AgsCh.task_scheduler.util.normalizer.TaskRefactor;
 import com.AgsCh.task_scheduler.util.word.WordParser;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class FunctionService {
 
     private final FunctionRepository repository;
     private final UserRepository userRepository;
+    private final AdminScheduleService scheduleService;
 
-    public FunctionService(FunctionRepository repository, UserRepository userRepository) {
+
+    public FunctionService(FunctionRepository repository, UserRepository userRepository, AdminScheduleService scheduleService) {
         this.repository = repository;
         this.userRepository = userRepository;
+        this.scheduleService = scheduleService;
     }
 
     // -------- CREATE --------
@@ -47,7 +53,7 @@ public class FunctionService {
     // -------- READ --------
     public List<Function> findAll() {
         User currentUser = getCurrentUser();
-        return repository.findByHouseId(currentUser.getHouse().getId());
+        return repository.findByHouseIdAndActiveTrue(currentUser.getHouse().getId());
     }
 
     public Function findById(Long id) {
@@ -56,7 +62,7 @@ public class FunctionService {
     }
 
     public List<Function> findByHouseId(Long houseId) {
-        return repository.findByHouseId(houseId);
+        return repository.findByHouseIdAndActiveTrue(houseId);
     }
 
     // -------- UPDATE --------
@@ -68,11 +74,19 @@ public class FunctionService {
         function.setAssignedDays(dto.getAssignedDays());
 
         repository.save(function);
+        scheduleService.invalidate(function.getHouse());
     }
 
     // -------- DELETE --------
+    @Transactional
     public void delete(Long id) {
-        repository.deleteById(id);
+
+        Function function = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Función no encontrada"));
+
+        function.setActive(false);
+        repository.save(function);
+        scheduleService.invalidate(function.getHouse());
     }
 
     // -------- LOAD WORD --------

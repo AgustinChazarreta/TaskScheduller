@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import com.AgsCh.task_scheduler.dto.ScheduleMapper;
 import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
 import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
+import com.AgsCh.task_scheduler.model.ScheduleRun;
 import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.service.admin.AdminService;
 import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
@@ -74,18 +75,24 @@ public class AdminApiController {
 
     @GetMapping("/schedule/status")
     public ResponseEntity<?> getScheduleStatus(Authentication authentication) {
-        // Obtener el nombre de usuario
+
         String username = authentication.getName();
         User user = adminService.findByUsername(username);
 
-        // Obtener el schedule activo para la casa del usuario
-        var activeRun = scheduleService.getActiveRunByHouse(user.getHouse().getId());
+        var lastRun = scheduleService
+                .getLastRunByHouse(user.getHouse().getId());
 
         Map<String, Object> response = new HashMap<>();
 
-        response.put("invalidated", activeRun == null);
-        response.put("lastSolvedAt",
-                activeRun != null ? activeRun.getCreatedAt() : null);
+        if (lastRun == null) {
+            response.put("invalidated", true);
+            response.put("lastSolvedAt", null);
+        } else {
+            response.put("invalidated",
+                    lastRun.getStatus() != ScheduleRun.Status.ACTIVE);
+            response.put("lastSolvedAt",
+                    lastRun.getCreatedAt());
+        }
 
         return ResponseEntity.ok(response);
     }

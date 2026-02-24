@@ -1,135 +1,216 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
 
-<section>
+<section class="container-fluid py-3 dashboard-bg">
 
-    <h1 class="mb-4">
-        <i class="bi bi-play-circle me-2"></i>
-        Admin Dashboard
-    </h1>
+    <!-- ================= HEADER ================= -->
+    <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
 
-    <!-- ================= INFORMACIÓN DEL ADMIN ================= -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header">
-            <h4>Información del Administrador</h4>
-        </div>
-
-        <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
-
-            <!-- DATOS PERSONALES -->
             <div>
-                <div class="mb-2">
-                    <strong>Usuario:</strong>
-                    <span th:text="${adminName}">Admin</span>
-                </div>
-
-                <div>
-                    <strong>Rol:</strong>
-                    <span class="badge bg-info text-dark" th:text="${role}">ADMIN</span>
-                </div>
+                <h2 class="fw-bold mb-1">Panel de Administración</h2>
+                <p class="text-muted mb-0">
+                    Control operativo de
+                    <span class="fw-semibold" th:text="${houseName}">House</span>
+                </p>
             </div>
 
-            <!-- CASA -->
-            <div class="text-end">
-                <strong>Casa:</strong>
-                <span class="badge bg-dark fs-6 px-3 py-2 ms-2">
-                    <span th:text="${houseName}">House Name</span>
-                </span>
+            <div class="d-flex align-items-center gap-2 bg-dark px-3 py-2 rounded-pill text-white mt-3 mt-md-0">
+                <i class="bi bi-person-circle fs-5"></i>
+                <span class="fw-semibold" th:text="${adminName}">Admin</span>
             </div>
 
         </div>
     </div>
 
 
-    <!-- ================= ESTADO DEL SCHEDULE ================= -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header">
-            <h4>Estado del Schedule</h4>
-        </div>
-        <div class="card-body d-flex gap-4 align-items-center">
+    <!-- ================= KPIs ================= -->
+    <div class="row g-4 mb-4">
 
-            <div class="me-3">
-                <strong>Última resolución:</strong>
-                <span id="lastSolvedAt">Cargando...</span>
+        <!-- Última resolución -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div class="card-body text-center p-4">
+
+                    <i class="bi bi-clock-history fs-3 text-secondary mb-3"></i>
+
+                    <div class="small fw-bold">
+                        Última resolución
+                    </div>
+
+                    <div id="lastSolvedAt" class="fw-semibold fs-6 mt-2">
+                        <span class="badge bg-secondary-subtle text-secondary px-3 py-2 fs-6 fw-bold">
+                            Cargando...
+                        </span>
+                    </div>
+
+                </div>
             </div>
+        </div>
 
-            <div>
-                <strong class="me-1">Estado:</strong>
-                <span id="scheduleStatus" class="badge bg-secondary fs-5 px-2 py-1">
-                    Cargando...
-                </span>
+        <!-- Estado -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div class="card-body text-center p-4">
+
+                    <i class="bi bi-activity fs-3 text-success mb-3"></i>
+
+                    <div class="small fw-bold">
+                        Estado del Schedule
+                    </div>
+
+                    <div class="mt-2">
+                        <span id="scheduleStatus"
+                            class="badge bg-success-subtle text-success px-3 py-2 fs-6 fw-semibold">
+                            Cargando...
+                        </span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Rol -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div class="card-body text-center p-4">
+
+                    <i class="bi bi-shield-lock fs-3 text-info mb-3"></i>
+
+                    <div class="small fw-bold">
+                        Rol
+                    </div>
+
+                    <div class="mt-2">
+                        <span class="badge bg-info-subtle text-primary px-3 py-2 fs-6 fw-bold" th:text="${role}">
+                            ADMIN
+                        </span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Casa -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div class="card-body text-center p-4">
+
+                    <i class="bi bi-house fs-3 text-warning mb-3"></i>
+
+                    <div class="small fw-bold">
+                        Casa
+                    </div>
+
+                    <div class="mt-2">
+                        <span class="badge bg-warning-subtle text-warning px-3 py-2 fs-6 fw-bold"
+                            th:text="${houseName}">
+                            House
+                        </span>
+                    </div>
+
+                </div>
             </div>
         </div>
 
     </div>
+
 
     <!-- ================= ALERTAS ================= -->
-    <div id="alertContainer"></div>
+    <div id="alertContainer" class="mb-4"></div>
 
-    <!-- ================= RESOLVER SCHEDULE ================= -->
-    <div class="card mb-4 shadow-sm overlay-wrapper" id="resolveCard">
-        <div class="card-header">
-            <h4>Resolver Schedule</h4>
-        </div>
 
-        <div class="card-body">
+    <!-- ================= GENERADOR ================= -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overlay-wrapper" id="resolveCard">
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-cpu me-2"></i>
+                    Generador de Schedule
+                </h5>
+                <small class="text-muted">
+                    Motor de optimización automática
+                </small>
+            </div>
+
             <form id="scheduleForm">
 
-                <div class="row mb-3">
+                <div class="row mb-4">
                     <div class="col-md-6">
-                        <label for="startDate" class="form-label">Fecha de inicio</label>
-                        <input type="date" class="form-control" id="startDate" required>
+                        <label for="startDate" class="form-label fw-semibold">
+                            Fecha de inicio
+                        </label>
+                        <input type="date" class="form-control rounded-3" id="startDate" required>
                     </div>
+
                     <div class="col-md-6">
-                        <label for="endDate" class="form-label">Fecha de fin</label>
-                        <input type="date" class="form-control" id="endDate" required>
+                        <label for="endDate" class="form-label fw-semibold">
+                            Fecha de fin
+                        </label>
+                        <input type="date" class="form-control rounded-3" id="endDate" required>
                     </div>
                 </div>
 
                 <div class="text-end">
-                    <button type="submit" class="btn btn-primary" id="resolveBtn">
+                    <button type="submit" class="btn btn-primary px-4 py-2" id="resolveBtn">
 
-                        <!-- TEXTO NORMAL -->
                         <span id="resolveText">
                             <i class="bi bi-cpu me-1"></i>
                             Generar Schedule
                         </span>
 
-                        <!-- SPINNER -->
                         <span id="resolveSpinner" class="d-none">
-                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                             Resolviendo...
                         </span>
+
                     </button>
                 </div>
+
             </form>
+
         </div>
     </div>
 
-    <!-- PERSONAS -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header">
-            <h4>Personas disponibles</h4>
-        </div>
 
-        <div class="card-body" id="personsContainer">
-            <p class="text-muted mb-0">Cargando personas...</p>
+    <!-- ================= PERSONAS ================= -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-4">
+                <i class="bi bi-people me-2"></i>
+                Personas Disponibles
+            </h5>
+
+            <div id="personsContainer">
+                <p class="text-muted mb-0">Cargando personas...</p>
+            </div>
+
         </div>
     </div>
 
-    <!-- ================= TAREAS ================= -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header">
-            <h4>Funciones cargadas</h4>
-        </div>
-        <div class="card-body" id="functionsContainer">
-            <p class="text-muted mb-0">Cargando funciones...</p>
+
+    <!-- ================= FUNCIONES ================= -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-4">
+                <i class="bi bi-list-task me-2"></i>
+                Funciones Cargadas
+            </h5>
+
+            <div id="functionsContainer">
+                <p class="text-muted mb-0">Cargando funciones...</p>
+            </div>
+
         </div>
     </div>
 
 
     <script src="/js/csrf.js"></script>
     <script src="/js/dashboard.js"></script>
+
 </section>
 
 </html>

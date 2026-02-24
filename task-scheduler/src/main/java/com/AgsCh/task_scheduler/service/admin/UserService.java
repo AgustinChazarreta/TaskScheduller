@@ -7,10 +7,14 @@ import org.springframework.stereotype.Service;
 
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.House;
+import com.AgsCh.task_scheduler.model.Person;
 import com.AgsCh.task_scheduler.model.Role;
 import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.repository.HouseRepository;
+import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.repository.UserRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class UserService {
@@ -18,15 +22,18 @@ public class UserService {
     private final UserRepository userRepository;
     private final HouseRepository houseRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PersonRepository personRepository;
 
     public UserService(
             UserRepository userRepository,
             HouseRepository houseRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            PersonRepository personRepository) {
 
         this.userRepository = userRepository;
         this.houseRepository = houseRepository;
         this.passwordEncoder = passwordEncoder;
+        this.personRepository = personRepository;
     }
 
     public User createAdmin(Long houseId, String username, String rawPassword) {
@@ -96,6 +103,7 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Transactional
     public void deleteUser(Long id) {
 
         User user = userRepository.findById(id)
@@ -106,10 +114,22 @@ public class UserService {
         }
 
         if (user.getRole() == Role.ADMIN) {
-            long adminCount = userRepository.findByRole(Role.ADMIN).size();
+            long adminCount = userRepository.countByRole(Role.ADMIN);
             if (adminCount <= 1) {
                 throw new BusinessException("No se puede eliminar el último administrador");
             }
+        }
+
+        // 🔥 Si tiene persona asociada, eliminar correctamente
+        Person person = user.getPerson();
+
+        if (person != null) {
+            // romper relación bidireccional
+            user.setPerson(null);
+            person.setUser(null);
+
+            userRepository.save(user); // actualizar FK a null
+            personRepository.delete(person);
         }
 
         userRepository.delete(user);

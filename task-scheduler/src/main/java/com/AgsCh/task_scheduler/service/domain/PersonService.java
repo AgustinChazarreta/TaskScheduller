@@ -16,6 +16,7 @@ import com.AgsCh.task_scheduler.dto.response.FunctionResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonCreatedResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
+import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Function;
 import com.AgsCh.task_scheduler.model.House;
 import com.AgsCh.task_scheduler.model.Person;
@@ -30,6 +31,7 @@ import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.repository.ScheduleRunRepository;
 import com.AgsCh.task_scheduler.repository.UserRepository;
 import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
+import com.AgsCh.task_scheduler.service.admin.UserService;
 import com.AgsCh.task_scheduler.service.storage.FileStorageService;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -49,6 +51,7 @@ public class PersonService {
     private final ScheduleRunRepository scheduleRunRepository;
     private final HouseRepository houseRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
 
     public PersonService(
             PersonRepository repository,
@@ -59,7 +62,8 @@ public class PersonService {
             FunctionAssignmentRepository functionAssignmentRepository,
             ScheduleRunRepository scheduleRunRepository,
             HouseRepository houseRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            UserService userService) {
 
         this.repository = repository;
         this.functionRepository = functionRepository;
@@ -70,6 +74,8 @@ public class PersonService {
         this.scheduleRunRepository = scheduleRunRepository;
         this.houseRepository = houseRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userService = userService;
+        
     }
 
     // =====================================================
@@ -328,10 +334,17 @@ public class PersonService {
     // DELETE
     // =====================================================
 
+    @Transactional
     public void delete(Long id) {
-        Person person = findById(id);
-        repository.delete(person);
-        scheduleService.invalidate(person.getHouse());
+
+        Person person = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("Persona no encontrada"));
+
+        if (person.getUser() != null) {
+            userService.deleteUser(person.getUser().getId());
+        } else {
+            repository.delete(person);
+        }
     }
 
     // =====================================================
