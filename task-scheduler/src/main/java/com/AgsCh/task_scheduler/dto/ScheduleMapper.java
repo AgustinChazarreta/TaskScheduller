@@ -165,4 +165,53 @@ public final class ScheduleMapper {
         return new ScheduleResponseDTO(responses, score);
     }
 
+    public static Schedule toModelFromAssignments(
+        List<FunctionAssignmentResponseDTO> dtos,
+        List<Function> functions,
+        List<Person> persons) {
+
+    if (dtos == null || dtos.isEmpty()) {
+        throw new BusinessException("No hay assignments para crear el Schedule");
+    }
+
+    List<FunctionAssignment> assignments = new ArrayList<>();
+
+    for (FunctionAssignmentResponseDTO dto : dtos) {
+
+        // 🔹 Buscar función por nombre
+        Function function = functions.stream()
+                .filter(f -> f.getName().equals(dto.getFunctionName()))
+                .findFirst()
+                .orElseThrow(() ->
+                        new BusinessException("Función no encontrada: " + dto.getFunctionName()));
+
+        // 🔹 Buscar persona (puede ser null si es UNASSIGNED)
+        Person person = persons.stream()
+                .filter(p -> p.getFullName().equals(dto.getPersonName()))
+                .findFirst()
+                .orElse(null);
+
+        // 🔹 Usar fecha directa (NO reconstruir con week/day)
+        LocalDate date = dto.getDate();
+
+        FunctionAssignment assignment = new FunctionAssignment(function, date);
+        assignment.setPerson(person);
+
+        assignments.add(assignment);
+    }
+
+    // 🔹 Calcular rango real del schedule
+    LocalDate startDate = assignments.stream()
+            .map(FunctionAssignment::getDate)
+            .min(LocalDate::compareTo)
+            .orElseThrow();
+
+    LocalDate endDate = assignments.stream()
+            .map(FunctionAssignment::getDate)
+            .max(LocalDate::compareTo)
+            .orElseThrow();
+
+    return new Schedule(persons, functions, assignments, startDate, endDate);
+}
+
 }

@@ -173,6 +173,30 @@
             transform: scale(1.05);
             transition: transform 0.25s ease;
         }
+
+        /* Logout estético con color normal más suave y hover más fuerte */
+        .sidebar-menu .btn-logout {
+            background-color: #f0504be5;;
+            /* rojo suave cuando no se pasa el mouse */
+            color: #fff;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            transition: all 0.2s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-menu .btn-logout:hover {
+            background-color: #dc3545;
+            /* rojo fuerte al pasar el mouse */
+            transform: translateX(2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+            color: #fff;
+        }
     </style>
 </head>
 
@@ -281,6 +305,7 @@
                         </th:block>
                         <!-- ================= ADMIN ================= -->
                         <th:block sec:authorize="hasRole('ADMIN')">
+                            <li class="nav-header text-uppercase small text-muted">Panel</li>
                             <li class="nav-item">
                                 <a href="/admin/dashboard" class="nav-link">
                                     <i class="nav-icon bi bi-speedometer2"></i>
@@ -304,7 +329,7 @@
 
                             <li class="nav-item">
                                 <a href="/results" class="nav-link">
-                                    <i class="nav-icon bi bi-bar-chart"></i>
+                                    <i class="nav-icon bi bi-calendar-check"></i>
                                     <p>Resultados</p>
                                 </a>
                             </li>
@@ -321,10 +346,9 @@
                         </th:block>
 
                         <!-- ================= LOGOUT (TODOS) ================= -->
-                        <li class="nav-item mt-4 px-3">
-                            <a href="#" class="btn btn-outline-danger w-100 opacity-75" data-bs-toggle="modal"
-                                data-bs-target="#logoutModal">
-                                <i class="bi bi-box-arrow-right me-2"></i>
+                        <li class="nav-item mt-4 px-3 sidebar-menu">
+                            <a href="#" class="btn btn-logout" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                                <i class="bi bi-box-arrow-right"></i>
                                 Cerrar sesión
                             </a>
                         </li>

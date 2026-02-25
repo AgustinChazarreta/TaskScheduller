@@ -9,6 +9,7 @@ import com.AgsCh.task_scheduler.model.FunctionAssignment;
 
 public class FunctionAssignmentResponseDTO {
 
+    private LocalDate date; // 🔹 nuevo campo
     private int week;
     private DayOfWeek day;
     private String functionName;
@@ -21,11 +22,17 @@ public class FunctionAssignmentResponseDTO {
             String personName,
             String personNickname) {
 
+        this.date = date; // 🔹 guardar fecha completa
         this.day = date.getDayOfWeek();
         this.functionName = functionName;
         this.personName = personName;
         this.personNickname = personNickname;
         this.week = date.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
+    }
+
+    // ================= GETTERS =================
+    public LocalDate getDate() {
+        return date;
     }
 
     public int getWeek() {
@@ -48,12 +55,16 @@ public class FunctionAssignmentResponseDTO {
         return personNickname;
     }
 
+    // ================= CONVERTIR DESDE ENTITY =================
     public static FunctionAssignmentResponseDTO fromEntity(FunctionAssignment entity) {
+
+        String personName = entity.getPerson() != null ? entity.getPerson().getFullName() : "UNASSIGNED";
+        String personNickname = entity.getPerson() != null ? entity.getPerson().getNickName() : "";
 
         return new FunctionAssignmentResponseDTO(
                 entity.getDate(),
                 entity.getFunction().getName(),
-                entity.getPerson().getFullName(),
-                entity.getPerson().getNickName());
+                personName,
+                personNickname);
     }
 }

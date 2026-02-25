@@ -68,6 +68,8 @@ public class AdminScheduleService {
                 solvedSchedule.getScore().toString(),
                 house);
 
+        run.setStatus(ScheduleRun.Status.ACTIVE);
+
         for (FunctionAssignment assignment : solvedSchedule.getFunctionAssignmentList()) {
             run.addAssignment(assignment);
         }
@@ -111,5 +113,44 @@ public class AdminScheduleService {
         return scheduleRunRepository
                 .findTopByHouse_IdOrderByCreatedAtDesc(houseId)
                 .orElse(null);
+    }
+
+    @Transactional
+    public ScheduleRun createNewRun(Schedule schedule, House house) {
+        if (schedule == null) {
+            throw new BusinessException("No hay Schedule para crear nueva versión");
+        }
+
+        if (schedule.getStartDate() == null || schedule.getEndDate() == null) {
+            throw new BusinessException("El Schedule no tiene rango de fechas definido");
+        }
+
+        // 1️⃣ Archivar el último run activo o invalidado
+        scheduleRunRepository.findTopByHouse_IdOrderByCreatedAtDesc(house.getId())
+                .ifPresent(run -> {
+                    if (run.getStatus() != ScheduleRun.Status.ARCHIVED) {
+                        run.setStatus(ScheduleRun.Status.ARCHIVED);
+                        scheduleRunRepository.save(run);
+                    }
+                });
+
+        // 2️⃣ Crear nuevo ACTIVE run con las asignaciones ya editadas
+        ScheduleRun newRun = new ScheduleRun(
+                schedule.getStartDate(),
+                schedule.getEndDate(),
+                schedule.getScore() != null ? schedule.getScore().toString() : "0",
+                house);
+        newRun.setStatus(ScheduleRun.Status.ACTIVE);
+
+        if (schedule.getFunctionAssignmentList() != null) {
+            for (FunctionAssignment assignment : schedule.getFunctionAssignmentList()) {
+                newRun.addAssignment(assignment);
+            }
+        }
+
+        // 3️⃣ Guardar en DB
+        scheduleRunRepository.save(newRun);
+
+        return newRun;
     }
 }

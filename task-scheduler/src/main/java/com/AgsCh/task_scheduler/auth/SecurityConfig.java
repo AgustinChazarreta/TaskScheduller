@@ -28,7 +28,8 @@ public class SecurityConfig {
                 http
                                 .userDetailsService(userDetailsService)
                                 .csrf(csrf -> csrf
-                                                .ignoringRequestMatchers("/h2-console/**"))
+                                                .ignoringRequestMatchers("/h2-console/**",
+                                                                "/api/**"))
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(
                                                                 "/login",
