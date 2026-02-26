@@ -5,6 +5,9 @@
 
     <main class="container-fluid py-4">
 
+        <!-- ALERTS -->
+        <div id="alertContainer"></div>
+
         <!-- HEADER -->
         <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
             <div class="d-flex justify-content-between align-items-center">
@@ -68,6 +71,8 @@
                     <!-- BODY -->
                     <div class="modal-body">
 
+                        <div id="modalAlertContainer"></div>
+
                         <h6 class="text-muted mb-3">Datos personales</h6>
 
                         <div class="row g-4 mb-3">
@@ -111,7 +116,7 @@
 
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">Email</label>
-                                        <input id="personEmail" type="email" class="form-control rounded-3">
+                                        <input id="personEmail" type="email" class="form-control rounded-3" required>
 
                                         <div class="form-check form-switch mt-2">
                                             <input class="form-check-input mailStatus" type="checkbox" id="mailStatus">
@@ -195,6 +200,45 @@
                     </div>
 
                 </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================= -->
+    <!-- MODAL CONFIRMAR ELIMINACIÓN PERSONA -->
+    <!-- ======================================= -->
+
+    <div class="modal fade" id="deletePersonModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow rounded-4 border-0">
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Confirmar eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
+                    </button>
+                </div>
+
+                <div class="modal-body text-center">
+                    <p class="mb-0 fs-5">
+                        ¿Seguro que deseas eliminar a
+                        <span class="fw-semibold" id="deletePersonName"></span>?
+                    </p>
+                </div>
+
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="button" class="btn btn-danger" id="confirmDeletePersonBtn">
+                        <i class="bi bi-trash me-1"></i>
+                        Eliminar
+                    </button>
+                </div>
 
             </div>
         </div>

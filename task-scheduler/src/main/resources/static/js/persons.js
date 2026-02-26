@@ -11,6 +11,8 @@ const photoInput = document.getElementById("personPhoto");
 const photoPreview = document.getElementById("personPhotoPreview");
 
 let editingPersonId = null;
+let personIdToDelete = null;
+let personNameToDelete = null;
 const personsCache = {};
 
 
@@ -47,6 +49,42 @@ function formatDays(days = []) {
             </span>`
         )
         .join("");
+}
+
+/* ===============================
+   BOOTSTRAP ALERT
+================================ */
+
+function showAlert(message, type = "success", insideModal = false) {
+
+    const container = insideModal
+        ? document.getElementById("modalAlertContainer")
+        : document.getElementById("alertContainer");
+
+    if (!container) return;
+
+    const alert = document.createElement("div");
+    alert.className = `alert alert-${type} alert-dismissible fade show rounded-3 shadow-sm`;
+
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    container.appendChild(alert);
+
+    if (insideModal) {
+        const modalBody = modalEl.querySelector(".modal-body");
+        modalBody.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }
+
+    setTimeout(() => {
+        alert.classList.remove("show");
+        alert.remove();
+    }, 8000);
 }
 
 
@@ -124,7 +162,7 @@ async function loadPersons() {
                         </button>
 
                         <button class="btn btn-sm btn-outline-danger rounded-circle"
-                                onclick="deletePerson('${p.id}', '${p.fullName}')">
+                                onclick="openDeletePersonModal('${p.id}', '${p.fullName}')">
                             <i class="bi bi-trash"></i>
                         </button>
 
@@ -172,7 +210,19 @@ form.addEventListener("submit", async e => {
     });
 
     if (!res.ok) {
-        alert("Error al guardar persona");
+
+        showAlert(`
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+            <div>
+                <div class="fw-semibold">No se pudo guardar la persona</div>
+                <small class="text-muted">
+                    Ya existe una persona con ese email.
+                </small>
+            </div>
+        </div>
+    `, "danger", true);   // 👈 true = dentro del modal
+
         return;
     }
 
@@ -183,10 +233,13 @@ form.addEventListener("submit", async e => {
         personId = result.personId;
 
         // 🔥 Mostrar password temporal al admin
-        alert(`Usuario creado correctamente.
-        Email: ${payload.email}
-        Password temporal: ${result.temporaryPassword}
-        El usuario deberá cambiarla al ingresar.`);
+        showAlert(`
+            <i class="bi bi-check2-circle text-success fs-5"></i>
+            <span class="fw-bold">Persona creada correctamente</span><br>
+            Email: <strong>${payload.email}</strong><br>
+            Password temporal: <strong>${result.temporaryPassword}</strong><br>
+            El usuario deberá cambiarla al ingresar.
+            `, "success");
     }
 
     // Subida de imagen
@@ -242,17 +295,71 @@ function editPerson(id) {
    DELETE
 ================================ */
 
-async function deletePerson(id, name) {
-    if (!confirm(`¿Eliminar a ${name}?`)) return;
+// Abrir modal
+function openDeletePersonModal(id, name) {
+    personIdToDelete = id;
+    personNameToDelete = name; // 👈 guardamos el string
+    document.getElementById("deletePersonName").textContent = name;
 
-    const res = await secureFetch(`/api/persons/${id}`, {
-        method: "DELETE"
-    });
-
-    if (res.ok) loadPersons();
+    const modal = new bootstrap.Modal(
+        document.getElementById("deletePersonModal")
+    );
+    modal.show();
 }
 
+// Confirmar eliminación
+document
+    .getElementById("confirmDeletePersonBtn")
+    .addEventListener("click", async function () {
 
+        if (!personIdToDelete) return;
+
+        const res = await secureFetch(
+            `/api/persons/${personIdToDelete}`,
+            { method: "DELETE" }
+        );
+
+        const modal = bootstrap.Modal.getInstance(
+            document.getElementById("deletePersonModal")
+        );
+
+        modal.hide();
+
+        if (!res.ok) {
+            showAlert(`
+                <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+                    <div>
+                        <div class="fw-semibold">
+                            No se pudo eliminar la persona
+                        </div>
+                    </div>
+                </div>
+            `, "danger");
+
+            personIdToDelete = null;
+            return;
+        }
+
+        showAlert(`
+    <div class="d-flex align-items-start gap-2">
+        <i class="bi bi-trash-fill text-success fs-5 mt-1"></i>
+        <div>
+            <div class="fw-semibold">
+                Persona eliminada c
+            </div>
+            <small class="text-muted">
+                ${personNameToDelete} fue eliminado del sistema.
+            </small>
+        </div>
+    </div>
+`, "success");
+
+        personIdToDelete = null;
+
+        loadPersons();
+    });
+    
 /* ===============================
    RESET FORM
 ================================ */
@@ -305,13 +412,13 @@ photoInput.addEventListener("change", function () {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-        alert("Solo se permiten imágenes");
+        showAlert("Solo se permiten imágenes", "danger");
         this.value = "";
         return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-        alert("La imagen no puede superar los 2MB");
+        showAlert("La imagen no puede superar los 2MB", "danger");
         this.value = "";
         return;
     }
@@ -354,11 +461,9 @@ async function uploadProfileImage(personId, file) {
     });
 
     if (!res.ok) {
-        alert("Error al subir la imagen");
+        showAlert("Error al subir la imagen", "danger");
     }
 }
-
-
 
 
 /* ===============================

@@ -486,8 +486,9 @@
                 <div class="modal-body text-center">
                     <p class="mb-0 fs-5">
                         ¿Seguro que deseas eliminar a
-                        <span class="fw-semibold" th:text="${user.username}">
-                        </span>?
+                        <span class="fw-semibold"
+                            th:text="${user.person != null ? user.person.fullName : user.username}">
+                        </span>
                     </p>
                 </div>
 

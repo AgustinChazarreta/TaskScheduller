@@ -47,7 +47,7 @@ function render(tasks) {
                         <button class="btn btn-sm btn-outline-secondary rounded-pill me-1" onclick="editFunction('${f.id || f.name}')">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="deleteFunction('${f.id || f.name}')">
+                        <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="openDeleteFunctionModal('${f.id || f.name}')">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -132,22 +132,35 @@ form.addEventListener("submit", async e => {
     const days = $("#personDays").val() || [];
     const sequential = document.getElementById("sequential").value === "true";
 
-    if (!days.length) return alert("Seleccioná al menos un día");
-
     const functionData = { name, assignedDays: days, sequential };
 
     if (editingFunctionId) {
-        if (draftFunctions[editingFunctionId]) draftFunctions[editingFunctionId] = functionData;
-        else if (functionCache[editingFunctionId]) {
+        if (draftFunctions[editingFunctionId]) {
+            draftFunctions[editingFunctionId] = functionData;
+        } else if (functionCache[editingFunctionId]) {
             try {
                 await secureFetch(`/api/functions/${editingFunctionId}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(functionData)
                 });
-                functionCache[editingFunctionId] = { ...functionCache[editingFunctionId], ...functionData, dirty: true };
+
+                functionCache[editingFunctionId] = {
+                    ...functionCache[editingFunctionId],
+                    ...functionData,
+                    dirty: true
+                };
+
             } catch {
-                return alert("Error actualizando la función");
+                showAlert(`
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+                        <div>
+                            <div class="fw-semibold">Error actualizando la función</div>
+                        </div>
+                    </div>
+                `, "danger");
+                return;
             }
         }
     } else {
@@ -171,21 +184,82 @@ modalEl.addEventListener("hidden.bs.modal", resetForm);
 /* ===========================================
     DELETE
 =========================================== */
-async function deleteFunction(key) {
+let functionIdToDelete = null;
+let functionNameToDelete = null;
+
+function openDeleteFunctionModal(key) {
+
     const functionData = draftFunctions[key] || functionCache[key];
     if (!functionData) return;
 
-    if (!confirm(`¿Eliminar la función "${functionData.name}"?`)) return;
+    functionIdToDelete = key;
+    functionNameToDelete = functionData.name;
 
-    if (draftFunctions[key]) delete draftFunctions[key];
-    if (functionCache[key]) {
-        delete functionCache[key];
-        await secureFetch(`/api/functions/${key}`, { method: "DELETE" });
-    }
+    document.getElementById("deleteFunctionName").textContent = functionData.name;
 
-    render({ ...functionCache, ...draftFunctions });
+    const modal = new bootstrap.Modal(
+        document.getElementById("deleteFunctionModal")
+    );
+
+    modal.show();
 }
 
+document
+    .getElementById("confirmDeleteFunctionBtn")
+    .addEventListener("click", async function () {
+
+        if (!functionIdToDelete) return;
+
+        if (draftFunctions[functionIdToDelete]) {
+            delete draftFunctions[functionIdToDelete];
+        }
+
+        if (functionCache[functionIdToDelete]) {
+            delete functionCache[functionIdToDelete];
+
+            const res = await secureFetch(
+                `/api/functions/${functionIdToDelete}`,
+                { method: "DELETE" }
+            );
+
+            if (!res.ok) {
+                showAlert(`
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+                        <div>
+                            <div class="fw-semibold">
+                                No se pudo eliminar la función
+                            </div>
+                        </div>
+                    </div>
+                `, "danger");
+
+                functionIdToDelete = null;
+                return;
+            }
+        }
+
+        bootstrap.Modal
+            .getInstance(document.getElementById("deleteFunctionModal"))
+            .hide();
+
+        showAlert(`
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-trash-fill text-success fs-5 mt-1"></i>
+                <div>
+                    <div class="fw-semibold">
+                        Función eliminada correctamente
+                    </div>
+                    <small class="text-muted">
+                        <strong>"${functionNameToDelete}"</strong> fue eliminada del sistema.
+                    </small>
+                </div>
+            </div>
+        `, "success");
+
+        functionIdToDelete = null;
+        render({ ...functionCache, ...draftFunctions });
+    });
 /* ===========================================
     SAVE
 =========================================== */
@@ -207,7 +281,14 @@ async function saveFunctions() {
 
     Object.values(functionCache).forEach(t => t.dirty = false);
     await loadFunctions();
-    alert("Funciones guardadas correctamente");
+    showAlert(`
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-check2-circle text-success fs-5"></i>
+            <div>
+                <div class="fw-semibold">Funciones guardadas correctamente</div>
+            </div>
+        </div>
+    `, "success");
 }
 
 /* ===========================================
@@ -219,3 +300,24 @@ modalEl.addEventListener("shown.bs.modal", () => {
         $el.select2({ placeholder: "Seleccioná días de trabajo", width: "100%", dropdownAutoWidth: true });
     }
 });
+
+function showAlert(message, type = "success") {
+
+    const container = document.getElementById("alertContainer");
+    if (!container) return;
+
+    const alert = document.createElement("div");
+    alert.className = `alert alert-${type} alert-dismissible fade show rounded-3 shadow-sm`;
+
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    container.appendChild(alert);
+
+    setTimeout(() => {
+        alert.classList.remove("show");
+        alert.remove();
+    }, 8000);
+}
