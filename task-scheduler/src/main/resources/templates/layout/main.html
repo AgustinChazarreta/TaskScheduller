@@ -176,7 +176,8 @@
 
         /* Logout estético con color normal más suave y hover más fuerte */
         .sidebar-menu .btn-logout {
-            background-color: #f0504be5;;
+            background-color: #f0504be5;
+            ;
             /* rojo suave cuando no se pasa el mouse */
             color: #fff;
             border: none;
@@ -343,6 +344,13 @@
                                     <p>Mi Panel</p>
                                 </a>
                             </li>
+
+                            <li class="nav-item">
+                                <a href="/user/results" class="nav-link">
+                                    <i class="nav-icon bi bi-calendar-check"></i>
+                                    <p>Resultados</p>
+                                </a>
+                            </li>
                         </th:block>
 
                         <!-- ================= LOGOUT (TODOS) ================= -->
@@ -407,6 +415,13 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/adminlte.js"></script>
+    <!-- 🔥 VARIABLES GLOBALES DEL USUARIO -->
+    <script th:inline="javascript">
+        window.appUser = {
+            name: /*[[${userName}]]*/ "",
+            house: /*[[${houseName}]]*/ ""
+        };
+    </script>
 </body>
 
 </html>

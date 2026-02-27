@@ -3,6 +3,7 @@ package com.AgsCh.task_scheduler.dto.request;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.NotBlank;
 
@@ -23,7 +24,10 @@ public class PersonRequestDTO {
 
     private boolean active = true;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate entryDate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate exitDate;
 
     private Set<DayOfWeek> workingDays;

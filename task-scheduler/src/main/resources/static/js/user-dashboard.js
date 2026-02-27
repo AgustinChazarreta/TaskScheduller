@@ -1,14 +1,53 @@
 /* ===============================
-   INIT
+   STATE & REFERENCES
 ================================ */
 
-document.addEventListener("DOMContentLoaded", () => {
-    loadProfile();
-    loadSchedule();
-});
+const profileContainer = document.getElementById("profileContainer");
+const assignmentsContainer = document.getElementById("assignmentsContainer");
 
+let profileEditMode = false;
 let currentUser = null;
-let editMode = false;
+
+
+/* ===============================
+   HELPERS
+================================ */
+
+function formatDate(dateString) {
+    if (!dateString) return "-";
+    return new Intl.DateTimeFormat("es-AR", { day: '2-digit', month: 'long', year: 'numeric' })
+        .format(new Date(dateString + 'T00:00'));
+}
+
+function formatDays(days = []) {
+    const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+    const labels = {
+        MONDAY: "Lunes", TUESDAY: "Martes", WEDNESDAY: "Miércoles",
+        THURSDAY: "Jueves", FRIDAY: "Viernes", SATURDAY: "Sábado", SUNDAY: "Domingo"
+    };
+    return order
+        .filter(d => days.includes(d))
+        .map(d => `<span class="badge bg-primary-subtle text-primary me-1">${labels[d]}</span>`)
+        .join("");
+}
+
+function showAlert(message, type = "success") {
+    const container = document.getElementById("alertContainer");
+    if (!container) return;
+
+    const alert = document.createElement("div");
+    alert.className = `alert alert-${type} alert-dismissible fade show rounded-3 shadow-sm`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    container.appendChild(alert);
+
+    setTimeout(() => {
+        alert.classList.remove("show");
+        alert.remove();
+    }, 6000);
+}
 
 
 /* ===============================
@@ -16,117 +55,105 @@ let editMode = false;
 ================================ */
 
 async function loadProfile() {
-
-    const container = document.getElementById("profileContainer");
-
     try {
-
         const res = await secureFetch("/api/user/me");
         if (!res.ok) throw new Error();
-
         currentUser = await res.json();
         renderProfile();
-
     } catch (err) {
-        container.innerHTML =
-            `<p class="text-danger">Error al cargar perfil</p>`;
+        profileContainer.innerHTML = `<p class="text-danger">Error al cargar perfil</p>`;
     }
 }
 
-
 function renderProfile() {
+    if (!currentUser) return;
 
-    const container = document.getElementById("profileContainer");
-
-    if (!editMode) {
-
-        container.innerHTML = `
-            <div class="row align-items-center">
-
+    if (!profileEditMode) {
+        profileContainer.innerHTML = `
+            <div class="row align-items-center mb-4">
                 <div class="col-md-3 text-center mb-3">
-                    <img src="${currentUser.profileImageUrl || '/avatar-example.png'}"
-                         class="img-fluid rounded-circle shadow-sm"
-                         style="max-width:150px;">
+                    <img src="${currentUser.profileImageUrl || '/person-circle.svg'}" class="img-fluid rounded-circle shadow-sm" style="max-width:150px;">
                 </div>
-
                 <div class="col-md-9">
-                    <h4>${currentUser.fullName}</h4>
+                    <h4>${currentUser.fullName} ${currentUser.nickName ? `(<small>${currentUser.nickName}</small>)` : ""}</h4>
                     <p><strong>Email:</strong> ${currentUser.email}</p>
+                    <p><strong>Fecha de nacimiento:</strong> ${formatDate(currentUser.birthDate)}</p>
                     <p><strong>Ingreso:</strong> ${formatDate(currentUser.entryDate)}</p>
-                    <p><strong>Estado:</strong>
-                        <span class="badge ${currentUser.active ? 'bg-success' : 'bg-secondary'}">
-                            ${currentUser.active ? 'Activo' : 'Inactivo'}
-                        </span>
-                    </p>
+                    <p><strong>Estado:</strong> <span class="badge ${currentUser.active ? 'bg-success' : 'bg-secondary'}">${currentUser.active ? 'Activo' : 'Inactivo'}</span></p>
+                    <p><strong>Notificaciones:</strong> <span class="badge ${currentUser.emailNotificationsEnabled ? 'bg-success' : 'bg-secondary'}">${currentUser.emailNotificationsEnabled ? 'Activadas' : 'Desactivadas'}</span></p>
+                    <button class="btn btn-outline-primary mt-2" onclick="enableProfileEdit()">Editar</button>
                 </div>
             </div>
         `;
-
     } else {
-
-        container.innerHTML = `
-            <form id="profileForm">
-
-                <div class="mb-3">
-                    <label class="form-label">Nombre completo</label>
-                    <input type="text" class="form-control"
-                           id="fullName"
-                           value="${currentUser.fullName}">
+        profileContainer.innerHTML = `
+            <form id="profileForm" class="row g-3">
+                <div class="col-md-3 text-center mb-3">
+                    <img src="${currentUser.profileImageUrl || '/person-circle.svg'}" id="profilePhotoPreview" class="img-fluid rounded-circle shadow-sm mb-2" style="max-width:150px;">
+                    <input type="file" id="profilePhotoInput" class="form-control mt-2">
                 </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Nickname</label>
-                    <input type="text" class="form-control"
-                           id="nickName"
-                           value="${currentUser.nickName || ''}">
+                <div class="col-md-9">
+                    <div class="mb-2">
+                        <label class="form-label">Nombre completo</label>
+                        <input type="text" id="profileName" class="form-control" value="${currentUser.fullName}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Nickname</label>
+                        <input type="text" id="profileNickname" class="form-control" value="${currentUser.nickName || ""}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="profileEmail" class="form-control" value="${currentUser.email}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Fecha de nacimiento</label>
+                        <input type="date" id="profileBirthDate" class="form-control" value="${currentUser.birthDate || ""}">
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="profileMailStatus" ${currentUser.emailNotificationsEnabled ? "checked" : ""}>
+                        <label class="form-check-label">Notificaciones por email</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary me-2">Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelProfileEdit()">Cancelar</button>
                 </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Fecha de nacimiento</label>
-                    <input type="date" class="form-control"
-                           id="birthDate"
-                           value="${currentUser.birthDate || ''}">
-                </div>
-
-                <button type="submit" class="btn btn-primary me-2">
-                    Guardar
-                </button>
-
-                <button type="button"
-                        class="btn btn-secondary"
-                        onclick="cancelEdit()">
-                    Cancelar
-                </button>
-
             </form>
         `;
 
-        document
-            .getElementById("profileForm")
-            .addEventListener("submit", saveProfile);
+        const photoInput = document.getElementById("profilePhotoInput");
+        const photoPreview = document.getElementById("profilePhotoPreview");
+
+        photoInput.addEventListener("change", function () {
+            const file = this.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = e => photoPreview.src = e.target.result;
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById("profileForm").addEventListener("submit", saveProfileChanges);
     }
 }
 
-
-function enableEdit() {
-    editMode = true;
+function enableProfileEdit() {
+    profileEditMode = true;
     renderProfile();
 }
 
-function cancelEdit() {
-    editMode = false;
+function cancelProfileEdit() {
+    profileEditMode = false;
     renderProfile();
 }
 
-
-async function saveProfile(e) {
-
+async function saveProfileChanges(e) {
     e.preventDefault();
 
     const payload = {
-        fullName: document.getElementById("fullName").value,
-        nickName: document.getElementById("nickName").value,
-        birthDate: document.getElementById("birthDate").value
+        fullName: document.getElementById("profileName").value.trim(),
+        nickName: document.getElementById("profileNickname").value.trim() || null,
+        birthDate: document.getElementById("profileBirthDate").value || null,
+        email: document.getElementById("profileEmail").value.trim(),
+        emailNotificationsEnabled: document.getElementById("profileMailStatus").checked
     };
 
     const res = await secureFetch("/api/user/me", {
@@ -136,73 +163,72 @@ async function saveProfile(e) {
     });
 
     if (!res.ok) {
-        alert("Error al actualizar perfil");
+        showAlert("Error al actualizar perfil", "danger");
         return;
     }
 
-    editMode = false;
+    // Subida de foto
+    const photoFile = document.getElementById("profilePhotoInput").files[0];
+    if (photoFile) {
+        await uploadProfileImage(currentUser.id, photoFile);
+    }
+
+    profileEditMode = false;
     loadProfile();
 }
 
 
 /* ===============================
-   SCHEDULE
+   AGENDA
 ================================ */
 
-async function loadSchedule() {
-
-    const container = document.getElementById("assignmentsContainer");
-    const weekLabel = document.getElementById("weekLabel");
-
+async function loadMySchedule() {
     try {
-
         const res = await secureFetch("/api/user/my-schedule");
         if (!res.ok) throw new Error();
-
         const data = await res.json();
 
-        weekLabel.textContent = data.weekLabel || "Mi Semana";
-        container.innerHTML = "";
+        assignmentsContainer.innerHTML = "";
 
-        if (!data.assignments || data.assignments.length === 0) {
-            container.innerHTML =
-                `<p class="text-muted">No tenés asignaciones esta semana.</p>`;
+        if (!data.assignments || !data.assignments.length) {
+            assignmentsContainer.innerHTML = `<p class="text-muted text-center py-4">No tenés asignaciones esta semana.</p>`;
             return;
         }
 
-        data.assignments.forEach(a => {
+        const table = document.createElement("table");
+        table.className = "table table-hover table-bordered shadow-sm";
 
-            const card = document.createElement("div");
-            card.className = "card shadow-sm";
-            card.style.width = "16rem";
+        table.innerHTML = `
+            <thead class="table-light text-center">
+                <tr>
+                    <th>Día</th>
+                    <th>Función</th>
+                    <th>Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.assignments.map(a => `
+                    <tr>
+                        <td class="text-center fw-semibold">${a.day}</td>
+                        <td class="text-center">
+                            <span class="badge bg-primary">${a.functionName}</span>
+                        </td>
+                        <td class="text-center">${a.details || "-"}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
 
-            card.innerHTML = `
-                <div class="card-header text-center fw-bold">
-                    ${a.day}
-                </div>
-                <div class="card-body text-center">
-                    <span class="badge bg-primary">
-                        ${a.functionName}
-                    </span>
-                </div>
-            `;
-
-            container.appendChild(card);
-        });
-
+        assignmentsContainer.appendChild(table);
     } catch (err) {
-
-        container.innerHTML =
-            `<p class="text-danger">Error al cargar agenda</p>`;
+        assignmentsContainer.innerHTML = `<p class="text-danger text-center py-4">Error al cargar agenda</p>`;
     }
 }
 
 
 /* ===============================
-   HELPERS
+   INIT
 ================================ */
 
-function formatDate(dateString) {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString("es-AR");
-}
+loadProfile();
+loadMySchedule();

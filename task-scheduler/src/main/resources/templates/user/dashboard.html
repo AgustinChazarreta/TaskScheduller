@@ -1,57 +1,377 @@
 <!DOCTYPE html>
-<html lang="es"
-      xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/main :: layout(~{::section})}">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
 
-<section>
+<head>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
 
-    <h1 class="mb-4">
-        <i class="bi bi-person-circle me-2"></i>
-        Mi Panel
-    </h1>
+<section class="container-fluid">
 
     <!-- ALERTAS -->
-    <div id="alertContainer"></div>
+    <div id="alertContainer" class="mb-4"></div>
 
-    <!-- ========================= -->
-    <!-- PERFIL -->
-    <!-- ========================= -->
+    <!-- PERFIL COMPLETO -->
+    <div class="card border-0 shadow-sm rounded-4 px-3 py-2 position-relative">
 
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0">Mi Perfil</h3>
-            <button class="btn btn-sm btn-outline-primary" onclick="enableEdit()">
-                Editar
-            </button>
+        <!-- BADGES ROL + CASA -->
+        <div class="profile-badges d-flex align-items-end position-absolute top-0 end-0 p-3">
+            <span id="profileRoleDisplay" class="badge bg-primary me-3 fs-6">
+                <i class="bi bi-person-fill me-1"></i>
+            </span>
+            <span id="profileHouseDisplay" class="badge bg-warning text-dark fs-6">
+                <i class="bi bi-house-fill me-1"></i>
+            </span>
         </div>
 
-        <div class="card-body" id="profileContainer">
-            <p class="text-muted">Cargando datos...</p>
+        <div class="card-body d-flex flex-wrap align-items-start">
+
+            <!-- DATOS PERSONALES -->
+            <div class="flex-grow-1 profile-details">
+
+                <!-- TÍTULO -->
+                <h5 class="mb-3 text-muted">Datos personales</h5>
+
+                <!-- FOTO + CAMPOS -->
+                <div class="row g-3 mb-3 align-items-center">
+
+                    <!-- FOTO -->
+                    <div class="col-md-3 text-center profile-image-wrapper">
+                        <img id="profileImage" src="/person-circle.svg" alt="Foto de perfil" class="rounded-circle mb-2"
+                            style="width:140px;height:140px;object-fit:cover;border:1px solid #dee2e6;">
+                        <input type="file" id="profileImageInput" style="display:none">
+                        <button class="btn btn-sm btn-outline-secondary w-60 d-none" id="changeImageBtn">
+                            Cambiar imagen
+                        </button>
+                    </div>
+
+                    <!-- CAMPOS -->
+                    <div class="col-md-9">
+                        <div class="row g-3">
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Nombre completo</label>
+                                <div id="profileNameDisplay" class="readonly-field"></div>
+                                <input type="text" id="profileName" class="form-control rounded-3 d-none">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Nombre de fantasía</label>
+                                <div id="profileNicknameDisplay" class="readonly-field"></div>
+                                <input type="text" id="profileNickname" class="form-control rounded-3 d-none">
+                            </div>
+
+                            <div class="col-md-2"></div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Fecha de entrada</label>
+                                <div id="profileEntryDateDisplay" class="readonly-field"></div>
+                                <input type="date" id="profileEntryDate" class="form-control rounded-3 d-none">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Email</label>
+                                <div id="profileEmailDisplay" class="readonly-field"></div>
+                                <input type="email" id="profileEmail" class="form-control rounded-3 d-none">
+                                <div class="form-check form-switch mt-2 d-none" id="profileMailStatusWrapper">
+                                    <input class="form-check-input" type="checkbox" id="profileMailStatus">
+                                    <label class="form-check-label">Recibir notificaciones</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Fecha de nacimiento</label>
+                                <div id="profileBirthDateDisplay" class="readonly-field"></div>
+                                <input type="date" id="profileBirthDate" class="form-control rounded-3 d-none">
+                            </div>
+
+                            <div class="col-md-2"></div>
+
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Fecha de salida</label>
+                                <div id="profileExitDateDisplay" class="readonly-field"></div>
+                                <input type="date" id="profileExitDate" class="form-control rounded-3 d-none">
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- ESTADO Y ASIGNACIONES -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold d-block">Estado</label>
+                        <div id="profileStatusDisplay" class="d-flex align-items-center justify-content-center"></div>
+                        <div class="form-check form-switch d-none" id="profileStatusWrapper">
+                            <input class="form-check-input" type="checkbox" id="profileStatus">
+                            <label class="form-check-label">Activo</label>
+                        </div>
+                    </div>
+                    <div class="col-md-1"></div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Funciones</label>
+                        <div id="profileFunctionsContainer" class="d-flex flex-wrap gap-1"></div>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold">Días de trabajo</label>
+                        <div id="profileDaysContainer" class="d-flex flex-wrap gap-1"></div>
+                    </div>
+                </div>
+
+                <!-- BOTONES -->
+                <div class="d-flex gap-2 justify-content-end">
+                    <button id="editProfileBtn" class="btn btn-outline-primary">Editar</button>
+                    <button id="saveProfileBtn" class="btn btn-success d-none">Guardar cambios</button>
+                </div>
+
+            </div>
         </div>
     </div>
 
-    <!-- ========================= -->
-    <!-- SCHEDULE -->
-    <!-- ========================= -->
+    <style>
+        .readonly-field {
+            background-color: #f8f9fa;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            min-height: 38px;
+            line-height: 1.5;
+            color: #212529;
+        }
 
-    <h2 class="mb-3">
-        <i class="bi bi-calendar-week me-2"></i>
-        Mi Agenda
-    </h2>
+        .status-active {
+            background-color: #28a745;
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
 
-    <div class="card mb-3 shadow-sm">
-        <div class="card-header text-center fw-bold" id="weekLabel">
-            Cargando semana...
-        </div>
-    </div>
+        .status-inactive {
+            background-color: #dc3545;
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
 
-    <div id="assignmentsContainer"
-         class="d-flex flex-wrap justify-content-center"
-         style="gap: 1.5rem;">
-    </div>
+        /* badges ROL + CASA */
+        .profile-badges {
+            z-index: 10;
+        }
 
-    <script src="/js/csrf.js"></script>
-    <script src="/js/user-dashboard.js"></script>
+        .profile-badges .badge {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+    </style>
+
+    <script>
+        const profileCache = {};
+        const dateFieldMap = {
+            profileBirthDate: 'birthDate',
+            profileEntryDate: 'entryDate',
+            profileExitDate: 'exitDate'
+        };
+
+        function formatDateDisplay(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-'); // yyyy-mm-dd
+            return `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/mm/yyyy
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProfile();
+            bindProfileActions();
+        });
+
+        async function loadProfile() {
+            try {
+                const res = await fetch('/api/user/me/details');
+                if (!res.ok) throw new Error('Error al cargar perfil');
+                const data = await res.json();
+                profileCache.data = data;
+                fillProfileDisplays(data);
+
+                // Funciones
+                const functionsContainer = document.getElementById('profileFunctionsContainer');
+                functionsContainer.innerHTML = '';
+                if (data.functions?.length) {
+                    data.functions.forEach(fn => {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-primary me-1 fs-6';
+                        badge.textContent = fn.name || fn;
+                        functionsContainer.appendChild(badge);
+                    });
+                } else functionsContainer.textContent = 'Sin funciones asignadas';
+
+                // Días
+                const dayLabels = { MONDAY: "Lunes", TUESDAY: "Martes", WEDNESDAY: "Miércoles", THURSDAY: "Jueves", FRIDAY: "Viernes", SATURDAY: "Sábado", SUNDAY: "Domingo" };
+                const daysContainer = document.getElementById('profileDaysContainer');
+                daysContainer.innerHTML = '';
+                if (data.workingDays?.length) {
+                    data.workingDays.forEach(day => {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-success me-1 fs-6';
+                        badge.textContent = dayLabels[day.toUpperCase()] || day;
+                        daysContainer.appendChild(badge);
+                    });
+                } else daysContainer.textContent = 'Sin días asignados';
+
+                // Imagen
+                document.getElementById('profileImage').src = data.profileImageUrl || '/person-circle.svg';
+
+                // Estado visual con icono
+                const statusDiv = document.getElementById('profileStatusDisplay');
+                if (data.active) {
+                    statusDiv.className = 'status-active';
+                    statusDiv.innerHTML = '<i class="bi bi-check-circle"></i> Activo';
+                } else {
+                    statusDiv.className = 'status-inactive';
+                    statusDiv.innerHTML = '<i class="bi bi-x-circle"></i> Inactivo';
+                }
+
+            } catch (err) {
+                console.error(err);
+                showAlert('No se pudo cargar el perfil.', 'danger');
+            }
+        }
+
+        function fillProfileDisplays(data) {
+            document.getElementById('profileNameDisplay').textContent = data.fullName || '';
+            document.getElementById('profileNicknameDisplay').textContent = data.nickName || '';
+            document.getElementById('profileEmailDisplay').textContent = data.email || '';
+            document.getElementById('profileBirthDateDisplay').textContent = formatDateDisplay(data.birthDate);
+            document.getElementById('profileEntryDateDisplay').textContent = formatDateDisplay(data.entryDate);
+            document.getElementById('profileExitDateDisplay').textContent = formatDateDisplay(data.exitDate);
+
+            // Rol y Casa con iconos
+            document.getElementById('profileRoleDisplay').innerHTML = `<i class="bi bi-person-fill me-1"></i>${data.role || ''}`;
+            document.getElementById('profileHouseDisplay').innerHTML = `<i class="bi bi-house-fill me-1"></i>${data.houseName || ''}`;
+
+            profileCache.datesForInput = {
+                birthDate: data.birthDate || '',
+                entryDate: data.entryDate || '',
+                exitDate: data.exitDate || ''
+            };
+        }
+
+        function bindProfileActions() {
+            const editBtn = document.getElementById('editProfileBtn');
+            const saveBtn = document.getElementById('saveProfileBtn');
+            const imageInput = document.getElementById('profileImageInput');
+            const changeImageBtn = document.getElementById('changeImageBtn');
+            const editableFields = ['profileName', 'profileNickname', 'profileBirthDate', 'profileEmail', 'profileEntryDate', 'profileExitDate'];
+
+            // variable temporal para almacenar la nueva imagen
+            let newProfileImageFile = null;
+
+            editBtn.addEventListener('click', () => {
+                editableFields.forEach(id => {
+                    const input = document.getElementById(id);
+                    const display = document.getElementById(id + 'Display');
+                    input.classList.remove('d-none');
+                    display.classList.add('d-none');
+                    input.value = dateFieldMap[id] ? profileCache.datesForInput[dateFieldMap[id]] : display.textContent;
+                });
+
+                changeImageBtn.classList.remove('d-none');
+                document.getElementById('profileMailStatusWrapper').classList.remove('d-none');
+                document.getElementById('profileMailStatus').checked = profileCache.data.emailNotificationsEnabled;
+
+                editBtn.classList.add('d-none');
+                saveBtn.classList.remove('d-none');
+            });
+
+            saveBtn.addEventListener('click', async () => {
+                const updatedData = {
+                    fullName: document.getElementById('profileName').value,
+                    nickName: document.getElementById('profileNickname').value,
+                    birthDate: document.getElementById('profileBirthDate').value,
+                    email: document.getElementById('profileEmail').value,
+                    emailNotificationsEnabled: document.getElementById('profileMailStatus').checked,
+                    entryDate: document.getElementById('profileEntryDate').value,
+                    exitDate: document.getElementById('profileExitDate').value
+                };
+
+                try {
+                    // primero actualizar datos generales
+                    const res = await fetch('/api/user/me', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatedData)
+                    });
+                    if (!res.ok) throw new Error('Error al guardar perfil');
+
+                    // luego subir la imagen si hay una seleccionada
+                    if (newProfileImageFile) {
+                        const formData = new FormData();
+                        formData.append('file', newProfileImageFile);
+
+                        const imgRes = await fetch('/api/user/profile-image', { method: 'POST', body: formData });
+                        if (!imgRes.ok) throw new Error('Error al subir imagen');
+                        const url = await imgRes.text();
+                        document.getElementById('profileImage').src = url;
+                        profileCache.data.profileImageUrl = url;
+
+                        // limpiar la variable temporal
+                        newProfileImageFile = null;
+                    }
+
+                    // actualizar caché y mostrar datos
+                    profileCache.data = { ...profileCache.data, ...updatedData };
+                    fillProfileDisplays(profileCache.data);
+
+                    // volver a modo lectura
+                    editableFields.forEach(id => {
+                        document.getElementById(id).classList.add('d-none');
+                        document.getElementById(id + 'Display').classList.remove('d-none');
+                    });
+                    changeImageBtn.classList.add('d-none');
+                    document.getElementById('profileMailStatusWrapper').classList.add('d-none');
+
+                    saveBtn.classList.add('d-none');
+                    editBtn.classList.remove('d-none');
+
+                    showAlert('Perfil actualizado correctamente.', 'success');
+
+                } catch (err) {
+                    console.error(err);
+                    showAlert('No se pudo guardar el perfil.', 'danger');
+                }
+            });
+
+            changeImageBtn.addEventListener('click', () => imageInput.click());
+
+            imageInput.addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // guardar temporalmente, pero no subir aún
+                newProfileImageFile = file;
+
+                const reader = new FileReader();
+                reader.onload = e => document.getElementById('profileImage').src = e.target.result;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function showAlert(msg, type = 'info') {
+            document.getElementById('alertContainer').innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show rounded-3 shadow-sm">
+            ${msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+        }
+    </script>
 
 </section>
 

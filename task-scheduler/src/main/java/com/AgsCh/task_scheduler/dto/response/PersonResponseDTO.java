@@ -18,6 +18,8 @@ public class PersonResponseDTO {
     private Set<DayOfWeek> workingDays;
     private Set<FunctionResponseDTO> functions;
     private String profileImageUrl;
+    private String role;
+    private String houseName;
 
     public PersonResponseDTO(
             Long id,
@@ -89,9 +91,25 @@ public class PersonResponseDTO {
 
     public Set<FunctionResponseDTO> getFunctions() {
         return functions;
-    }  
-    
+    }
+
     public String getProfileImageUrl() {
         return profileImageUrl;
+    }
+    
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setHouseName(String houseName) {
+        this.houseName = houseName;
+    }
+
+    public String getHouseName(){
+        return houseName;
     }
 }

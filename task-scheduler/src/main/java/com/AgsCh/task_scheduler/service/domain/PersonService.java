@@ -75,7 +75,7 @@ public class PersonService {
         this.houseRepository = houseRepository;
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
-        
+
     }
 
     // =====================================================
@@ -245,6 +245,10 @@ public class PersonService {
     public PersonResponseDTO getMyProfile() {
         return mapToResponseDTO(getCurrentUserPerson());
     }
+    
+    public PersonResponseDTO getMyProfileSafe() {
+        return mapToResponseDTOSafe(getCurrentUserPerson());
+    }
 
     private PersonResponseDTO mapToResponseDTO(Person person) {
 
@@ -255,6 +259,35 @@ public class PersonService {
                         pf.getFunction().getName(),
                         pf.getFunction().isSequential(),
                         pf.getFunction().getAssignedDays()))
+                .collect(Collectors.toSet());
+
+        return new PersonResponseDTO(
+                person.getId(),
+                person.getFullName(),
+                person.getNickName(),
+                person.getBirthDate(),
+                person.getEmail(),
+                person.isEmailNotificationsEnabled(),
+                person.isActive(),
+                person.getEntryDate(),
+                person.getExitDate(),
+                person.getWorkingDays(),
+                functions,
+                person.getProfileImageUrl());
+    }
+
+    // DTO seguro para perfil (no incluye assignedDays)
+    public PersonResponseDTO mapToResponseDTOSafe(Person person) {
+
+        // mapeamos funciones SIN assignedDays
+        Set<FunctionResponseDTO> functions = person.getPersonFunctions()
+                .stream()
+                .map(pf -> new FunctionResponseDTO(
+                        pf.getFunction().getId(),
+                        pf.getFunction().getName(),
+                        pf.getFunction().isSequential(),
+                        null // 🔹 no traemos assignedDays
+                ))
                 .collect(Collectors.toSet());
 
         return new PersonResponseDTO(
@@ -322,11 +355,12 @@ public class PersonService {
         person.setBirthDate(dto.getBirthDate());
         person.setEmail(dto.getEmail());
         person.setEmailNotificationsEnabled(dto.isEmailNotificationsEnabled());
+        person.setEntryDate(dto.getEntryDate());
+        person.setExitDate(dto.getExitDate());
 
         // ❌ NO permitimos:
         // - cambiar funciones
         // - cambiar active
-        // - cambiar entry/exit date
         // - cambiar workingDays
     }
 

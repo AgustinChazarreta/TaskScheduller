@@ -2,6 +2,7 @@ package com.AgsCh.task_scheduler.service.admin;
 
 import java.util.List;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
+import org.springframework.security.core.Authentication;
 
 @Service
 public class UserService {
@@ -74,6 +76,16 @@ public class UserService {
 
     public List<User> getAllAdmins() {
         return userRepository.findByRole(Role.ADMIN);
+    }
+
+    public User getAuthenticatedUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new BusinessException("No hay usuario autenticado");
+        }
+        String username = auth.getName(); // el username logueado
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException("Usuario no encontrado"));
     }
 
     public void updateUser(Long id, String username, boolean active, Long houseId) {

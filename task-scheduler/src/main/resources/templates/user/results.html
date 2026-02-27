@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
+<section>
+    <style th:inline="text">
+        @media print {
+
+            .day-block,
+            .card {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(80px, 1fr));
+            gap: 0.25rem;
+            overflow-x: auto;
+        }
+
+        .day-header {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 0.05rem;
+            font-size: clamp(0.65rem, 0.9vw, 0.8rem);
+            background-color: #f0f0f0;
+            border-radius: 0.5rem;
+            padding: 0.05rem 0;
+        }
+
+        .function-badge {
+            font-size: 0.7rem;
+            /* apenas más chico */
+            padding: 0.2rem 0.45rem;
+            /* un poco menos alto */
+            border-radius: 0.35rem;
+            background-color: #198754;
+            color: white;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+            /* mantiene buena legibilidad */
+        }
+
+        .day-cell {
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            min-height: 100px;
+            max-height: 150px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            padding: 0.25rem;
+            font-size: 0.8rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden;
+        }
+
+        .day-cell:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+
+        .assignments-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            overflow-y: auto;
+        }
+
+        .modal-tasks-wrapper {
+            width: 75%;
+            margin: 0 auto;
+            /* lo centra */
+        }
+    </style>
+
+    <main class="container-fluid py-2">
+        <div
+            class="bg-white rounded-4 shadow-sm p-3 mb-4 border-soft d-flex justify-content-between align-items-center">
+            <h2 class="fw-bold mb-0">
+                <i class="bi bi-calendar-check text-primary me-2"></i>
+                Schedule Mensual
+            </h2>
+            <button id="generatePdfBtn" class="btn btn-danger rounded-pill px-4" onclick="generatePDF()">
+                <i class="bi bi-filetype-pdf"></i> Generar PDF
+            </button>
+        </div>
+
+        <div id="resultsContainer" class="bg-white rounded-4 shadow-sm p-4 border-soft mb-4">
+            <div class="d-flex justify-content-center mb-4">
+                <div class="bg-white shadow-sm rounded-4 px-4 py-3 border-soft" id="monthLabel"></div>
+            </div>
+            <div id="assignmentsContainer" class="calendar-grid mb-3"></div>
+            <div class="d-flex justify-content-center gap-5 mb-3">
+                <button class="btn btn-primary rounded-pill px-4" onclick="prevMonth()">Mes anterior</button>
+                <button class="btn btn-primary rounded-pill px-4" onclick="nextMonth()">Mes siguiente</button>
+            </div>
+        </div>
+
+        <!-- Modal detalle del día -->
+        <div class="modal fade" id="dayModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-4">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Detalle del día</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="dayModalBody"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        let assignments = [];
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        const jsDays = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+        const labels = { MONDAY: "Lunes", TUESDAY: "Martes", WEDNESDAY: "Miércoles", THURSDAY: "Jueves", FRIDAY: "Viernes", SATURDAY: "Sábado", SUNDAY: "Domingo" };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadAssignments();
+            renderCalendar();
+        });
+
+        async function loadAssignments() {
+            try {
+                const res = await fetch('/api/user/my-schedule');
+                const data = await res.json();
+                assignments = data.assignments || [];
+                console.log("DATA RECIBIDA:", data);
+            } catch (e) {
+                console.error("Error al cargar assignments", e);
+                assignments = [];
+            }
+        }
+
+        /* 🔥 ÚNICA FUNCIÓN MODIFICADA */
+        function renderCalendar() {
+            const container = document.getElementById('assignmentsContainer');
+            const monthLabel = document.getElementById('monthLabel');
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const monthText = firstDay.toLocaleString('es-AR', { month: 'long', year: 'numeric' });
+
+            const capitalizedMonth = monthText.charAt(0).toUpperCase() + monthText.slice(1);
+            monthLabel.innerHTML = `<span class="badge bg-primary fs-4">${capitalizedMonth}</span>`;
+
+            let html = "";
+            const startDay = firstDay.getDay();
+            for (let i = 0; i < startDay; i++) html += `<div class="day-cell"></div>`;
+
+            const maxVisible = 3;
+
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+
+                const dayDate = new Date(currentYear, currentMonth, d);
+                const dayDateStr = dayDate.toISOString().split('T')[0];
+
+                const dayAssignments = assignments.filter(a => a.date === dayDateStr);
+
+                html += `<div class="day-cell" onclick="showDayModal('${dayDateStr}')">
+                    <div class="day-header">${d} ${labels[jsDays[dayDate.getDay()]]}</div>
+                    <div class="assignments-container">`;
+
+                dayAssignments.slice(0, maxVisible).forEach(a => {
+                    html += `<div class="function-badge">${a.functionName}</div>`;
+                });
+
+                if (dayAssignments.length > maxVisible) {
+                    html += `<div class="function-badge" style="background-color:#6c757d;">
+                                +${dayAssignments.length - maxVisible} más
+                             </div>`;
+                }
+
+                html += `</div></div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function nextMonth() { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(); }
+        function prevMonth() { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } renderCalendar(); }
+
+        function showDayModal(dateStr) {
+
+            const modalBody = document.getElementById('dayModalBody');
+            const date = new Date(dateStr);
+
+            const formattedDate =
+                date.toLocaleDateString('es-AR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+
+            const dayAssignments = assignments.filter(a => a.date === dateStr);
+
+            let content = `
+        <div class="text-center mb-3">
+            <span class="badge bg-primary fs-6 px-3 py-2">
+                ${formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)}
+            </span>
+        </div>
+    `;
+
+            if (dayAssignments.length === 0) {
+
+                content += `
+            <p class="text-center text-muted">
+                No hay tareas para este día.
+            </p>
+        `;
+
+            } else {
+
+                content += `
+                    <div class="modal-tasks-wrapper">
+                        <div style="display:flex; flex-direction:column; gap:0.6rem;">
+                `;
+
+                dayAssignments.forEach(a => {
+                    content += `
+                <div class="function-badge" style="padding:0.5rem; font-size:0.85rem;">
+                    ${a.functionName}
+                </div>
+            `;
+                });
+
+                content += `</div></div>`;
+            }
+
+            modalBody.innerHTML = content;
+
+            const modal = new bootstrap.Modal(document.getElementById('dayModal'));
+            modal.show();
+        }
+
+        function loadImageAsBase64(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                img.onload = function () {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL("image/png"));
+                };
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+
+            if (!assignments || assignments.length === 0) {
+                alert("No hay asignaciones para generar PDF");
+                return;
+            }
+
+            const pdf = new jsPDF('portrait', 'pt', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+
+            const pageMargin = 40;
+            const bottomMargin = 70;
+            const columnGap = 20;
+            const numColumns = 3;
+            const columnWidth = (pdfWidth - pageMargin * 2 - columnGap * (numColumns - 1)) / numColumns;
+
+            const lineHeight = 18;
+            const subLineHeight = 14;
+            const daySpacing = 6;
+
+            const titleFontSize = 18;
+            const periodFontSize = 11;
+            const monthFontSize = 19;
+            const dayFontSize = 14;
+            const fnFontSize = 12;
+
+            const safeBottom = pdfHeight - bottomMargin;
+
+            // 🔹 CARGAR LOGO
+            let logoBase64 = null;
+            try {
+                logoBase64 = await loadImageAsBase64('/logo.png');
+            } catch (e) {
+                console.error("No se pudo cargar el logo", e);
+            }
+
+            // -----------------------------
+            // ORDENAR Y AGRUPAR
+            // -----------------------------
+            const sortedAssignments = assignments
+                .slice()
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const startDate = new Date(sortedAssignments[0].date);
+            const endDate = new Date(sortedAssignments[sortedAssignments.length - 1].date);
+
+            const formatDate = (d) =>
+                `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+
+            const assignmentsByDay = {};
+            sortedAssignments.forEach(a => {
+                const parts = a.date.split('-');
+                const day = new Date(parts[0], parseInt(parts[1], 10) - 1, parts[2]);
+                const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+
+                if (!assignmentsByDay[key]) assignmentsByDay[key] = [];
+                assignmentsByDay[key].push(a.functionName);
+            });
+
+            // -----------------------------
+            // LOGO (más grande)
+            // -----------------------------
+            if (logoBase64) {
+                const logoWidth = 90;   // 🔥 antes 70
+                const logoHeight = 90;  // 🔥 antes 70
+
+                pdf.addImage(
+                    logoBase64,
+                    "PNG",
+                    pdfWidth / 2 - logoWidth / 2,
+                    25,
+                    logoWidth,
+                    logoHeight
+                );
+            }
+
+            // -----------------------------
+            // HEADER
+            // -----------------------------
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(titleFontSize);
+            pdf.setTextColor(30);
+            pdf.text("SCHEDULE", pdfWidth / 2, 140, { align: "center" });
+
+            pdf.setFont("helvetica", "normal");
+            pdf.setFontSize(periodFontSize);
+            pdf.setTextColor(80);
+
+            pdf.text(
+                `Período: ${formatDate(startDate)} - ${formatDate(endDate)}`,
+                pdfWidth / 2,
+                160,
+                { align: "center" }
+            );
+
+            pdf.text(
+                `Usuario: ${window.appUser?.name || ""} | Casa: ${window.appUser?.house || ""}`,
+                pdfWidth / 2,
+                175,
+                { align: "center" }
+            );
+
+            pdf.setDrawColor(120);
+            pdf.setLineWidth(0.8);
+            pdf.line(pageMargin, 190, pdfWidth - pageMargin, 190);
+
+            // -----------------------------
+            // VARIABLES DE POSICIÓN
+            // -----------------------------
+            let currentMonth = null;
+            let cursorX = pageMargin;
+            let cursorY = 220; // 🔥 primera página mantiene margen grande
+            let col = 0;
+            let monthStartY = cursorY;
+
+            for (const dateStr of Object.keys(assignmentsByDay)) {
+
+                const parts = dateStr.split('-');
+                const day = new Date(parts[0], parseInt(parts[1], 10) - 1, parts[2]);
+                const month = day.getMonth();
+                const year = day.getFullYear();
+
+                if (currentMonth === null || month !== currentMonth) {
+
+                    if (currentMonth !== null) {
+                        pdf.addPage();
+                        cursorX = pageMargin;
+                        cursorY = 50;   // 🔥 arranca mucho más arriba
+                        monthStartY = cursorY; // importante
+                    }
+
+                    currentMonth = month;
+                    col = 0;
+
+                    const monthName = day.toLocaleString('es-AR', { month: 'long' });
+                    const monthTitle =
+                        monthName.charAt(0).toUpperCase() +
+                        monthName.slice(1) +
+                        ' ' +
+                        year;
+
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setFontSize(monthFontSize);
+                    pdf.setTextColor(20);
+
+                    pdf.text(monthTitle, pageMargin, cursorY);
+                    cursorY += lineHeight * 1.7;
+
+                    monthStartY = cursorY;
+                }
+
+                const dayLabel = `${day.getDate()} ${labels[jsDays[day.getDay()]]}`;
+
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(dayFontSize);
+                pdf.setTextColor(40);
+                pdf.text(dayLabel, cursorX, cursorY);
+
+                cursorY += lineHeight;
+
+                pdf.setFont("helvetica", "normal");
+                pdf.setFontSize(fnFontSize);
+                pdf.setTextColor(70);
+
+                assignmentsByDay[dateStr].forEach(fn => {
+                    pdf.text(`• ${fn}`, cursorX + 10, cursorY);
+                    cursorY += subLineHeight;
+                });
+
+                cursorY += subLineHeight / 2 + daySpacing;
+
+                if (cursorY > safeBottom) {
+
+                    if (col < numColumns - 1) {
+                        col++;
+                        cursorX = pageMargin + col * (columnWidth + columnGap);
+                        cursorY = monthStartY;
+                    } else {
+                        pdf.addPage();
+                        col = 0;
+                        cursorX = pageMargin;
+                        cursorY = 50;   // 🔥 también más arriba
+                        monthStartY = cursorY;
+                    }
+                }
+            }
+
+            pdf.save(`Schedule-${formatDate(startDate)}-${formatDate(endDate)}.pdf`);
+        }
+    </script>
+</section>
+
+</html>
