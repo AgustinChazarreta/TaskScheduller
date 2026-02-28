@@ -1,14 +1,18 @@
 package com.AgsCh.task_scheduler.planner;
 
-import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
+import org.optaplanner.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
 import org.optaplanner.core.api.score.stream.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 
 import com.AgsCh.task_scheduler.model.FunctionAssignment;
 import com.AgsCh.task_scheduler.model.Person;
 
 public class ScheduleConstraintProvider implements ConstraintProvider {
+
+        private static final int ROTATION_WEIGHT = 20;
+        private static final int CONSECUTIVE_WEIGHT = 5;
 
         @Override
         public Constraint[] defineConstraints(ConstraintFactory factory) {
@@ -25,9 +29,14 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 personCannotWorkOnBirthday(factory),
 
                                 // =========================
+                                // MEDIUM CONSTRAINTS
+                                // =========================
+                                rotateSharedFunctionsMonthly(factory),
+
+                                // =========================
                                 // SOFT CONSTRAINTS
                                 // =========================
-                                balanceWorkload(factory)
+                                avoidConsecutiveAssignments(factory)
                 };
         }
 
@@ -38,7 +47,7 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
         private Constraint functionMustHavePerson(ConstraintFactory factory) {
                 return factory.forEach(FunctionAssignment.class)
                                 .filter(fa -> fa.getPerson() == null)
-                                .penalize(HardSoftScore.ONE_HARD)
+                                .penalize(HardMediumSoftScore.ONE_HARD)
                                 .asConstraint("Function must have an assigned person");
         }
 
@@ -49,49 +58,44 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                                 .getPersonFunctions()
                                                 .stream()
                                                 .noneMatch(pf -> pf.getFunction().equals(fa.getFunction())))
-                                .penalize(HardSoftScore.ONE_HARD)
+                                .penalize(HardMediumSoftScore.ONE_HARD)
                                 .asConstraint("Person must be able to perform function");
         }
 
-        /**
-         * Nueva constraint centralizada que reemplaza personMustWorkThatDay +
-         * personMustBeAvailable
-         */
         private Constraint personMustBeAssignable(ConstraintFactory factory) {
                 return factory.forEach(FunctionAssignment.class)
                                 .filter(fa -> fa.getPerson() != null && fa.getDate() != null)
                                 .filter(fa -> !isPersonAssignable(fa.getPerson(), fa.getDate()))
-                                .penalize(HardSoftScore.ONE_HARD)
-                                .asConstraint("Person must be assignable (working day + unavailability + active + entry/exit)");
+                                .penalize(HardMediumSoftScore.ONE_HARD)
+                                .asConstraint("Person must be assignable");
         }
 
         private boolean isPersonAssignable(Person person, LocalDate date) {
+
                 if (person == null || date == null) {
-                        return true; // no penalizamos null
+                        return true;
                 }
 
-                // 1️⃣ Día de la semana
                 if (!person.worksOn(date.getDayOfWeek())) {
                         return false;
                 }
 
-                // 2️⃣ Indisponibilidades puntuales
                 boolean unavailable = person.getUnavailabilities()
                                 .stream()
                                 .anyMatch(u -> u.includes(date));
+
                 if (unavailable) {
                         return false;
                 }
 
-                // 3️⃣ Activo
                 if (!person.isActive()) {
                         return false;
                 }
 
-                // 4️⃣ Entry / Exit
                 if (person.getEntryDate() != null && date.isBefore(person.getEntryDate())) {
                         return false;
                 }
+
                 if (person.getExitDate() != null && date.isAfter(person.getExitDate())) {
                         return false;
                 }
@@ -105,24 +109,24 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 .filter(fa -> !fa.getFunction()
                                                 .getAssignedDays()
                                                 .contains(fa.getDate().getDayOfWeek()))
-                                .penalize(HardSoftScore.ONE_HARD)
-                                .asConstraint("Function must be scheduled on an allowed day");
+                                .penalize(HardMediumSoftScore.ONE_HARD)
+                                .asConstraint("Function must be scheduled on allowed day");
         }
 
         private Constraint noDoubleBooking(ConstraintFactory factory) {
                 return factory.forEachUniquePair(FunctionAssignment.class,
                                 Joiners.equal(FunctionAssignment::getPerson),
                                 Joiners.equal(FunctionAssignment::getDate))
-                                .penalize(HardSoftScore.ONE_HARD)
-                                .asConstraint("Person cannot be assigned to multiple functions on the same day");
+                                .penalize(HardMediumSoftScore.ONE_HARD)
+                                .asConstraint("No double booking per day");
         }
 
         private Constraint personCannotWorkOnBirthday(ConstraintFactory factory) {
                 return factory.forEach(FunctionAssignment.class)
                                 .filter(fa -> fa.getPerson() != null && fa.getDate() != null)
                                 .filter(fa -> isBirthday(fa.getPerson().getBirthDate(), fa.getDate()))
-                                .penalize(HardSoftScore.ONE_HARD)
-                                .asConstraint("Person cannot work on their birthday");
+                                .penalize(HardMediumSoftScore.ONE_HARD)
+                                .asConstraint("Person cannot work on birthday");
         }
 
         private boolean isBirthday(LocalDate birthDate, LocalDate assignmentDate) {
@@ -133,16 +137,44 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
         }
 
         // =========================
+        // MEDIUM CONSTRAINTS
+        // =========================
+
+        /**
+         * Rota funciones compartidas dentro del mismo mes.
+         * No penaliza funciones que solo puede hacer una persona.
+         */
+        private Constraint rotateSharedFunctionsMonthly(ConstraintFactory factory) {
+                return factory.forEach(FunctionAssignment.class)
+                                .filter(fa -> fa.getPerson() != null)
+                                // Solo funciones que tienen más de un candidato posible
+                                .filter(fa -> fa.getFunction()
+                                                .getPersonFunctions()
+                                                .size() > 1)
+                                .groupBy(
+                                                fa -> fa.getPerson(),
+                                                fa -> fa.getFunction(),
+                                                fa -> YearMonth.from(fa.getDate()),
+                                                ConstraintCollectors.count())
+                                .filter((person, function, month, count) -> count > 1)
+                                .penalize(
+                                                HardMediumSoftScore.ofMedium(ROTATION_WEIGHT),
+                                                (person, function, month, count) -> (count - 1) * (count - 1))
+                                .asConstraint("Rotate shared functions monthly");
+        }
+
+        // =========================
         // SOFT CONSTRAINTS
         // =========================
 
-        private Constraint balanceWorkload(ConstraintFactory factory) {
-                return factory.forEach(FunctionAssignment.class)
-                                .filter(fa -> fa.getPerson() != null)
-                                .groupBy(FunctionAssignment::getPerson,
-                                                ConstraintCollectors.count())
-                                .filter((person, count) -> count > 3)
-                                .penalize(HardSoftScore.ONE_SOFT, (person, count) -> count - 3)
-                                .asConstraint("Balance workload");
+        private Constraint avoidConsecutiveAssignments(ConstraintFactory factory) {
+                return factory.forEachUniquePair(FunctionAssignment.class,
+                                Joiners.equal(FunctionAssignment::getPerson))
+                                .filter((a, b) -> a.getDate() != null &&
+                                                b.getDate() != null &&
+                                                Math.abs(a.getDate().toEpochDay()
+                                                                - b.getDate().toEpochDay()) == 1)
+                                .penalize(HardMediumSoftScore.ofSoft(CONSECUTIVE_WEIGHT))
+                                .asConstraint("Avoid consecutive assignments");
         }
 }
