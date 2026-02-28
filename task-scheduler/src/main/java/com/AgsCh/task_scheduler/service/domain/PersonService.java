@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
+import com.AgsCh.task_scheduler.dto.request.PersonUnavailabilityDTO;
 import com.AgsCh.task_scheduler.dto.response.FunctionAssignmentResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.FunctionResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonCreatedResponseDTO;
@@ -21,6 +22,7 @@ import com.AgsCh.task_scheduler.model.Function;
 import com.AgsCh.task_scheduler.model.House;
 import com.AgsCh.task_scheduler.model.Person;
 import com.AgsCh.task_scheduler.model.PersonFunction;
+import com.AgsCh.task_scheduler.model.PersonUnavailability;
 import com.AgsCh.task_scheduler.model.Role;
 import com.AgsCh.task_scheduler.model.ScheduleRun;
 import com.AgsCh.task_scheduler.model.User;
@@ -113,6 +115,18 @@ public class PersonService {
             }
         }
 
+        // 🔹 UNAVAILABILITIES
+        if (dto.getUnavailabilities() != null) {
+            dto.getUnavailabilities().forEach(uDto -> {
+                if (uDto.getEndDate() != null) {
+                    person.addUnavailability(
+                            new PersonUnavailability(uDto.getStartDate(), uDto.getEndDate(), uDto.getReason()));
+                } else {
+                    person.addUnavailability(new PersonUnavailability(uDto.getStartDate(), uDto.getReason()));
+                }
+            });
+        }
+
         Person savedPerson = repository.save(person);
 
         // PASSWORD TEMPORAL
@@ -141,28 +155,20 @@ public class PersonService {
     public PersonCreatedResponseDTO createForHouse(Long houseId, PersonRequestDTO dto) {
 
         User currentUser = getCurrentUser();
-        // 1️⃣ Seguridad multi-tenant
-        // 🔐 Si es ADMIN, solo puede crear en su propia house
+
         if (currentUser.getRole() == Role.ADMIN) {
-
-            if (currentUser.getHouse() == null ||
-                    !currentUser.getHouse().getId().equals(houseId)) {
-
+            if (currentUser.getHouse() == null || !currentUser.getHouse().getId().equals(houseId)) {
                 throw new RuntimeException("Access denied");
             }
         }
 
-        // 2️⃣ Buscar house real desde base de datos
-        // 🔥 Si es WEBMASTER → puede crear en cualquier house
         House house = houseRepository.findById(houseId)
                 .orElseThrow(() -> new RuntimeException("House not found"));
 
-        // 3️⃣ Validar email duplicado
         if (userRepository.existsByUsernameAndHouse(dto.getEmail(), house)) {
             throw new RuntimeException("Email already in use in this house");
         }
 
-        // 4️⃣ Crear Person
         Person person = new Person(
                 dto.getFullName(),
                 dto.getNickName(),
@@ -176,24 +182,28 @@ public class PersonService {
 
         person.setHouse(house);
 
-        // 5️⃣ Funciones
+        // FUNCIONES
         if (dto.getFunctionIds() != null && !dto.getFunctionIds().isEmpty()) {
-
             List<Function> functions = functionRepository.findAllById(dto.getFunctionIds());
-
             for (Function f : functions) {
-
                 if (!f.getHouse().getId().equals(houseId)) {
                     throw new RuntimeException("Function does not belong to this house");
                 }
-
                 person.addPersonFunction(new PersonFunction(person, f));
+            }
+        }
+
+        // UNAVAILABILITIES
+        if (dto.getUnavailabilities() != null && !dto.getUnavailabilities().isEmpty()) {
+            for (PersonUnavailabilityDTO u : dto.getUnavailabilities()) {
+                PersonUnavailability pu = new PersonUnavailability(u.getStartDate(), u.getEndDate(), u.getReason());
+                person.addUnavailability(pu);
             }
         }
 
         Person savedPerson = repository.save(person);
 
-        // 6️⃣ Crear User
+        // PASSWORD TEMPORAL
         String temporaryPassword = generateTemporaryPassword();
 
         User user = new User();
@@ -245,7 +255,7 @@ public class PersonService {
     public PersonResponseDTO getMyProfile() {
         return mapToResponseDTO(getCurrentUserPerson());
     }
-    
+
     public PersonResponseDTO getMyProfileSafe() {
         return mapToResponseDTOSafe(getCurrentUserPerson());
     }
@@ -289,6 +299,14 @@ public class PersonService {
                         null // 🔹 no traemos assignedDays
                 ))
                 .collect(Collectors.toSet());
+        // UNAVAILABILITIES
+        Set<PersonUnavailabilityDTO> unavailabilities = person.getUnavailabilities()
+                .stream()
+                .map(u -> new PersonUnavailabilityDTO(
+                        u.getStartDate(),
+                        u.getEndDate(),
+                        u.getReason()))
+                .collect(Collectors.toSet());
 
         return new PersonResponseDTO(
                 person.getId(),
@@ -302,7 +320,10 @@ public class PersonService {
                 person.getExitDate(),
                 person.getWorkingDays(),
                 functions,
-                person.getProfileImageUrl());
+                unavailabilities,
+                person.getProfileImageUrl(),
+                person.getUser() != null ? person.getUser().getRole().name() : null,
+                person.getHouse() != null ? person.getHouse().getName() : null);
     }
 
     // =====================================================
@@ -324,22 +345,32 @@ public class PersonService {
         person.setExitDate(dto.getExitDate());
         person.setWorkingDays(dto.getWorkingDays());
 
+        // FUNCIONES
         Set<Long> newFunctionIds = dto.getFunctionIds() != null ? dto.getFunctionIds() : Set.of();
-
         person.getPersonFunctions()
                 .removeIf(pf -> !newFunctionIds.contains(pf.getFunction().getId()));
 
         for (Long functionId : newFunctionIds) {
-
             boolean exists = person.getPersonFunctions().stream()
                     .anyMatch(pf -> pf.getFunction().getId().equals(functionId));
-
             if (!exists) {
                 Function f = functionRepository.findById(functionId)
                         .orElseThrow(() -> new RuntimeException("Function not found"));
-
                 person.addPersonFunction(new PersonFunction(person, f));
             }
+        }
+
+        // 🔹 UNAVAILABILITIES
+        person.getUnavailabilities().clear(); // borramos las viejas
+        if (dto.getUnavailabilities() != null) {
+            dto.getUnavailabilities().forEach(uDto -> {
+                if (uDto.getEndDate() != null) {
+                    person.addUnavailability(
+                            new PersonUnavailability(uDto.getStartDate(), uDto.getEndDate(), uDto.getReason()));
+                } else {
+                    person.addUnavailability(new PersonUnavailability(uDto.getStartDate(), uDto.getReason()));
+                }
+            });
         }
 
         scheduleService.invalidate(person.getHouse());

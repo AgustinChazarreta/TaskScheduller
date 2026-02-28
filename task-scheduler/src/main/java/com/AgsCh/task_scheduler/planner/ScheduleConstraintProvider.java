@@ -6,6 +6,7 @@ import org.optaplanner.core.api.score.stream.*;
 import java.time.LocalDate;
 
 import com.AgsCh.task_scheduler.model.FunctionAssignment;
+import com.AgsCh.task_scheduler.model.Person;
 
 public class ScheduleConstraintProvider implements ConstraintProvider {
 
@@ -18,8 +19,7 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 // =========================
                                 functionMustHavePerson(factory),
                                 personMustBeAbleToPerformFunction(factory),
-                                personMustWorkThatDay(factory),
-                                personMustBeAvailable(factory),
+                                personMustBeAssignable(factory),
                                 functionMustBeScheduledOnAllowedDay(factory),
                                 noDoubleBooking(factory),
                                 personCannotWorkOnBirthday(factory),
@@ -31,11 +31,9 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                 };
         }
 
-        /*
-         * =========================
-         * HARD CONSTRAINTS
-         * =========================
-         */
+        // =========================
+        // HARD CONSTRAINTS
+        // =========================
 
         private Constraint functionMustHavePerson(ConstraintFactory factory) {
                 return factory.forEach(FunctionAssignment.class)
@@ -55,25 +53,50 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 .asConstraint("Person must be able to perform function");
         }
 
-        private Constraint personMustWorkThatDay(ConstraintFactory factory) {
+        /**
+         * Nueva constraint centralizada que reemplaza personMustWorkThatDay +
+         * personMustBeAvailable
+         */
+        private Constraint personMustBeAssignable(ConstraintFactory factory) {
                 return factory.forEach(FunctionAssignment.class)
                                 .filter(fa -> fa.getPerson() != null && fa.getDate() != null)
-                                .filter(fa -> !fa.getPerson()
-                                                .getWorkingDays()
-                                                .contains(fa.getDate().getDayOfWeek()))
+                                .filter(fa -> !isPersonAssignable(fa.getPerson(), fa.getDate()))
                                 .penalize(HardSoftScore.ONE_HARD)
-                                .asConstraint("Person must work on that day of week");
+                                .asConstraint("Person must be assignable (working day + unavailability + active + entry/exit)");
         }
 
-        private Constraint personMustBeAvailable(ConstraintFactory factory) {
-                return factory.forEach(FunctionAssignment.class)
-                                .filter(fa -> fa.getPerson() != null && fa.getDate() != null)
-                                .filter(fa -> fa.getPerson()
-                                                .getUnavailabilities()
-                                                .stream()
-                                                .anyMatch(u -> u.includes(fa.getDate())))
-                                .penalize(HardSoftScore.ONE_HARD)
-                                .asConstraint("Person must be available (no unavailability)");
+        private boolean isPersonAssignable(Person person, LocalDate date) {
+                if (person == null || date == null) {
+                        return true; // no penalizamos null
+                }
+
+                // 1️⃣ Día de la semana
+                if (!person.worksOn(date.getDayOfWeek())) {
+                        return false;
+                }
+
+                // 2️⃣ Indisponibilidades puntuales
+                boolean unavailable = person.getUnavailabilities()
+                                .stream()
+                                .anyMatch(u -> u.includes(date));
+                if (unavailable) {
+                        return false;
+                }
+
+                // 3️⃣ Activo
+                if (!person.isActive()) {
+                        return false;
+                }
+
+                // 4️⃣ Entry / Exit
+                if (person.getEntryDate() != null && date.isBefore(person.getEntryDate())) {
+                        return false;
+                }
+                if (person.getExitDate() != null && date.isAfter(person.getExitDate())) {
+                        return false;
+                }
+
+                return true;
         }
 
         private Constraint functionMustBeScheduledOnAllowedDay(ConstraintFactory factory) {
@@ -87,8 +110,7 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
         }
 
         private Constraint noDoubleBooking(ConstraintFactory factory) {
-                return factory.forEachUniquePair(
-                                FunctionAssignment.class,
+                return factory.forEachUniquePair(FunctionAssignment.class,
                                 Joiners.equal(FunctionAssignment::getPerson),
                                 Joiners.equal(FunctionAssignment::getDate))
                                 .penalize(HardSoftScore.ONE_HARD)
@@ -98,9 +120,7 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
         private Constraint personCannotWorkOnBirthday(ConstraintFactory factory) {
                 return factory.forEach(FunctionAssignment.class)
                                 .filter(fa -> fa.getPerson() != null && fa.getDate() != null)
-                                .filter(fa -> isBirthday(
-                                                fa.getPerson().getBirthDate(),
-                                                fa.getDate()))
+                                .filter(fa -> isBirthday(fa.getPerson().getBirthDate(), fa.getDate()))
                                 .penalize(HardSoftScore.ONE_HARD)
                                 .asConstraint("Person cannot work on their birthday");
         }
@@ -112,22 +132,17 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 && birthDate.getDayOfMonth() == assignmentDate.getDayOfMonth();
         }
 
-        /*
-         * =========================
-         * SOFT CONSTRAINTS
-         * =========================
-         */
+        // =========================
+        // SOFT CONSTRAINTS
+        // =========================
 
         private Constraint balanceWorkload(ConstraintFactory factory) {
                 return factory.forEach(FunctionAssignment.class)
                                 .filter(fa -> fa.getPerson() != null)
-                                .groupBy(
-                                                FunctionAssignment::getPerson,
+                                .groupBy(FunctionAssignment::getPerson,
                                                 ConstraintCollectors.count())
                                 .filter((person, count) -> count > 3)
-                                .penalize(
-                                                HardSoftScore.ONE_SOFT,
-                                                (person, count) -> count - 3)
+                                .penalize(HardSoftScore.ONE_SOFT, (person, count) -> count - 3)
                                 .asConstraint("Balance workload");
         }
 }

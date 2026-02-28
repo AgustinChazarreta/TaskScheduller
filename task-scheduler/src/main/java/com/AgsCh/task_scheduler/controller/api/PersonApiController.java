@@ -9,10 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
-import com.AgsCh.task_scheduler.dto.response.FunctionResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonCreatedResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonResponseDTO;
-import com.AgsCh.task_scheduler.model.PersonFunction;
 import com.AgsCh.task_scheduler.service.domain.PersonService;
 
 @RestController
@@ -32,31 +30,12 @@ public class PersonApiController {
         return service.create(dto);
     }
 
-    // -------- READ --------
+    // -------- READ ALL --------
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public List<PersonResponseDTO> list() {
         return service.findAll().stream()
-                .map(p -> new PersonResponseDTO(
-                        p.getId(),
-                        p.getFullName(),
-                        p.getNickName(),
-                        p.getBirthDate(),
-                        p.getEmail(),
-                        p.isEmailNotificationsEnabled(),
-                        p.isActive(),
-                        p.getEntryDate(),
-                        p.getExitDate(),
-                        p.getWorkingDays(),
-                        p.getPersonFunctions().stream()
-                                .filter(PersonFunction::isActive)
-                                .map(pf -> new FunctionResponseDTO(
-                                        pf.getFunction().getId(),
-                                        pf.getFunction().getName(),
-                                        pf.getFunction().isSequential(),
-                                        pf.getFunction().getAssignedDays()))
-                                .collect(Collectors.toSet()),
-                        p.getProfileImageUrl()))
+                .map(service::mapToResponseDTOSafe) // usamos el DTO seguro que incluye unavailabilities
                 .collect(Collectors.toList());
     }
 

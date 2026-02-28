@@ -1,5 +1,6 @@
 package com.AgsCh.task_scheduler.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.AgsCh.task_scheduler.model.ScheduleRun;
+import com.AgsCh.task_scheduler.model.ScheduleRun.Status;
 
 import jakarta.transaction.Transactional;
 
@@ -48,4 +50,12 @@ public interface ScheduleRunRepository extends JpaRepository<ScheduleRun, Long> 
     */
     List<ScheduleRun> findByHouse_IdOrderByCreatedAtDesc(Long houseId);
     Optional<ScheduleRun> findTopByHouse_IdOrderByCreatedAtDesc(Long houseId);
+
+    List<ScheduleRun> findAllByOrderByCreatedAtDesc();
+
+    Optional<ScheduleRun> findTopByOrderByCreatedAtDesc();
+
+    long countByCreatedAtBetween(LocalDateTime startOfMonth, LocalDateTime startOfNextMonth);
+
+    long countByStatus(Status active);
 }

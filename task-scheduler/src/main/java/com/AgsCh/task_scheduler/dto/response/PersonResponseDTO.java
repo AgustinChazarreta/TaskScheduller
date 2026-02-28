@@ -4,6 +4,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Set;
 
+import com.AgsCh.task_scheduler.dto.request.PersonUnavailabilityDTO;
+
 public class PersonResponseDTO {
 
     private Long id;
@@ -17,10 +19,47 @@ public class PersonResponseDTO {
     private LocalDate exitDate;
     private Set<DayOfWeek> workingDays;
     private Set<FunctionResponseDTO> functions;
+    private Set<PersonUnavailabilityDTO> unavailabilities;
     private String profileImageUrl;
     private String role;
     private String houseName;
 
+    // Constructor full
+    public PersonResponseDTO(
+            Long id,
+            String fullName,
+            String nickName,
+            LocalDate birthDate,
+            String email,
+            boolean emailNotificationsEnabled,
+            boolean active,
+            LocalDate entryDate,
+            LocalDate exitDate,
+            Set<DayOfWeek> workingDays,
+            Set<FunctionResponseDTO> functions,
+            Set<PersonUnavailabilityDTO> unavailabilities,
+            String profileImageUrl,
+            String role,
+            String houseName) {
+
+        this.id = id;
+        this.fullName = fullName;
+        this.nickName = nickName;
+        this.birthDate = birthDate;
+        this.email = email;
+        this.emailNotificationsEnabled = emailNotificationsEnabled;
+        this.active = active;
+        this.entryDate = entryDate;
+        this.exitDate = exitDate;
+        this.workingDays = workingDays;
+        this.functions = functions;
+        this.unavailabilities = unavailabilities;
+        this.profileImageUrl = profileImageUrl;
+        this.role = role;
+        this.houseName = houseName;
+    }
+
+    // Constructor sin role, houseName y unavailabilities (compatibilidad)
     public PersonResponseDTO(
             Long id,
             String fullName,
@@ -35,20 +74,12 @@ public class PersonResponseDTO {
             Set<FunctionResponseDTO> functions,
             String profileImageUrl) {
 
-        this.id = id;
-        this.fullName = fullName;
-        this.nickName = nickName;
-        this.birthDate = birthDate;
-        this.email = email;
-        this.emailNotificationsEnabled = emailNotificationsEnabled;
-        this.active = active;
-        this.entryDate = entryDate;
-        this.exitDate = exitDate;
-        this.workingDays = workingDays;
-        this.functions = functions;
-        this.profileImageUrl = profileImageUrl;
+        // llama al constructor full pasando nulls para lo que falta
+        this(id, fullName, nickName, birthDate, email, emailNotificationsEnabled, active,
+                entryDate, exitDate, workingDays, functions, null, profileImageUrl, null, null);
     }
 
+    // ---------------- Getters ----------------
     public Long getId() {
         return id;
     }
@@ -93,23 +124,32 @@ public class PersonResponseDTO {
         return functions;
     }
 
+    public Set<PersonUnavailabilityDTO> getUnavailabilities() {
+        return unavailabilities;
+    }
+
     public String getProfileImageUrl() {
         return profileImageUrl;
-    }
-    
-    public void setRole(String role) {
-        this.role = role;
     }
 
     public String getRole() {
         return role;
     }
 
+    public String getHouseName() {
+        return houseName;
+    }
+
+    // ---------------- Setters ----------------
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     public void setHouseName(String houseName) {
         this.houseName = houseName;
     }
 
-    public String getHouseName(){
-        return houseName;
+    public void setUnavailabilities(Set<PersonUnavailabilityDTO> unavailabilities) {
+        this.unavailabilities = unavailabilities;
     }
 }

@@ -117,9 +117,9 @@
         <div class="card-body p-4">
             <h5 class="fw-bold mb-4">Módulos del Sistema</h5>
 
-            <div class="row g-4">
+            <div class="row g-4 mx-2">
 
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <a th:href="@{/webmaster/houses}" class="text-decoration-none text-dark">
                         <div class="p-4 bg-light rounded-4 h-100 module-hover">
                             <i class="bi bi-house-door fs-3 text-primary mb-3 d-block"></i>
@@ -129,17 +129,17 @@
                     </a>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <a href="/webmaster/users" class="text-decoration-none text-dark">
                         <div class="p-4 bg-light rounded-4 h-100 module-hover">
                             <i class="bi bi-people fs-3 text-success mb-3 d-block"></i>
-                            <h6 class="fw-semibold">Cuentas</h6>
+                            <h6 class="fw-semibold">Gestión de Cuentas</h6>
                             <small class="text-muted">Control de usuarios y admins</small>
                         </div>
                     </a>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <a href="/webmaster/roles" class="text-decoration-none text-dark">
                         <div class="p-4 bg-light rounded-4 h-100 module-hover">
                             <i class="bi bi-shield-lock fs-3 text-warning mb-3 d-block"></i>
@@ -149,36 +149,15 @@
                     </a>
                 </div>
 
-                <div class="col-md-4">
-                    <a href="/webmaster/settings" class="text-decoration-none text-dark">
+                <div class="col-md-6">
+                    <a href="/webmaster/schedules" class="text-decoration-none text-dark">
                         <div class="p-4 bg-light rounded-4 h-100 module-hover">
-                            <i class="bi bi-sliders fs-3 text-info mb-3 d-block"></i>
-                            <h6 class="fw-semibold">Configuración</h6>
-                            <small class="text-muted">Parámetros generales del sistema</small>
+                            <i class="bi bi-clock-history fs-3 text-secondary mb-3 d-block"></i>
+                            <h6 class="fw-semibold">Schedule Runs</h6>
+                            <small class="text-muted">Historial global de ejecuciones</small>
                         </div>
                     </a>
                 </div>
-
-                <div class="col-md-4">
-                    <a href="/webmaster/logs" class="text-decoration-none text-dark">
-                        <div class="p-4 bg-light rounded-4 h-100 module-hover">
-                            <i class="bi bi-file-earmark-text fs-3 text-secondary mb-3 d-block"></i>
-                            <h6 class="fw-semibold">Logs</h6>
-                            <small class="text-muted">Auditoría y seguimiento</small>
-                        </div>
-                    </a>
-                </div>
-
-                <div class="col-md-4">
-                    <a href="/webmaster/backup" class="text-decoration-none text-dark">
-                        <div class="p-4 bg-light rounded-4 h-100 module-hover">
-                            <i class="bi bi-database-check fs-3 text-danger mb-3 d-block"></i>
-                            <h6 class="fw-semibold">Backup</h6>
-                            <small class="text-muted">Respaldo y restauración</small>
-                        </div>
-                    </a>
-                </div>
-
             </div>
         </div>
     </div>

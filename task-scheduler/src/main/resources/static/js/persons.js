@@ -173,6 +173,62 @@ async function loadPersons() {
         });
 }
 
+/* ===============================
+   UNAVAILABILITIES STATE
+================================ */
+const unavailabilityStart = document.getElementById("unavailabilityStart");
+const unavailabilityEnd = document.getElementById("unavailabilityEnd");
+const unavailabilityReason = document.getElementById("unavailabilityReason");
+const addUnavailabilityBtn = document.getElementById("addUnavailabilityBtn");
+const unavailabilitiesList = document.getElementById("unavailabilitiesList");
+
+let currentUnavailabilities = [];
+
+// Función para renderizar la lista
+function renderUnavailabilities() {
+    unavailabilitiesList.innerHTML = "";
+    currentUnavailabilities.forEach((u, i) => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between align-items-center rounded-3 mb-1";
+        li.innerHTML = `
+            <div>
+                <strong>${u.startDate}</strong> - <strong>${u.endDate || "-"}</strong> : ${u.reason}
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger rounded-circle" onclick="removeUnavailability(${i})">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+        unavailabilitiesList.appendChild(li);
+    });
+}
+
+// Agregar nueva ausencia
+addUnavailabilityBtn.addEventListener("click", () => {
+    const start = unavailabilityStart.value;
+    const end = unavailabilityEnd.value || null;
+    const reason = unavailabilityReason.value.trim();
+
+    if (!start || !reason) {
+        showAlert("Fecha de inicio y motivo son obligatorios", "danger", true);
+        return;
+    }
+
+    currentUnavailabilities.push({ startDate: start, endDate: end, reason });
+    renderUnavailabilities();
+
+    // reset inputs
+    unavailabilityStart.value = "";
+    unavailabilityEnd.value = "";
+    unavailabilityReason.value = "";
+});
+
+// Eliminar
+function removeUnavailability(index) {
+    currentUnavailabilities.splice(index, 1);
+    renderUnavailabilities();
+}
+
+
 
 /* ===============================
    CREATE / UPDATE
@@ -182,16 +238,17 @@ form.addEventListener("submit", async e => {
     e.preventDefault();
 
     const payload = {
-        fullName: document.getElementById("personName").value.trim(),
-        nickName: document.getElementById("personNickname").value.trim() || null,
-        birthDate: document.getElementById("personBirthDate").value,
-        active: document.getElementById("personStatus").checked,
-        email: document.getElementById("personEmail").value.trim(),
-        emailNotificationsEnabled: document.getElementById("mailStatus").checked,
-        entryDate: document.getElementById("personEntryDate").value,
-        exitDate: document.getElementById("personExitDate").value || null,
+        fullName: personName.value.trim(),
+        nickName: personNickname.value.trim() || null,
+        birthDate: personBirthDate.value,
+        active: personStatus.checked,
+        email: personEmail.value.trim(),
+        emailNotificationsEnabled: mailStatus.checked,
+        entryDate: personEntryDate.value,
+        exitDate: personExitDate.value || null,
         workingDays: $('#personDays').val(),
-        functionIds: $("#personFunctions").val().map(Number)
+        functionIds: $("#personFunctions").val().map(Number),
+        unavailabilities: currentUnavailabilities // 🔹 acá se envía el array
     };
 
     const url = editingPersonId
@@ -278,6 +335,8 @@ function editPerson(id) {
     personStatus.checked = p.active;
     personEntryDate.value = p.entryDate;
     personExitDate.value = p.exitDate || "";
+    currentUnavailabilities = p.unavailabilities ? [...p.unavailabilities] : [];
+    renderUnavailabilities();
 
     $("#personFunctions").val(p.functions.map(f => f.id)).trigger("change");
     $("#personDays").val(p.workingDays).trigger("change");
@@ -359,16 +418,17 @@ document
 
         loadPersons();
     });
-    
+
 /* ===============================
    RESET FORM
 ================================ */
 
 function resetForm() {
     editingPersonId = null;
+    currentUnavailabilities = [];
+    renderUnavailabilities();
 
     modalTitle.innerHTML = `<i class="bi bi-person-plus me-2"></i>Agregar persona`;
-
     form.reset();
 
     $("#personFunctions").val(null).trigger("change");
@@ -376,6 +436,10 @@ function resetForm() {
 
     photoPreview.src = "/person-circle.svg";
     if (photoInput) { photoInput.value = ""; }
+
+    unavailabilityStart.value = "";
+    unavailabilityEnd.value = "";
+    unavailabilityReason.value = "";
 }
 
 

@@ -2,6 +2,7 @@ package com.AgsCh.task_scheduler.dto.request;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -33,6 +34,8 @@ public class PersonRequestDTO {
     private Set<DayOfWeek> workingDays;
 
     private Set<Long> functionIds;
+
+    private List<PersonUnavailabilityDTO> unavailabilities;
 
     public PersonRequestDTO() {
     }
@@ -125,5 +128,13 @@ public class PersonRequestDTO {
 
     public void setFunctionIds(Set<Long> functionIds) {
         this.functionIds = functionIds;
+    }
+
+    public List<PersonUnavailabilityDTO> getUnavailabilities() {
+        return unavailabilities;
+    }
+
+    public void setUnavailabilities(List<PersonUnavailabilityDTO> unavailabilities) {
+        this.unavailabilities = unavailabilities;
     }
 }

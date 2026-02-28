@@ -183,6 +183,40 @@
                             </div>
 
                         </div>
+                        
+                        <hr>
+
+                        <!-- UNAVAILABILITIES -->
+                        <h6 class="text-muted mb-3">Ausencias / No disponibles</h6>
+
+                        <div class="row g-3 mb-3 align-items-end">
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Fecha inicio</label>
+                                <input type="date" id="unavailabilityStart" class="form-control rounded-3">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Fecha fin</label>
+                                <input type="date" id="unavailabilityEnd" class="form-control rounded-3">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Motivo</label>
+                                <input type="text" id="unavailabilityReason" class="form-control rounded-3"
+                                    placeholder="Ej: Vacaciones">
+                            </div>
+
+                            <div class="col-md-12 mt-2 d-grid">
+                                <button type="button" class="btn btn-outline-primary rounded-pill"
+                                    id="addUnavailabilityBtn">
+                                    <i class="bi bi-plus-lg me-1"></i> Agregar ausencia
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <ul id="unavailabilitiesList" class="list-group mt-3"></ul>
 
                     </div>
 

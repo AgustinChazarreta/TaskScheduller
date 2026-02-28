@@ -16,6 +16,7 @@ import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.service.admin.AdminService;
 import com.AgsCh.task_scheduler.service.admin.HouseService;
 import com.AgsCh.task_scheduler.service.admin.UserService;
+import com.AgsCh.task_scheduler.service.admin.WebmasterScheduleService;
 import com.AgsCh.task_scheduler.service.domain.PersonService;
 
 @Controller
@@ -27,17 +28,20 @@ public class WebmasterWebController {
     private final UserService userService;
     private final PersonService personService;
     private final AdminService adminService;
+    private final WebmasterScheduleService webmasterScheduleService;
 
     public WebmasterWebController(
             HouseService houseService,
             UserService userService,
             AdminService adminService,
-            PersonService personService) {
+            PersonService personService,
+            WebmasterScheduleService webmasterScheduleService) {
 
         this.houseService = houseService;
         this.userService = userService;
         this.adminService = adminService;
         this.personService = personService;
+        this.webmasterScheduleService = webmasterScheduleService;
     }
 
     @GetMapping("/dashboard")
@@ -243,6 +247,16 @@ public class WebmasterWebController {
         }
 
         return "redirect:/webmaster/users";
+    }
+
+    @GetMapping("/schedules")
+    public String schedules(Model model) {
+
+        var scheduleRuns = webmasterScheduleService.getAllRuns();
+
+        model.addAttribute("scheduleRuns", scheduleRuns);
+
+        return "webmaster/schedules";
     }
 
 }

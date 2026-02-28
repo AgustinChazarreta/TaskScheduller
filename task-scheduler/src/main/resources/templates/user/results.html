@@ -131,6 +131,20 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadAssignments();
+
+            // 🔹 Si no se recibió ningún resultado del backend
+            if (!assignments || assignments.length === 0) {
+                const container = document.getElementById('resultsContainer');
+                container.innerHTML = `
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-exclamation-circle fs-1 mb-3"></i>
+                <div>No hay resultados disponibles del schedule.</div>
+            </div>
+        `;
+                return; // no hacemos renderCalendar
+            }
+
+            // 🔹 Si hay datos del backend, renderizamos el calendario normalmente
             renderCalendar();
         });
 
@@ -146,48 +160,62 @@
             }
         }
 
-        /* 🔥 ÚNICA FUNCIÓN MODIFICADA */
         function renderCalendar() {
-            const container = document.getElementById('assignmentsContainer');
+            const container = document.getElementById('resultsContainer');
             const monthLabel = document.getElementById('monthLabel');
             const firstDay = new Date(currentYear, currentMonth, 1);
             const lastDay = new Date(currentYear, currentMonth + 1, 0);
             const monthText = firstDay.toLocaleString('es-AR', { month: 'long', year: 'numeric' });
-
             const capitalizedMonth = monthText.charAt(0).toUpperCase() + monthText.slice(1);
-            monthLabel.innerHTML = `<span class="badge bg-primary fs-4">${capitalizedMonth}</span>`;
 
+            // reconstruimos el contenido completo del contenedor
+            container.innerHTML = `
+        <div class="d-flex justify-content-center mb-4">
+            <div class="bg-white shadow-sm rounded-4 px-4 py-3 border-soft" id="monthLabel">
+                <span class="badge bg-primary fs-4">${capitalizedMonth}</span>
+            </div>
+        </div>
+        <div id="assignmentsContainer" class="calendar-grid mb-3"></div>
+        <div class="d-flex justify-content-center gap-5 mb-3">
+            <button class="btn btn-primary rounded-pill px-4" onclick="prevMonth()">Mes anterior</button>
+            <button class="btn btn-primary rounded-pill px-4" onclick="nextMonth()">Mes siguiente</button>
+        </div>
+    `;
+
+            const assignmentsContainer = document.getElementById('assignmentsContainer');
             let html = "";
             const startDay = firstDay.getDay();
-            for (let i = 0; i < startDay; i++) html += `<div class="day-cell"></div>`;
-
             const maxVisible = 3;
 
-            for (let d = 1; d <= lastDay.getDate(); d++) {
+            // días vacíos antes del primer día del mes
+            for (let i = 0; i < startDay; i++) html += `<div class="day-cell"></div>`;
 
+            // recorrer todos los días del mes
+            for (let d = 1; d <= lastDay.getDate(); d++) {
                 const dayDate = new Date(currentYear, currentMonth, d);
                 const dayDateStr = dayDate.toISOString().split('T')[0];
-
                 const dayAssignments = assignments.filter(a => a.date === dayDateStr);
 
                 html += `<div class="day-cell" onclick="showDayModal('${dayDateStr}')">
-                    <div class="day-header">${d} ${labels[jsDays[dayDate.getDay()]]}</div>
-                    <div class="assignments-container">`;
+            <div class="day-header">${d} ${labels[jsDays[dayDate.getDay()]]}</div>
+            <div class="assignments-container">`;
 
+                // mostrar hasta maxVisible asignaciones
                 dayAssignments.slice(0, maxVisible).forEach(a => {
                     html += `<div class="function-badge">${a.functionName}</div>`;
                 });
 
+                // si hay más de maxVisible, mostrar "+X más"
                 if (dayAssignments.length > maxVisible) {
                     html += `<div class="function-badge" style="background-color:#6c757d;">
-                                +${dayAssignments.length - maxVisible} más
-                             </div>`;
+                        +${dayAssignments.length - maxVisible} más
+                     </div>`;
                 }
 
                 html += `</div></div>`;
             }
 
-            container.innerHTML = html;
+            assignmentsContainer.innerHTML = html;
         }
 
         function nextMonth() { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(); }

@@ -1,5 +1,8 @@
 package com.AgsCh.task_scheduler.controller.api;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
+import com.AgsCh.task_scheduler.dto.request.PersonUnavailabilityDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
 import com.AgsCh.task_scheduler.model.User;
@@ -68,6 +72,20 @@ public class UserController {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error al subir la imagen");
         }
+    }
+
+    @GetMapping("/me/unavailabilities")
+    public List<PersonUnavailabilityDTO> getMyUnavailabilities() {
+        User user = userService.getAuthenticatedUser();
+
+        // mapear de entidad a DTO
+        return user.getPerson().getUnavailabilities().stream()
+                .map(u -> new PersonUnavailabilityDTO(
+                        u.getStartDate(),
+                        u.getEndDate(),
+                        u.getReason()
+                ))
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/my-schedule")
