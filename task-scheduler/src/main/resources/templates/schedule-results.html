@@ -246,10 +246,27 @@
             }
         }
 
-        function loadResults() {
-            const result = JSON.parse(sessionStorage.getItem('scheduleResults')) || { assignments: [] };
-            assignments = result.assignments;
-            renderCalendar();
+        async function loadResults() {
+
+            try {
+                const res = await fetch('/api/admin/schedule/current');
+
+                if (!res.ok) {
+                    assignments = [];
+                    renderCalendar();
+                    return;
+                }
+
+                const data = await res.json();
+
+                assignments = data.assignments || [];
+                renderCalendar();
+
+            } catch (e) {
+                console.error("Error cargando schedule actual", e);
+                assignments = [];
+                renderCalendar();
+            }
         }
 
         function renderCalendar() {
@@ -426,9 +443,6 @@
                 }
 
                 const updatedSchedule = await res.json();
-
-                // Actualizamos sessionStorage con lo que devuelve backend
-                sessionStorage.setItem('scheduleResults', JSON.stringify(updatedSchedule));
 
                 alert('Schedule guardado como nueva versión.');
 

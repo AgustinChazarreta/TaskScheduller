@@ -52,7 +52,10 @@ public class AdminApiController {
      * =========================
      */
     @GetMapping("/schedule/current")
-    public ScheduleResponseDTO current(@AuthenticationPrincipal User user) {
+    public ScheduleResponseDTO current(Authentication authentication) {
+
+        String username = authentication.getName();
+        User user = adminService.findByUsername(username);
 
         var run = scheduleService.getActiveRunByHouse(user.getHouse().getId());
 
