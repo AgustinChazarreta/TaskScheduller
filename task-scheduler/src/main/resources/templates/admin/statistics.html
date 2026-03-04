@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
+
+<section>
+
+    <main class="container-fluid py-4">
+
+        <!-- ================= HEADER ================= -->
+        <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="fw-bold mb-0">
+                    <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>
+                    Estadísticas de la Casa
+                </h2>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-4 shadow-sm p-4 border-soft mb-4" th:if="${stats == null or stats.totalAssignments == 0}">
+            <div class="d-flex flex-column justify-content-center text-center text-muted" style="min-height:50vh;">
+                <i class="bi bi-exclamation-triangle fs-1 mb-3"></i>
+                <h4>Estadísticas no disponibles</h4>
+                <p>No se han generado estadísticas para esta Casa aún.</p>
+            </div>
+        </div>
+
+        <!-- ================= METRICS ================= -->
+        <div class="row g-4 mb-4" th:if="${stats != null and stats.totalAssignments > 0}">
+
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                    <div class="fw-semibold mb-2 fs-5">Asignaciones Totales</div>
+                    <div class="fs-2 fw-bold" th:text="${stats != null ? stats.totalAssignments : 0}">
+                        0
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                    <div class="fw-semibold mb-2 fs-5">Runs Históricos</div>
+                    <div class="fs-2 fw-bold" th:text="${stats != null ? stats.historicalRuns : 0}">
+                        0
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 text-center p-4">
+                    <div class="fw-semibold mb-2 fs-5">Personas Totales</div>
+                    <div class="fs-2 fw-bold" th:text="${stats != null ? #lists.size(stats.peopleStats) : 0}">
+                        0
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= CHARTS ================= -->
+        <div class="row g-4" th:if="${stats != null and stats.totalAssignments > 0}">
+
+            <!-- Assignments per Person -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3 fs-4">
+                            Asignaciones por Persona
+                        </h5>
+                        <div style="height: 350px;">
+                            <canvas id="personChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignments per Function -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3 fs-4">
+                            Asignaciones por Función
+                        </h5>
+                        <div style="height: 350px;">
+                            <canvas id="functionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Trend -->
+            <div class="col-md-12">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3 fs-4">
+                            Tendencia Mensual de Asignaciones
+                        </h5>
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ================= CHART SCRIPT ================= -->
+
+    <script th:inline="javascript" th:if="${stats != null and stats.totalAssignments > 0}">
+
+        /* ================= PERSON DATA ================= */
+
+        const personLabels = /*[[${personLabels != null ? personLabels : {}}]]*/[];
+        const personValues = /*[[${personValues!= null ? personValues : {}}]]*/[];
+
+        new Chart(document.getElementById('personChart'), {
+            type: 'bar',
+            data: {
+                labels: personLabels,
+                datasets: [{
+                    label: 'Assignments',
+                    data: personValues,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        /* ================= FUNCTION DATA ================= */
+
+        const functionLabels = /*[[${functionLabels != null ? functionLabels : {}}]]*/[];
+        const functionValues = /*[[${functionValues != null ? functionValues : {}}]]*/[];
+
+        new Chart(document.getElementById('functionChart'), {
+            type: 'doughnut',
+            data: {
+                labels: functionLabels,
+                datasets: [{
+                    data: functionValues
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        /* ================= MONTHLY TREND ================= */
+
+        const monthLabels = /*[[${monthLabels != null ? monthLabels : {}}]]*/[];
+        const monthValues = /*[[${monthValues != null ? monthValues : {}}]]*/[];
+
+        if (Array.isArray(monthLabels) &&
+            Array.isArray(monthValues) &&
+            monthLabels.length === monthValues.length &&
+            monthLabels.length > 0) {
+
+            const formattedLabels = monthLabels.map(m => {
+                const [year, month] = m.split('-');
+
+                // month - 1 porque JS empieza en 0
+                const date = new Date(parseInt(year), parseInt(month) - 1);
+
+                const label = date.toLocaleString('es-AR', {
+                    month: 'short',
+                    year: 'numeric'
+                }).replace('.', '');
+
+                return label.charAt(0).toUpperCase() + label.slice(1);
+            });
+
+            new Chart(document.getElementById('monthlyChart'), {
+                type: 'line',
+                data: {
+                    labels: formattedLabels,
+                    datasets: [{
+                        label: 'Asignaciones',
+                        data: monthValues,
+                        fill: true,
+                        borderColor: '#0daefd',
+                        backgroundColor: 'rgba(13,110,253,0.1)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+
+    </script>
+
+</section>
+
+</html>

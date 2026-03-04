@@ -20,6 +20,7 @@
 
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* 🔥 FIX Select2 + AdminLTE + Modal */
         .select2-container {
@@ -198,6 +199,24 @@
             box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
             color: #fff;
         }
+
+        .stat-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 
@@ -251,7 +270,7 @@
             <div class="sidebar-wrapper">
                 <nav class="mt-2">
                     <ul class="nav sidebar-menu flex-column">
-
+                        
                         <!-- ================= WEBMASTER ================= -->
                         <th:block sec:authorize="hasRole('WEBMASTER')">
 
@@ -282,7 +301,7 @@
                                     <p>Roles</p>
                                 </a>
                             </li>
-
+                            
                             <li class="nav-header text-uppercase small text-muted mt-3">Sistema</li>
                             <li class="nav-item">
                                 <a href="/webmaster/schedules" class="nav-link">
@@ -291,6 +310,13 @@
                                 </a>
                             </li>
 
+                            <li class="nav-item">
+                                <a href="/webmaster/statistics" class="nav-link">
+                                    <i class="nav-icon bi bi-bar-chart-line-fill"></i>
+                                    <p>Estadísticas</p>
+                                </a>
+                            </li>
+                            
                         </th:block>
                         <!-- ================= ADMIN ================= -->
                         <th:block sec:authorize="hasRole('ADMIN')">
@@ -299,6 +325,13 @@
                                 <a href="/admin/dashboard" class="nav-link">
                                     <i class="nav-icon bi bi-speedometer2"></i>
                                     <p>Dashboard</p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="/admin/statistics" class="nav-link">
+                                    <i class="nav-icon bi bi-bar-chart-line-fill"></i>
+                                    <p>Estadísticas</p>
                                 </a>
                             </li>
 

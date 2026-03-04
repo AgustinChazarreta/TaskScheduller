@@ -9,4 +9,5 @@ import com.AgsCh.task_scheduler.model.Person;
 
 public interface PersonRepository extends JpaRepository<Person, Long> {
     List<Person> findByHouse(House house);
+    List<Person> findByHouseId(Long houseId);
 }

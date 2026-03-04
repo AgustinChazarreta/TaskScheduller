@@ -102,7 +102,7 @@ async function loadPersons() {
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center py-5 text-muted">
-                    No hay personas registradas.
+                    No hay personas registradas
                 </td>
             </tr>`;
         return;
