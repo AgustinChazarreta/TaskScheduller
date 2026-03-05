@@ -13,604 +13,261 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- Mensaje específico de creación de usuario -->
+        <!-- Mensaje específico -->
         <div th:if="${createdUserEmail}" class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm">
+
             <strong>Usuario creado correctamente</strong>
             <br>
+
             Username:
             <strong th:text="${createdUserEmail}"></strong>
+
             <br>
+
             Password temporal:
             <strong th:text="${temporaryPassword}"></strong>
+
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- Mensaje de error -->
+        <!-- Error -->
         <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm">
+
             <strong th:text="${errorMessage}"></strong>
+
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+
         </div>
 
         <!-- HEADER -->
+
         <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
-            <div class="d-flex justify-content-between align-items-center">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+
                 <div>
+
                     <h2 class="fw-bold mb-0">
+
                         <i class="bi bi-people text-primary me-2"></i>
+
                         Gestión de Cuentas
+
                     </h2>
+
                     <small class="text-muted">
+
                         Control de usuarios y admins
+
                     </small>
+
                 </div>
 
-                <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal"
-                    data-bs-target="#createUserModal">
-                    <i class="bi bi-plus-lg me-2"></i>
-                    Nueva Cuenta
-                </button>
+                <div class="d-flex align-items-center gap-3">
+
+                    <!-- FILTRO POR ROL -->
+
+                    <select id="roleFilter" class="form-select form-select-sm" style="width:180px;">
+
+                        <option value="ALL">Todos los roles</option>
+
+                        <option value="ADMIN">Admins</option>
+
+                        <option value="USER">Users</option>
+
+                    </select>
+
+                    <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal"
+                        data-bs-target="#createUserModal">
+
+                        <i class="bi bi-plus-lg me-2"></i>
+
+                        Nueva Cuenta
+
+                    </button>
+
+                </div>
+
             </div>
+
         </div>
 
         <!-- TABLA -->
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0 table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4">Nombre</th>
-                                <th>Rol</th>
-                                <th>Estado</th>
-                                <th>House</th>
-                                <th>Fecha de creación</th>
-                                <th class="text-end pe-4">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
 
-                            <tr th:each="user : ${users}">
+        <div class="card border-0 shadow-sm rounded-4">
+
+            <div class="card-body p-0">
+
+                <div class="table-responsive">
+
+                    <table class="table align-middle mb-0 table-hover">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th class="ps-4">Nombre</th>
+
+                                <th>Rol</th>
+
+                                <th>Estado</th>
+
+                                <th>House</th>
+
+                                <th>Fecha de creación</th>
+
+                                <th class="text-end pe-4">Acciones</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="usersTable">
+
+                            <tr th:each="user : ${users}" th:attr="data-role=${user.role.name()}">
+
                                 <td class="ps-4 fw-semibold"
                                     th:text="${user.role.name() == 'USER' ? (user.person != null ? user.person.fullName : user.username) : user.username}">
                                 </td>
 
                                 <td>
+
                                     <span class="badge bg-primary-subtle text-primary"
-                                        th:if="${user.role.name() == 'ADMIN'}">Admin</span>
+                                        th:if="${user.role.name() == 'ADMIN'}">
+
+                                        Admin
+
+                                    </span>
+
                                     <span class="badge bg-warning-subtle text-warning"
-                                        th:if="${user.role.name() == 'USER'}">User</span>
+                                        th:if="${user.role.name() == 'USER'}">
+
+                                        User
+
+                                    </span>
+
                                 </td>
 
                                 <td>
-                                    <span class="badge bg-success-subtle text-success"
-                                        th:if="${user.active}">Activo</span>
-                                    <span class="badge bg-secondary-subtle text-secondary"
-                                        th:if="${!user.active}">Inactivo</span>
+
+                                    <span class="badge bg-success-subtle text-success" th:if="${user.active}">
+
+                                        Activo
+
+                                    </span>
+
+                                    <span class="badge bg-secondary-subtle text-secondary" th:if="${!user.active}">
+
+                                        Inactivo
+
+                                    </span>
+
                                 </td>
 
                                 <td>
+
                                     <span class="badge bg-info-subtle text-dark"
                                         th:text="${user.house != null ? user.house.name : '-'}">
+
                                     </span>
+
                                 </td>
 
                                 <td>
+
                                     <div class="fw-semibold"
                                         th:text="${#temporals.format(user.createdAt,'dd ''de'' MMMM yyyy')}">
+
                                     </div>
+
                                     <small class="text-muted"
                                         th:text="${#temporals.format(user.createdAt,'HH:mm')} + ' hs'">
+
                                     </small>
+
                                 </td>
+
                                 <td class="text-end pe-4">
-                                    <!-- EDIT -->
+
                                     <button class="btn btn-sm btn-outline-secondary rounded-circle me-2"
                                         data-bs-toggle="modal" th:data-bs-target="'#editUserModal-' + ${user.id}">
+
                                         <i class="bi bi-pencil"></i>
+
                                     </button>
 
-                                    <!-- DELETE -->
                                     <button class="btn btn-sm btn-outline-danger rounded-circle" data-bs-toggle="modal"
                                         th:data-bs-target="'#deleteUserModal-' + ${user.id}">
+
                                         <i class="bi bi-trash"></i>
+
                                     </button>
+
                                 </td>
+
                             </tr>
 
                             <tr th:if="${#lists.isEmpty(users)}">
+
                                 <td colspan="6" class="text-center py-5 text-muted">
+
                                     No hay usuarios registrados.
+
                                 </td>
+
                             </tr>
 
                         </tbody>
+
                     </table>
+
                 </div>
+
             </div>
+
         </div>
 
     </main>
 
+    <!-- ============================= -->
+    <!-- SCRIPT FILTRO POR ROL -->
+    <!-- ============================= -->
 
-    <!-- ===================================================== -->
-    <!-- MODAL CREAR CUENTA (SELECCIÓN DE TIPO) -->
-    <!-- ===================================================== -->
-
-    <div class="modal fade" id="createUserModal">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow border-0">
-
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-person-plus-fill me-2"></i>
-                        Nueva Cuenta
-                    </h5>
-                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body text-center">
-
-                    <p class="mb-4">¿Qué tipo de cuenta deseas crear?</p>
-
-                    <button class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#createAdminModal"
-                        data-bs-dismiss="modal">
-                        Crear Admin
-                    </button>
-
-                    <button class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#createUserPersonModal"
-                        data-bs-dismiss="modal">
-                        Crear User
-                    </button>
-
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-
-    <!-- ===================================================== -->
-    <!-- MODAL CREAR ADMIN -->
-    <!-- ===================================================== -->
-
-    <div class="modal fade" id="createAdminModal">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow border-0">
-
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-person-plus-fill me-2"></i>
-                        Nuevo Admin
-                    </h5>
-                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-
-                <form th:action="@{/webmaster/users/create-admin}" method="post">
-
-                    <div class="modal-body">
-
-                        <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <input type="text" name="username" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Contraseña</label>
-                            <input type="password" name="password" class="form-control" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">House</label>
-                            <select name="houseId" class="form-select" required>
-                                <option value="" disabled selected>
-                                    Selecciona una House
-                                </option>
-                                <option th:each="house : ${houses}" th:value="${house.id}" th:text="${house.name}">
-                                </option>
-                            </select>
-                        </div>
-
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            Crear Admin
-                        </button>
-                    </div>
-
-                </form>
-
-            </div>
-        </div>
-    </div>
-
-
-    <!-- ===================================================== -->
-    <!-- MODAL CREAR USER -->
-    <!-- ===================================================== -->
-
-    <div class="modal fade" id="createUserPersonModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-
-                <form th:action="@{/webmaster/users/create-user}" method="post" enctype="multipart/form-data">
-
-                    <!-- HEADER -->
-                    <div class="modal-header bg-warning text-dark">
-                        <h5 class="modal-title">
-                            <i class="bi bi-person-plus me-2"></i>
-                            Nuevo Usuario
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <!-- BODY -->
-                    <div class="modal-body">
-                        <!-- ============================= -->
-                        <!-- DATOS PERSONALES -->
-                        <!-- ============================= -->
-
-                        <h6 class="text-muted mb-3">Datos personales</h6>
-
-                        <div class="row g-4 mb-3">
-
-                            <!-- FOTO -->
-                            <div class="col-md-4 text-center">
-                                <div class="mb-2">
-                                    <img src="/person-circle.svg" class="rounded-circle img-fluid border"
-                                        style="width:140px;height:140px;object-fit:cover;" id="personPhotoPreview">
-                                </div>
-
-                                <div class="d-grid gap-2">
-                                    <input type="file" name="personPhoto" class="form-control form-control-sm"
-                                        accept="image/*">
-
-                                    <small class="text-muted">
-                                        JPG o PNG · máx 2MB
-                                    </small>
-                                </div>
-                            </div>
-
-                            <!-- DATOS -->
-                            <div class="col-md-8">
-                                <div class="row g-3">
-
-                                    <div class="col-md-6">
-                                        <label class="form-label">Nombre completo</label>
-                                        <input name="personFullName" class="form-control" required>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label">Nombre de fantasía</label>
-                                        <input name="personNickname" class="form-control">
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label">Fecha de nacimiento</label>
-                                        <input type="date" name="personBirthDate" class="form-control" required>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label">Email</label>
-                                        <input type="email" name="personEmail" class="form-control" required>
-
-                                        <div class="form-check form-switch mt-2">
-                                            <input class="form-check-input" type="checkbox" name="receiveNotifications"
-                                                value="true">
-                                            <label class="form-check-label">
-                                                Recibir notificaciones
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <!-- ============================= -->
-                        <!-- ESTADO Y FECHAS -->
-                        <!-- ============================= -->
-
-                        <div class="row g-3 mb-3">
-
-                            <div class="col-md-4">
-                                <label class="form-label d-block">Estado</label>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="active" value="true" checked>
-                                    <label class="form-check-label">
-                                        Activo
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Fecha de entrada</label>
-                                <input type="date" name="personEntryDate" class="form-control" required>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">Fecha de salida</label>
-                                <input type="date" name="personExitDate" class="form-control">
-                            </div>
-
-                        </div>
-
-                        <hr>
-
-                        <!-- ============================= -->
-                        <!-- FUNCIONES Y DÍAS -->
-                        <!-- ============================= -->
-
-                        <h6 class="text-muted mb-3">Asignaciones</h6>
-
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Funciones</label>
-                                <select name="personFunctions" class="form-control select2" multiple
-                                    style="width:100%;">
-                                    <option th:each="f : ${functions}" th:value="${f.id}" th:text="${f.name}">
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Días de trabajo</label>
-                                <select name="personDays" class="form-control select2" multiple required
-                                    style="width:100%;">
-                                    <option value="MONDAY">Lunes</option>
-                                    <option value="TUESDAY">Martes</option>
-                                    <option value="WEDNESDAY">Miércoles</option>
-                                    <option value="THURSDAY">Jueves</option>
-                                    <option value="FRIDAY">Viernes</option>
-                                    <option value="SATURDAY">Sábado</option>
-                                    <option value="SUNDAY">Domingo</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">House</label>
-                                <select name="houseId" class="form-select" required>
-                                    <option value="" disabled selected>
-                                        Selecciona una House
-                                    </option>
-                                    <option th:each="house : ${houses}" th:value="${house.id}" th:text="${house.name}">
-                                    </option>
-                                </select>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <!-- FOOTER -->
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                            Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-warning">
-                            <i class="bi bi-save me-1"></i>
-                            Crear Usuario
-                        </button>
-                    </div>
-
-                </form>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- ===================================================== -->
-    <!-- MODAL EDIT USER -->
-    <!-- ===================================================== -->
-
-    <div th:each="user : ${users}" class="modal fade" th:id="'editUserModal-' + ${user.id}" tabindex="-1">
-
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow rounded-4">
-
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-pencil me-2"></i>
-                        Editar Cuenta
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body">
-                    <form th:action="@{/webmaster/users/edit/{id}(id=${user.id})}" method="post">
-
-                        <!-- Username -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Username</label>
-                            <input type="text" name="username" th:value="${user.username}"
-                                class="form-control rounded-3" required>
-                        </div>
-
-                        <!-- Estado -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Estado</label>
-                            <select name="active" class="form-select rounded-3">
-                                <option value="true" th:selected="${user.active}">
-                                    Activo
-                                </option>
-                                <option value="false" th:selected="${!user.active}">
-                                    Inactivo
-                                </option>
-                            </select>
-                        </div>
-
-                        <!-- House -->
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">House</label>
-                            <select name="houseId" class="form-select rounded-3">
-                                <option th:each="house : ${houses}" th:value="${house.id}" th:text="${house.name}"
-                                    th:selected="${user.house != null and house.id == user.house.id}">
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="modal-footer justify-content-center">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                Cancelar
-                            </button>
-
-                            <button type="submit" class="btn btn-primary">
-                                Guardar Cambios
-                            </button>
-                        </div>
-
-                    </form>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- ===================================================== -->
-    <!-- MODAL DELETE USER -->
-    <!-- ===================================================== -->
-
-    <div th:each="user : ${users}" class="modal fade" th:id="'deleteUserModal-' + ${user.id}" tabindex="-1">
-
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow rounded-4">
-
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        Eliminar Cuenta
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
-                    </button>
-                </div>
-
-                <div class="modal-body text-center">
-                    <p class="mb-0 fs-5">
-                        ¿Seguro que deseas eliminar a
-                        <span class="fw-semibold"
-                            th:text="${user.person != null ? user.person.fullName : user.username}">
-                        </span>
-                    </p>
-                </div>
-
-                <div class="modal-footer justify-content-center">
-
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-
-                    <form th:action="@{/webmaster/users/delete/{id}(id=${user.id})}" method="post">
-                        <button type="submit" class="btn btn-danger">
-                            Eliminar
-                        </button>
-                    </form>
-
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-
-    <script src="/plugins/select2/js/select2.full.min.js"></script>
     <script>
+
         document.addEventListener("DOMContentLoaded", function () {
 
-            const modalEl = document.getElementById("createUserPersonModal");
-            if (!modalEl) return;
+            const roleFilter = document.getElementById("roleFilter");
 
-            const form = modalEl.querySelector("form");
-            const photoInput = modalEl.querySelector('input[name="personPhoto"]');
-            const photoPreview = modalEl.querySelector("#personPhotoPreview");
+            const rows = document.querySelectorAll("#usersTable tr[data-role]");
 
+            roleFilter.addEventListener("change", function () {
 
-            /* =====================================================
-               SELECT2 SEGURO DENTRO DEL MODAL
-            ===================================================== */
+                const selected = this.value;
 
-            modalEl.addEventListener("shown.bs.modal", function () {
+                rows.forEach(row => {
 
-                $(modalEl).find(".select2").each(function () {
+                    const role = row.getAttribute("data-role");
 
-                    const $select = $(this);
+                    if (selected === "ALL" || role === selected) {
 
-                    // Evita reinicializar si ya está activo
-                    if ($select.hasClass("select2-hidden-accessible")) return;
+                        row.style.display = "";
 
-                    $select.select2({
-                        dropdownParent: $(modalEl),
-                        width: "100%",
-                        placeholder: "Seleccioná opciones"
-                    });
+                    } else {
+
+                        row.style.display = "none";
+
+                    }
 
                 });
 
             });
-
-
-            /* =====================================================
-               RESET FORM AL CERRAR MODAL
-            ===================================================== */
-
-            modalEl.addEventListener("hidden.bs.modal", function () {
-
-                form.reset();
-
-                // Reset imagen preview
-                if (photoPreview) {
-                    photoPreview.src = "/person-circle.svg";
-                }
-
-                // Reset select2
-                $(modalEl).find(".select2").each(function () {
-                    $(this).val(null).trigger("change");
-                });
-
-            });
-
-
-            /* =====================================================
-               PREVIEW FOTO USUARIO
-            ===================================================== */
-
-            if (photoInput && photoPreview) {
-
-                photoInput.addEventListener("change", function () {
-
-                    const file = this.files[0];
-                    if (!file) return;
-
-                    // Validar tipo
-                    if (!file.type.startsWith("image/")) {
-                        alert("Solo se permiten imágenes");
-                        this.value = "";
-                        return;
-                    }
-
-                    // Validar tamaño 2MB
-                    if (file.size > 2 * 1024 * 1024) {
-                        alert("La imagen no puede superar los 2MB");
-                        this.value = "";
-                        return;
-                    }
-
-                    const reader = new FileReader();
-
-                    reader.onload = function (e) {
-                        photoPreview.src = e.target.result;
-                    };
-
-                    reader.readAsDataURL(file);
-                });
-
-            }
 
         });
+
     </script>
+
+    <script src="/plugins/select2/js/select2.full.min.js"></script>
     <script src="/js/select2-modal.js"></script>
 
 </section>

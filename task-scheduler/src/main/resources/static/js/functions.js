@@ -41,7 +41,7 @@ function render(tasks) {
                     <td class="fw-semibold">${f.name}</td>
                     <td>
                         <span class="badge ${f.sequential ? "bg-warning text-dark" : "bg-secondary"} me-1">
-                            ${f.sequential ? "Recurrente" : "Una vez"}
+                            ${f.sequential ? "Secuencial" : "Aleatoria"}
                         </span>
                     </td>
                     <td>${formatDays(f.assignedDays || [])}</td>

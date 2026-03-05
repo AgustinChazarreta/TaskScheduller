@@ -34,15 +34,35 @@ public class FunctionRuleWebController {
     }
 
     @PostMapping
-    public String create(@ModelAttribute("ruleDto") FunctionRuleRequestDTO dto) {
-        functionRuleService.create(dto, getCurrentUsername());
-        return "redirect:/admin/function-rules";
+    public String create(@ModelAttribute("ruleDto") FunctionRuleRequestDTO dto, Model model) {
+        try {
+            functionRuleService.create(dto, getCurrentUsername());
+            return "redirect:/admin/function-rules";
+        } catch (IllegalArgumentException e) {
+            // Capturamos la excepción y mostramos el mensaje en el modal
+            List<FunctionRuleResponseDTO> rules = functionRuleService.findByUser(getCurrentUsername());
+            model.addAttribute("rules", rules);
+            model.addAttribute("functions", functionService.findAll());
+            model.addAttribute("ruleDto", dto);
+            model.addAttribute("errorMessage", e.getMessage());
+            return "admin/function-rules"; // vuelve al mismo template
+        }
     }
 
     @PostMapping("/update/{id}")
-    public String update(@PathVariable Long id, @ModelAttribute("ruleDto") FunctionRuleRequestDTO dto) {
-        functionRuleService.update(id, dto, getCurrentUsername());
-        return "redirect:/admin/function-rules";
+    public String update(@PathVariable Long id, @ModelAttribute("ruleDto") FunctionRuleRequestDTO dto, Model model) {
+        try {
+            functionRuleService.update(id, dto, getCurrentUsername());
+            return "redirect:/admin/function-rules";
+        } catch (IllegalArgumentException e) {
+            // igual que en create, mostramos error en el modal de edición
+            List<FunctionRuleResponseDTO> rules = functionRuleService.findByUser(getCurrentUsername());
+            model.addAttribute("rules", rules);
+            model.addAttribute("functions", functionService.findAll());
+            model.addAttribute("ruleDto", dto);
+            model.addAttribute("errorMessage", e.getMessage());
+            return "admin/function-rules";
+        }
     }
 
     @PostMapping("/delete/{id}")

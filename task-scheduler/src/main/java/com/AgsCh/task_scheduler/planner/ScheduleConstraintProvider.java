@@ -15,6 +15,7 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
 
         private static final int ROTATION_WEIGHT = 20;
         private static final int CONSECUTIVE_WEIGHT = 5;
+        private static final int SEQUENTIAL_WEIGHT = 15;
 
         @Override
         public Constraint[] defineConstraints(ConstraintFactory factory) {
@@ -30,18 +31,18 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 noDoubleBooking(factory),
                                 personCannotWorkOnBirthday(factory),
 
-                                incompatibleFunctionsSameDay(factory), // 👈 NUEVA
+                                incompatibleFunctionsSameDay(factory),
 
                                 // =========================
                                 // MEDIUM CONSTRAINTS
                                 // =========================
                                 rotateSharedFunctionsMonthly(factory),
-
+                                respectSequentialFunctions(factory),
                                 // =========================
                                 // SOFT CONSTRAINTS
                                 // =========================
                                 avoidConsecutiveAssignments(factory),
-                                softIncompatibleFunctionsSameDay(factory) // 👈 NUEVA
+                                softIncompatibleFunctionsSameDay(factory)
                 };
         }
 
@@ -183,6 +184,28 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 .asConstraint("Rotate shared functions monthly");
         }
 
+        private Constraint respectSequentialFunctions(ConstraintFactory factory) {
+                return factory.forEachUniquePair(FunctionAssignment.class,
+                                Joiners.equal(FunctionAssignment::getPerson)) // misma persona
+                                .filter((fa1, fa2) -> fa1.getFunction() != null
+                                                && fa2.getFunction() != null
+                                                && fa1.getFunction().isSequential()) // solo secuenciales
+                                .filter((fa1, fa2) -> fa1.getDate() != null && fa2.getDate() != null)
+                                .penalize(HardMediumSoftScore.ofMedium(SEQUENTIAL_WEIGHT),
+                                                (fa1, fa2) -> {
+                                                        // Calcula días entre asignaciones de la misma función
+                                                        if (!fa1.getFunction().equals(fa2.getFunction()))
+                                                                return 0;
+
+                                                        long daysBetween = Math.abs(fa1.getDate().toEpochDay()
+                                                                        - fa2.getDate().toEpochDay());
+
+                                                        // Penaliza si la misma persona hizo la función muy
+                                                        // recientemente
+                                                        return daysBetween < 7 ? (int) (7 - daysBetween) : 0;
+                                                })
+                                .asConstraint("Respect sequential functions");
+        }
         // =========================
         // SOFT CONSTRAINTS
         // =========================

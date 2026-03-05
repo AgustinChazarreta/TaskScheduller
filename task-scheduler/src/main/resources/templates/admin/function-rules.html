@@ -3,6 +3,9 @@
 <section>
     <main class="container-fluid py-4">
 
+        <!-- ALERTAS DINÁMICAS -->
+        <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1055;"></div>
+
         <!-- HEADER -->
         <div
             class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft d-flex justify-content-between align-items-center">
@@ -41,7 +44,6 @@
                             </tr>
                         </thead>
                         <tbody id="rulesTableBody">
-                            <!-- Filas de reglas -->
                             <tr th:each="rule : ${rules}" th:if="${rules.size() > 0}">
                                 <td><span class="badge func-badge" th:text="${rule.functionAName}"></span></td>
                                 <td><span class="badge func-badge" th:text="${rule.functionBName}"></span></td>
@@ -58,7 +60,6 @@
                                 </td>
                             </tr>
 
-                            <!-- Mensaje si no hay reglas -->
                             <tr id="noRulesRow" th:if="${rules.size() == 0}">
                                 <td colspan="4" class="text-center text-muted py-4">
                                     <i class="bi bi-exclamation-triangle me-2"></i>
@@ -75,7 +76,7 @@
         <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <form th:action="@{/admin/function-rules}" th:object="${ruleDto}" method="post"
-                    class="modal-content rounded-4 shadow border-0">
+                    class="modal-content rounded-4 shadow border-0" id="createRuleForm">
                     <div class="modal-header bg-primary text-white">
                         <h5 class="modal-title">
                             <i class="bi bi-plus-lg me-2"></i> Nueva Regla
@@ -84,15 +85,20 @@
                     </div>
                     <div class="modal-body">
                         <div class="row g-3">
+                            <!-- ALERTA -->
+                            <div id="ruleAlert" class="alert alert-danger mt-3 d-none"></div>
+
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Función A</label>
-                                <select th:field="*{functionAId}" class="form-select rounded-3" required>
+                                <select id="functionASelect" th:field="*{functionAId}" class="form-select rounded-3"
+                                    required>
                                     <option th:each="f : ${functions}" th:value="${f.id}" th:text="${f.name}"></option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Función B</label>
-                                <select th:field="*{functionBId}" class="form-select rounded-3" required>
+                                <select id="functionBSelect" th:field="*{functionBId}" class="form-select rounded-3"
+                                    required>
                                     <option th:each="f : ${functions}" th:value="${f.id}" th:text="${f.name}"></option>
                                 </select>
                             </div>
@@ -100,7 +106,9 @@
                                 <label class="form-label fw-semibold">Tipo de Regla</label>
                                 <select th:field="*{type}" class="form-select rounded-3" required>
                                     <option th:each="t : ${T(com.AgsCh.task_scheduler.model.RuleType).values()}"
-                                        th:value="${t}" th:text="${t}"></option>
+                                        th:value="${t}"
+                                        th:text="${#strings.capitalize(#strings.replace(t.toString(), '_', ' ').toLowerCase())}">
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -121,7 +129,7 @@
             <div class="modal fade" th:id="'editModal-' + ${rule.id}" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                     <form th:action="@{/admin/function-rules/update/{id}(id=${rule.id})}" method="post"
-                        class="modal-content rounded-4 shadow border-0">
+                        class="modal-content rounded-4 shadow border-0 editRuleForm">
                         <div class="modal-header bg-primary text-white">
                             <h5 class="modal-title">
                                 <i class="bi bi-pencil-square me-2"></i> Editar Regla
@@ -130,6 +138,9 @@
                         </div>
                         <div class="modal-body">
                             <div class="row g-3">
+                                <!-- ALERTA EDIT -->
+                                <div class="alert alert-danger mt-3 d-none edit-alert"></div>
+
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">Función A</label>
                                     <select name="functionAId" class="form-select rounded-3" required>
@@ -186,7 +197,7 @@
                         <div class="modal-footer justify-content-center">
                             <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
                                 data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-danger rounded-pill px-4">
+                            <button class="btn btn-danger rounded-pill px-4" type="submit">
                                 <i class="bi bi-trash me-1"></i> Eliminar
                             </button>
                         </div>
@@ -197,30 +208,30 @@
 
     </main>
 
-    <script>
+    <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function () {
+
             const filterSelect = document.getElementById('filterType');
             const tableBody = document.getElementById('rulesTableBody');
             const noRulesRow = document.getElementById('noRulesRow');
+            const createForm = document.getElementById('createRuleForm');
+            const funcASelect = document.getElementById('functionASelect');
+            const funcBSelect = document.getElementById('functionBSelect');
+            const alertBox = document.getElementById('ruleAlert');
+            const existingRules = /*[[${rules}]]*/[];
 
             // FILTRO POR TIPO
             filterSelect.addEventListener('change', function () {
                 const selectedType = this.value;
                 let anyVisible = false;
-
-                tableBody.querySelectorAll('tr').forEach(function (row) {
+                tableBody.querySelectorAll('tr').forEach(row => {
                     if (row.id === 'noRulesRow') return;
                     const rowTypeSpan = row.querySelector('span.rule-type');
                     if (!rowTypeSpan) return;
                     const rowType = rowTypeSpan.textContent.trim();
-                    if (selectedType === 'ALL' || rowType === selectedType) {
-                        row.style.display = '';
-                        anyVisible = true;
-                    } else {
-                        row.style.display = 'none';
-                    }
+                    row.style.display = (selectedType === 'ALL' || rowType === selectedType) ? '' : 'none';
+                    if (row.style.display !== 'none') anyVisible = true;
                 });
-
                 noRulesRow.style.display = anyVisible ? 'none' : '';
             });
 
@@ -233,19 +244,144 @@
             document.querySelectorAll('span.rule-type').forEach(span => {
                 const tipo = span.textContent.trim();
                 span.className = 'badge rule-type';
-                if (tipo === 'INCOMPATIBLE') {
-                    span.classList.add('bg-danger-subtle', 'text-danger');
-                } else if (tipo === 'SOFT_INCOMPATIBLE') {
-                    span.classList.add('bg-warning-subtle', 'text-warning');
-                } else if (tipo === 'COMPATIBLE') {
-                    span.classList.add('bg-success-subtle', 'text-success');
-                } else {
-                    span.classList.add('bg-light', 'text-dark');
+                if (tipo === 'INCOMPATIBLE') span.classList.add('bg-danger-subtle', 'text-danger');
+                else if (tipo === 'SOFT_INCOMPATIBLE') span.classList.add('bg-warning-subtle', 'text-warning');
+                else if (tipo === 'COMPATIBLE') span.classList.add('bg-success-subtle', 'text-success');
+                else span.classList.add('bg-light', 'text-dark');
+            });
+
+            // VALIDACION CREAR
+            createForm.addEventListener('submit', function (event) {
+                const funcA = funcASelect.value;
+                const funcB = funcBSelect.value;
+
+                alertBox.classList.add('d-none');
+                alertBox.innerHTML = '';
+
+                if (funcA === funcB) {
+                    event.preventDefault();
+                    alertBox.innerHTML = `
+            <div class="d-flex align-items-start gap-2 position-relative">
+                <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">No se pudo guardar la regla</div>
+                    <small class="text-muted">
+                        La función A y B no pueden ser la misma.
+                    </small>
+                </div>
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-2" 
+                    aria-label="Cerrar" onclick="this.closest('.alert').classList.add('d-none')"></button>
+            </div>
+        `;
+                    alertBox.classList.remove('d-none');
+                    return;
+                }
+
+                const conflict = existingRules.find(r =>
+                    (r.functionAId == funcA && r.functionBId == funcB) ||
+                    (r.functionAId == funcB && r.functionBId == funcA)
+                );
+
+                if (conflict) {
+                    event.preventDefault();
+                    alertBox.innerHTML = `
+            <div class="d-flex align-items-start gap-2 position-relative">
+                <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">No se pudo guardar la regla</div>
+                    <small class="text-muted">
+                        Esta regla ya existe o contradice una existente (${conflict.functionAName} - ${conflict.functionBName}).
+                    </small>
+                </div>
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-2" 
+                    aria-label="Cerrar" onclick="this.closest('.alert').classList.add('d-none')"></button>
+            </div>
+        `;
+                    alertBox.classList.remove('d-none');
+                    return;
                 }
             });
-        });
-    </script>
 
+            // VALIDACION EDIT
+            document.querySelectorAll('.editRuleForm').forEach(form => {
+                const funcAEdit = form.querySelector('select[name="functionAId"]');
+                const funcBEdit = form.querySelector('select[name="functionBId"]');
+                const editAlert = form.querySelector('.edit-alert');
+
+                form.addEventListener('submit', function (event) {
+                    const funcA = funcAEdit.value;
+                    const funcB = funcBEdit.value;
+                    editAlert.classList.add('d-none');
+                    editAlert.innerHTML = '';
+
+                    if (funcA === funcB) {
+                        event.preventDefault();
+                        editAlert.innerHTML = `
+                <div class="d-flex align-items-start gap-2 position-relative">
+                    <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">No se pudo actualizar la regla</div>
+                        <small class="text-muted">
+                            La función A y B no pueden ser la misma.
+                        </small>
+                    </div>
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2" 
+                        aria-label="Cerrar" onclick="this.closest('.alert').classList.add('d-none')"></button>
+                </div>
+            `;
+                        editAlert.classList.remove('d-none');
+                        return;
+                    }
+
+                    const ruleId = form.getAttribute('action')?.match(/\/update\/(\d+)/)?.[1] || null;
+                    const conflict = existingRules.find(r =>
+                        r.id != ruleId && (
+                            (r.functionAId == funcA && r.functionBId == funcB) ||
+                            (r.functionAId == funcB && r.functionBId == funcA)
+                        )
+                    );
+
+                    if (conflict) {
+                        event.preventDefault();
+                        editAlert.innerHTML = `
+                <div class="d-flex align-items-start gap-2 position-relative">
+                    <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">No se pudo actualizar la regla</div>
+                        <small class="text-muted">
+                            Esta edición entra en conflicto con otra regla existente (${conflict.functionAName} - ${conflict.functionBName}).
+                        </small>
+                    </div>
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2" 
+                        aria-label="Cerrar" onclick="this.closest('.alert').classList.add('d-none')"></button>
+                </div>
+            `;
+                        editAlert.classList.remove('d-none');
+                        return;
+                    }
+                });
+            });
+
+        });
+
+        // ALERTAS DINÁMICAS
+        function showAlert(message, type = "success") {
+            const container = document.getElementById("alertContainer");
+            if (!container) return;
+            const alert = document.createElement("div");
+            alert.className = `alert alert-${type} alert-dismissible fade show rounded-3 shadow-sm`;
+            alert.style.minWidth = "250px";
+            alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+            container.appendChild(alert);
+            setTimeout(() => {
+                alert.classList.remove("show");
+                alert.remove();
+            }, 8000);
+        }
+    </script>
 </section>
 
 </html>

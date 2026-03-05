@@ -352,7 +352,7 @@ function renderFunctions(functions) {
                                     ? "bg-info-subtle text-primary"
                                     : "bg-secondary-subtle text-secondary"
                                 } px-3 py-2 fw-bold">
-                                ${f.sequential ? "Recurrente" : "Una vez"}
+                                ${f.sequential ? "Secuencial" : "Aleatoria"}
                                 </span>
                             </td>
 
