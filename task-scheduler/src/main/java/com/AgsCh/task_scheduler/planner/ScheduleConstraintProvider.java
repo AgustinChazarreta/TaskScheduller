@@ -7,7 +7,9 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 
 import com.AgsCh.task_scheduler.model.FunctionAssignment;
+import com.AgsCh.task_scheduler.model.FunctionRule;
 import com.AgsCh.task_scheduler.model.Person;
+import com.AgsCh.task_scheduler.model.RuleType;
 
 public class ScheduleConstraintProvider implements ConstraintProvider {
 
@@ -28,6 +30,8 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 noDoubleBooking(factory),
                                 personCannotWorkOnBirthday(factory),
 
+                                incompatibleFunctionsSameDay(factory), // 👈 NUEVA
+
                                 // =========================
                                 // MEDIUM CONSTRAINTS
                                 // =========================
@@ -36,7 +40,8 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 // =========================
                                 // SOFT CONSTRAINTS
                                 // =========================
-                                avoidConsecutiveAssignments(factory)
+                                avoidConsecutiveAssignments(factory),
+                                softIncompatibleFunctionsSameDay(factory) // 👈 NUEVA
                 };
         }
 
@@ -136,6 +141,21 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 && birthDate.getDayOfMonth() == assignmentDate.getDayOfMonth();
         }
 
+        private Constraint incompatibleFunctionsSameDay(ConstraintFactory factory) {
+                return factory
+                                .forEachUniquePair(FunctionAssignment.class,
+                                                Joiners.equal(FunctionAssignment::getPerson),
+                                                Joiners.equal(FunctionAssignment::getDate))
+                                .filter((a1, a2) -> a1.getFunction() != null &&
+                                                a2.getFunction() != null)
+                                .join(FunctionRule.class,
+                                                Joiners.filtering((a1, a2,
+                                                                rule) -> rule.getType() == RuleType.INCOMPATIBLE &&
+                                                                                rule.matches(a1.getFunction(),
+                                                                                                a2.getFunction())))
+                                .penalize(HardMediumSoftScore.ONE_HARD)
+                                .asConstraint("Incompatible functions same day");
+        }
         // =========================
         // MEDIUM CONSTRAINTS
         // =========================
@@ -176,5 +196,21 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                                                 - b.getDate().toEpochDay()) == 1)
                                 .penalize(HardMediumSoftScore.ofSoft(CONSECUTIVE_WEIGHT))
                                 .asConstraint("Avoid consecutive assignments");
+        }
+
+        private Constraint softIncompatibleFunctionsSameDay(ConstraintFactory factory) {
+                return factory
+                                .forEachUniquePair(FunctionAssignment.class,
+                                                Joiners.equal(FunctionAssignment::getPerson),
+                                                Joiners.equal(FunctionAssignment::getDate))
+                                .filter((a1, a2) -> a1.getFunction() != null &&
+                                                a2.getFunction() != null)
+                                .join(FunctionRule.class,
+                                                Joiners.filtering((a1, a2,
+                                                                rule) -> rule.getType() == RuleType.SOFT_INCOMPATIBLE &&
+                                                                                rule.matches(a1.getFunction(),
+                                                                                                a2.getFunction())))
+                                .penalize(HardMediumSoftScore.ONE_SOFT)
+                                .asConstraint("Soft incompatible functions same day");
         }
 }

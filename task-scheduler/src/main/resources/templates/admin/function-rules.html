@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
+<section>
+    <main class="container-fluid py-4">
+
+        <!-- HEADER -->
+        <div
+            class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft d-flex justify-content-between align-items-center">
+            <h2 class="fw-bold mb-0">
+                <i class="bi bi-gear text-primary me-2"></i>
+                Reglas de Funciones
+            </h2>
+            <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createModal">
+                <i class="bi bi-plus-lg me-2"></i>
+                Nueva Regla
+            </button>
+        </div>
+
+        <!-- FILTRO -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold me-2">Filtrar por Tipo:</label>
+            <select id="filterType" class="form-select d-inline-block w-auto rounded-3">
+                <option value="ALL" selected>Todos</option>
+                <option value="COMPATIBLE">Compatible</option>
+                <option value="INCOMPATIBLE">Incompatible</option>
+                <option value="SOFT_INCOMPATIBLE">Soft Incompatible</option>
+            </select>
+        </div>
+
+        <!-- TABLA -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Función A</th>
+                                <th>Función B</th>
+                                <th>Tipo</th>
+                                <th class="text-end pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rulesTableBody">
+                            <!-- Filas de reglas -->
+                            <tr th:each="rule : ${rules}" th:if="${rules.size() > 0}">
+                                <td><span class="badge func-badge" th:text="${rule.functionAName}"></span></td>
+                                <td><span class="badge func-badge" th:text="${rule.functionBName}"></span></td>
+                                <td><span class="badge rule-type" th:text="${rule.type}"></span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle me-2"
+                                        data-bs-toggle="modal" th:data-bs-target="'#editModal-' + ${rule.id}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger rounded-circle" data-bs-toggle="modal"
+                                        th:data-bs-target="'#deleteModal-' + ${rule.id}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- Mensaje si no hay reglas -->
+                            <tr id="noRulesRow" th:if="${rules.size() == 0}">
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    No hay reglas cargadas.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CREATE MODAL -->
+        <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <form th:action="@{/admin/function-rules}" th:object="${ruleDto}" method="post"
+                    class="modal-content rounded-4 shadow border-0">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="bi bi-plus-lg me-2"></i> Nueva Regla
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Función A</label>
+                                <select th:field="*{functionAId}" class="form-select rounded-3" required>
+                                    <option th:each="f : ${functions}" th:value="${f.id}" th:text="${f.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Función B</label>
+                                <select th:field="*{functionBId}" class="form-select rounded-3" required>
+                                    <option th:each="f : ${functions}" th:value="${f.id}" th:text="${f.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Tipo de Regla</label>
+                                <select th:field="*{type}" class="form-select rounded-3" required>
+                                    <option th:each="t : ${T(com.AgsCh.task_scheduler.model.RuleType).values()}"
+                                        th:value="${t}" th:text="${t}"></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                            data-bs-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-primary rounded-pill px-4" type="submit">
+                            <i class="bi bi-save me-1"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- EDIT MODALS -->
+        <div th:each="rule : ${rules}">
+            <div class="modal fade" th:id="'editModal-' + ${rule.id}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                    <form th:action="@{/admin/function-rules/update/{id}(id=${rule.id})}" method="post"
+                        class="modal-content rounded-4 shadow border-0">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">
+                                <i class="bi bi-pencil-square me-2"></i> Editar Regla
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Función A</label>
+                                    <select name="functionAId" class="form-select rounded-3" required>
+                                        <option th:each="f : ${functions}" th:value="${f.id}" th:text="${f.name}"
+                                            th:selected="${f.id} == ${rule.functionAId}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Función B</label>
+                                    <select name="functionBId" class="form-select rounded-3" required>
+                                        <option th:each="f : ${functions}" th:value="${f.id}" th:text="${f.name}"
+                                            th:selected="${f.id} == ${rule.functionBId}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Tipo</label>
+                                    <select name="type" class="form-select rounded-3" required>
+                                        <option th:each="t : ${T(com.AgsCh.task_scheduler.model.RuleType).values()}"
+                                            th:value="${t}" th:text="${t}" th:selected="${t} == ${rule.type}"></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer justify-content-center">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <button class="btn btn-primary rounded-pill px-4" type="submit">
+                                <i class="bi bi-save me-1"></i> Actualizar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- DELETE MODALS -->
+        <div th:each="rule : ${rules}">
+            <div class="modal fade" th:id="'deleteModal-' + ${rule.id}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <form th:action="@{/admin/function-rules/delete/{id}(id=${rule.id})}" method="post"
+                        class="modal-content shadow rounded-4 border-0">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirmar eliminación
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <p class="mb-0 fs-5">
+                                ¿Seguro que querés eliminar <b
+                                    th:text="${rule.functionAName} + ' - ' + ${rule.functionBName}"></b>?
+                            </p>
+                        </div>
+                        <div class="modal-footer justify-content-center">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-danger rounded-pill px-4">
+                                <i class="bi bi-trash me-1"></i> Eliminar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterSelect = document.getElementById('filterType');
+            const tableBody = document.getElementById('rulesTableBody');
+            const noRulesRow = document.getElementById('noRulesRow');
+
+            // FILTRO POR TIPO
+            filterSelect.addEventListener('change', function () {
+                const selectedType = this.value;
+                let anyVisible = false;
+
+                tableBody.querySelectorAll('tr').forEach(function (row) {
+                    if (row.id === 'noRulesRow') return;
+                    const rowTypeSpan = row.querySelector('span.rule-type');
+                    if (!rowTypeSpan) return;
+                    const rowType = rowTypeSpan.textContent.trim();
+                    if (selectedType === 'ALL' || rowType === selectedType) {
+                        row.style.display = '';
+                        anyVisible = true;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                noRulesRow.style.display = anyVisible ? 'none' : '';
+            });
+
+            // BADGES FUNCIONES
+            document.querySelectorAll('span.func-badge').forEach(span => {
+                span.className = 'badge bg-info-subtle text-primary func-badge';
+            });
+
+            // BADGES TIPO REGLA
+            document.querySelectorAll('span.rule-type').forEach(span => {
+                const tipo = span.textContent.trim();
+                span.className = 'badge rule-type';
+                if (tipo === 'INCOMPATIBLE') {
+                    span.classList.add('bg-danger-subtle', 'text-danger');
+                } else if (tipo === 'SOFT_INCOMPATIBLE') {
+                    span.classList.add('bg-warning-subtle', 'text-warning');
+                } else if (tipo === 'COMPATIBLE') {
+                    span.classList.add('bg-success-subtle', 'text-success');
+                } else {
+                    span.classList.add('bg-light', 'text-dark');
+                }
+            });
+        });
+    </script>
+
+</section>
+
+</html>

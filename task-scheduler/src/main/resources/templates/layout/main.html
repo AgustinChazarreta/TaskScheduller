@@ -270,7 +270,7 @@
             <div class="sidebar-wrapper">
                 <nav class="mt-2">
                     <ul class="nav sidebar-menu flex-column">
-                        
+
                         <!-- ================= WEBMASTER ================= -->
                         <th:block sec:authorize="hasRole('WEBMASTER')">
 
@@ -301,7 +301,7 @@
                                     <p>Roles</p>
                                 </a>
                             </li>
-                            
+
                             <li class="nav-header text-uppercase small text-muted mt-3">Sistema</li>
                             <li class="nav-item">
                                 <a href="/webmaster/schedules" class="nav-link">
@@ -316,10 +316,12 @@
                                     <p>Estadísticas</p>
                                 </a>
                             </li>
-                            
+
                         </th:block>
                         <!-- ================= ADMIN ================= -->
                         <th:block sec:authorize="hasRole('ADMIN')">
+
+                            <!-- Panel Principal -->
                             <li class="nav-header text-uppercase small text-muted">Panel</li>
                             <li class="nav-item">
                                 <a href="/admin/dashboard" class="nav-link">
@@ -327,7 +329,6 @@
                                     <p>Dashboard</p>
                                 </a>
                             </li>
-
                             <li class="nav-item">
                                 <a href="/admin/statistics" class="nav-link">
                                     <i class="nav-icon bi bi-bar-chart-line-fill"></i>
@@ -335,13 +336,23 @@
                                 </a>
                             </li>
 
+                            <!-- Gestión de Funciones -->
+                            <li class="nav-header text-uppercase small text-muted">Funciones</li>
                             <li class="nav-item">
                                 <a href="/admin/functions" class="nav-link">
                                     <i class="nav-icon bi bi-list-task"></i>
                                     <p>Funciones</p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="/admin/function-rules" class="nav-link">
+                                    <i class="nav-icon bi bi-clipboard-data"></i>
+                                    <p>Reglas de Funciones</p>
+                                </a>
+                            </li>
 
+                            <!-- Gestión de Personas -->
+                            <li class="nav-header text-uppercase small text-muted">Usuarios</li>
                             <li class="nav-item">
                                 <a href="/admin/persons" class="nav-link">
                                     <i class="nav-icon bi bi-people"></i>
@@ -349,12 +360,15 @@
                                 </a>
                             </li>
 
+                            <!-- Resultados y seguimiento -->
+                            <li class="nav-header text-uppercase small text-muted">Resultados</li>
                             <li class="nav-item">
                                 <a href="/results" class="nav-link">
                                     <i class="nav-icon bi bi-calendar-check"></i>
                                     <p>Resultados</p>
                                 </a>
                             </li>
+
                         </th:block>
 
                         <!-- ================= USER ================= -->

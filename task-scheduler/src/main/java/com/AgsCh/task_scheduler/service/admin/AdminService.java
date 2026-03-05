@@ -1,15 +1,19 @@
 package com.AgsCh.task_scheduler.service.admin;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.AgsCh.task_scheduler.dto.ScheduleMapper;
 import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
+import com.AgsCh.task_scheduler.model.FunctionRule;
 import com.AgsCh.task_scheduler.model.Role;
 import com.AgsCh.task_scheduler.model.Schedule;
 import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.repository.UserRepository;
 import com.AgsCh.task_scheduler.repository.FunctionRepository;
+import com.AgsCh.task_scheduler.repository.FunctionRuleRepository;
 
 @Service
 public class AdminService {
@@ -18,17 +22,20 @@ public class AdminService {
     private final FunctionRepository functionRepository;
     private final PersonRepository personRepository;
     private final UserRepository userRepository;
+    private final FunctionRuleRepository functionRuleRepository;
 
     public AdminService(
             AdminScheduleService adminScheduleService,
             FunctionRepository functionRepository,
             UserRepository userRepository,
-            PersonRepository personRepository) {
+            PersonRepository personRepository,
+            FunctionRuleRepository functionRuleRepository) {
 
         this.adminScheduleService = adminScheduleService;
         this.functionRepository = functionRepository;
         this.personRepository = personRepository;
         this.userRepository = userRepository;
+        this.functionRuleRepository = functionRuleRepository;
     }
 
     /*
@@ -36,15 +43,22 @@ public class AdminService {
      * GENERAR Y RESOLVER
      * =========================
      */
+    // DTO → dominio
     public Schedule generateAndSolve(ScheduleRequestDTO request, User user) {
 
-        // 1️⃣ DTO → dominio
+        // 1️⃣ Construcción base (sin rules)
         Schedule schedule = ScheduleMapper.toModel(
                 request,
                 functionRepository,
                 personRepository);
 
-        // 2️⃣ Resolver y persistir por house
+        // 2️⃣ Cargar reglas de la house
+        List<FunctionRule> rules = functionRuleRepository.findByHouseId(user.getHouse().getId());
+
+        // 3️⃣ Inyectarlas en el mismo Schedule
+        schedule.setFunctionRuleList(rules);
+
+        // 4️⃣ Resolver y persistir
         return adminScheduleService.solve(schedule, user.getHouse());
     }
 

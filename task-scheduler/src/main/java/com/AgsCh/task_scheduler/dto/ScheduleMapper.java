@@ -23,24 +23,24 @@ public final class ScheduleMapper {
      * ======================
      */
 
-    public static Schedule toModel(
-            ScheduleRequestDTO request,
-            FunctionRepository functionRepository,
-            PersonRepository personRepository) {
+        public static Schedule toModel(
+                ScheduleRequestDTO request,
+                FunctionRepository functionRepository,
+                PersonRepository personRepository) {
 
-        // 1️⃣ Traer Functions y Persons existentes de la DB
-        List<Function> functions = loadFunctions(request.getFunctionIds(), functionRepository);
-        List<Person> persons = loadPersons(request.getPersonIds(), personRepository);
+            // 1️⃣ Traer Functions y Persons existentes de la DB
+            List<Function> functions = loadFunctions(request.getFunctionIds(), functionRepository);
+            List<Person> persons = loadPersons(request.getPersonIds(), personRepository);
 
-        // 2️⃣ Fechas
-        LocalDate start = request.getPeriod().getStartDate();
-        LocalDate end = request.getPeriod().getEndDate();
+            // 2️⃣ Fechas
+            LocalDate start = request.getPeriod().getStartDate();
+            LocalDate end = request.getPeriod().getEndDate();
 
-        // 3️⃣ Crear TaskAssignments con planningId
-        List<FunctionAssignment> assignments = createAssignments(functions, start, end);
+            // 3️⃣ Crear TaskAssignments con planningId
+            List<FunctionAssignment> assignments = createAssignments(functions, start, end);
 
-        return new Schedule(persons, functions, assignments, start, end);
-    }
+            return new Schedule(persons, functions, assignments, start, end);
+        }
 
     private static List<Function> loadFunctions(List<Long> ids, FunctionRepository repo) {
         List<Function> functions = new ArrayList<>();

@@ -26,7 +26,9 @@ function render(tasks) {
     tbody.innerHTML = "";
 
     if (!Object.keys(tasks).length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">No hay funciones ingresadas</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        No hay funciones ingresadas</td></tr>`;
         return;
     }
 

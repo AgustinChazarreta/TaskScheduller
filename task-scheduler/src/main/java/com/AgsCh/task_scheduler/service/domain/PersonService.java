@@ -405,6 +405,8 @@ public class PersonService {
         Person person = repository.findById(id)
                 .orElseThrow(() -> new BusinessException("Persona no encontrada"));
 
+        scheduleService.invalidate(person.getHouse());
+
         if (person.getUser() != null) {
             userService.deleteUser(person.getUser().getId());
         } else {

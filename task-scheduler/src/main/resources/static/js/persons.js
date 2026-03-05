@@ -102,6 +102,7 @@ async function loadPersons() {
         tbody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center py-5 text-muted">
+                <i class="bi bi-exclamation-triangle me-2"></i>
                     No hay personas registradas
                 </td>
             </tr>`;
@@ -405,7 +406,7 @@ document
         <i class="bi bi-trash-fill text-success fs-5 mt-1"></i>
         <div>
             <div class="fw-semibold">
-                Persona eliminada c
+                Persona eliminada
             </div>
             <small class="text-muted">
                 ${personNameToDelete} fue eliminado del sistema.
