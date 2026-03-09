@@ -247,14 +247,15 @@ function renderPersons(persons) {
     container.innerHTML = `
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+                <thead class="table-light text-center">
                     <tr>
-                        <th style="width: 40px;"></th>
-                        <th>Nombre</th>
-                        <th>Cumpleaños</th>
-                        <th>Email</th>
-                        <th class="text-center">Estado</th>
+                        <th class="text-center"></th>
+                        <th class="text-center">Nombre</th>
+                        <th class="text-center">Cumpleaños</th>
+                        <th class="text-center">Email</th>
+                        <th class="text-center">Grupo</th>
                         <th class="text-center">Días disponibles</th>
+                        <th class="text-center">Estado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -284,22 +285,29 @@ function renderPersons(persons) {
                             <td>
                                 <span class="badge bg-secondary-subtle text-secondary px-3 py-2 fw-semibold">
                                     ${p.email}
-                                </span>
-                            </td>
-
+                                    </span>
+                                    </td>
+                                    
+                                    <!-- Grupo -->
+                                    <td>
+                                        ${p.groupName
+            ? `<span class="badge bg-warning-subtle text-warning px-3 py-2 fw-semibold">${p.groupName}</span>`
+            : `<span class="text-muted">-</span>`}
+                                    </td>
+                                    
+                                    <!-- Días -->
+                                    <td class="text-center">
+                                    ${formatDays(p.workingDays)}
+                                    </td>
+                                    
                             <!-- Estado -->
                             <td class="text-center">
                                 <span class="badge ${p.active
-                                    ? "bg-success-subtle text-success"
-                                    : "bg-danger-subtle text-danger"
-                                } px-3 py-2 fw-bold">
+            ? "bg-success-subtle text-success"
+            : "bg-danger-subtle text-danger"
+        } px-3 py-2 fw-bold">
                                     ${p.active ? "Activo" : "Inactivo"}
                                 </span>
-                            </td>
-
-                            <!-- Días -->
-                            <td class="text-center">
-                                ${formatDays(p.workingDays)}
                             </td>
 
                         </tr>
@@ -309,7 +317,6 @@ function renderPersons(persons) {
         </div>
     `;
 }
-
 function renderFunctions(functions) {
     const container = document.getElementById('functionsContainer');
 
@@ -324,10 +331,10 @@ function renderFunctions(functions) {
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 40px;"></th>
-                        <th>Función</th>
-                        <th>Tipo</th>
-                        <th>Días asignados</th>
+                        <th class="text-center" style="width: 40px;"></th>
+                        <th style="padding-left: 1rem;">Función</th>
+                        <th style="padding-left: 2rem;">Tipo</th>
+                        <th class="text-center">Días asignados</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -347,18 +354,20 @@ function renderFunctions(functions) {
                             </td>
 
                             <!-- Tipo -->
-                            <td>
-                                <span class="badge ${f.sequential
-                                    ? "bg-info-subtle text-primary"
-                                    : "bg-secondary-subtle text-secondary"
-                                } px-3 py-2 fw-bold">
-                                ${f.sequential ? "Secuencial" : "Aleatoria"}
-                                </span>
-                            </td>
+<td>
+    <span class="badge ${f.sequential
+            ? "bg-info-subtle text-info"
+            : "bg-warning-subtle text-warning"
+        } px-3 py-2 fw-bold">
+        ${f.sequential ? "Secuencial" : "Aleatoria"}
+    </span>
+</td>
 
-                            <!-- Días -->
-                            <td>
-                                ${formatDays(f.assignedDays)}
+                            <!-- Días centrados -->
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center flex-wrap gap-1">
+                                    ${formatDays(f.assignedDays)}
+                                </div>
                             </td>
 
                         </tr>
@@ -387,7 +396,7 @@ function formatDays(days = []) {
 
     return order
         .filter(d => days.includes(d))
-        .map(d => `<span class="badge bg-warning-subtle text-warning me-1">${labels[d]}</span>`)
+        .map(d => `<span class="badge bg-primary-subtle text-primary me-1">${labels[d]}</span>`)
         .join("");
 }
 

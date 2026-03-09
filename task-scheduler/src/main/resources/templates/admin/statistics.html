@@ -9,13 +9,14 @@
         <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="fw-bold mb-0">
-                    <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>
+                    <i class="bi bi-bar-chart-line text-primary me-2"></i>
                     Estadísticas de la Casa
                 </h2>
             </div>
         </div>
 
-        <div class="bg-white rounded-4 shadow-sm p-4 border-soft mb-4" th:if="${stats == null or stats.totalAssignments == 0}">
+        <div class="bg-white rounded-4 shadow-sm p-4 border-soft mb-4"
+            th:if="${stats == null or stats.totalAssignments == 0}">
             <div class="d-flex flex-column justify-content-center text-center text-muted" style="min-height:50vh;">
                 <i class="bi bi-exclamation-triangle fs-1 mb-3"></i>
                 <h4>Estadísticas no disponibles</h4>
@@ -161,24 +162,25 @@
 
             const formattedLabels = monthLabels.map(m => {
                 const [year, month] = m.split('-');
-
-                // month - 1 porque JS empieza en 0
                 const date = new Date(parseInt(year), parseInt(month) - 1);
-
-                const label = date.toLocaleString('es-AR', {
-                    month: 'short',
-                    year: 'numeric'
-                }).replace('.', '');
-
+                const label = date.toLocaleString('es-AR', { month: 'short', year: 'numeric' }).replace('.', '');
                 return label.charAt(0).toUpperCase() + label.slice(1);
             });
+
+            // calcular márgenes para que el gráfico no toque los bordes
+            const minValue = Math.min(...monthValues);
+            const maxValue = Math.max(...monthValues);
+            const padding = Math.ceil((maxValue - minValue) * 0.3);
+
+            // label dinámico
+            const monthlyLabel = 'Asignaciones';
 
             new Chart(document.getElementById('monthlyChart'), {
                 type: 'line',
                 data: {
                     labels: formattedLabels,
                     datasets: [{
-                        label: 'Asignaciones',
+                        label: monthlyLabel,
                         data: monthValues,
                         fill: true,
                         borderColor: '#0daefd',
@@ -187,7 +189,19 @@
                     }]
                 },
                 options: {
-                    responsive: true
+                    responsive: true,
+                    scales: {
+                        y: {
+                            min: minValue - padding,
+                            max: maxValue + padding
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
                 }
             });
         }

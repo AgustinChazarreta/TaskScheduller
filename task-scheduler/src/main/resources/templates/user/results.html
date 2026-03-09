@@ -131,6 +131,7 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             await loadAssignments();
+            toggleGeneratePDFButton();
 
             // 🔹 Si no se recibió ningún resultado del backend
             if (!assignments || assignments.length === 0) {
@@ -157,6 +158,8 @@
             } catch (e) {
                 console.error("Error al cargar assignments", e);
                 assignments = [];
+            } finally {
+                toggleGeneratePDFButton(); // 🔹 asegurarse de actualizar el botón
             }
         }
 
@@ -483,6 +486,19 @@
             }
 
             pdf.save(`Schedule-${formatDate(startDate)}-${formatDate(endDate)}.pdf`);
+        }
+
+        function toggleGeneratePDFButton() {
+            const btn = document.getElementById('generatePdfBtn');
+            if (!assignments || assignments.length === 0) {
+                btn.disabled = true;           // desactiva el botón
+                btn.classList.add('btn-secondary');  // opcional: cambia color para indicar que está desactivado
+                btn.classList.remove('btn-danger');
+            } else {
+                btn.disabled = false;          // habilita el botón
+                btn.classList.add('btn-danger'); // restaura color original
+                btn.classList.remove('btn-secondary');
+            }
         }
     </script>
 </section>

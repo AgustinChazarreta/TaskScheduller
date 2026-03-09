@@ -15,6 +15,8 @@ let personIdToDelete = null;
 let personNameToDelete = null;
 const personsCache = {};
 
+let allPersons = []; // 🔹 para el filtro
+
 
 /* ===============================
    HELPERS
@@ -96,12 +98,23 @@ async function loadPersons() {
     const res = await fetch("/api/persons");
     const data = await res.json();
 
+    allPersons = data; // 🔹 guardamos todas
+
+    renderPersons(data);
+}
+
+
+// ===============================
+// RENDER PERSONS
+// ===============================
+function renderPersons(data) {
+
     tbody.innerHTML = "";
 
     if (!data.length) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-5 text-muted">
+                <td colspan="8" class="text-center py-5 text-muted">
                 <i class="bi bi-exclamation-triangle me-2"></i>
                     No hay personas registradas
                 </td>
@@ -118,46 +131,52 @@ async function loadPersons() {
             tbody.insertAdjacentHTML("beforeend", `
                 <tr>
 
-                    <td class="ps-4 text-center fw-semibold">
+                    <td class="text-center fw-semibold pe-3">
                         ${index + 1}
                     </td>
 
-                    <td class="fw-semibold">
+                    <td class="text-center fw-semibold">
                         ${p.fullName}
                         ${p.nickName ? `<br><small class="text-muted">${p.nickName}</small>` : ""}
                     </td>
 
-                    <td>
-    <div class="fw-semibold">
-        ${new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(p.birthDate + 'T00:00'))}
-    </div>
-</td>
-
-                    <td>
-                        ${p.email
-                    ? `<span class="badge bg-secondary-subtle text-secondary">
-                                      ${p.email}
-                                   </span>`
-                    : `<span class="text-muted">-</span>`
-                }
+                    <td class="text-center">
+                        <div class="fw-semibold">
+                            ${new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
+                    .format(new Date(p.birthDate + 'T00:00'))}
+                        </div>
                     </td>
 
-                    <td>
+                    <td class="text-center">
+                        ${p.email
+                    ? `<span class="badge bg-secondary-subtle text-secondary">${p.email}</span>`
+                    : `<span class="text-muted">-</span>`}
+                    </td>
+
+                    <td class="text-center">
+                        ${p.groupName
+                    ? `<span class="badge bg-warning-subtle text-warning">${p.groupName}</span>`
+                    : `<span class="text-muted">-</span>`}
+                    </td>
+
+                    <!-- DÍAS DISPONIBLES CENTRADOS -->
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center flex-wrap gap-1">
+                            ${formatDays(p.workingDays)}
+                        </div>
+                    </td>
+
+                    <td class="text-center">
                         <span class="badge ${p.active
                     ? "bg-success-subtle text-success"
-                    : "bg-secondary-subtle text-secondary"
-                }">
+                    : "bg-danger-subtle text-danger"}">
                             ${p.active ? "Activo" : "Inactivo"}
                         </span>
                     </td>
 
-                    <td>
-                        ${formatDays(p.workingDays)}
-                    </td>
-
-                    <td class="text-end pe-4">
-
-                        <button class="btn btn-sm btn-outline-secondary rounded-circle me-2"
+                    <!-- ACCIONES SEPARADAS -->
+                    <td class="text-end actions-col ps-5">
+                        <button class="btn btn-sm btn-outline-secondary rounded-circle me-1"
                                 onclick="editPerson('${p.id}')">
                             <i class="bi bi-pencil"></i>
                         </button>
@@ -166,7 +185,6 @@ async function loadPersons() {
                                 onclick="openDeletePersonModal('${p.id}', '${p.fullName}')">
                             <i class="bi bi-trash"></i>
                         </button>
-
                     </td>
 
                 </tr>
@@ -174,9 +192,34 @@ async function loadPersons() {
         });
 }
 
+
+/* ===============================
+   GROUP FILTER
+================================ */
+
+document
+    .getElementById("groupFilter")
+    ?.addEventListener("change", function () {
+
+        const groupId = this.value;
+
+        if (groupId === "ALL") {
+            renderPersons(allPersons);
+            return;
+        }
+
+        const filtered = allPersons.filter(p =>
+            String(p.groupId) === groupId
+        );
+
+        renderPersons(filtered);
+    });
+
+
 /* ===============================
    UNAVAILABILITIES STATE
 ================================ */
+
 const unavailabilityStart = document.getElementById("unavailabilityStart");
 const unavailabilityEnd = document.getElementById("unavailabilityEnd");
 const unavailabilityReason = document.getElementById("unavailabilityReason");
@@ -185,7 +228,6 @@ const unavailabilitiesList = document.getElementById("unavailabilitiesList");
 
 let currentUnavailabilities = [];
 
-// Función para renderizar la lista
 function renderUnavailabilities() {
     unavailabilitiesList.innerHTML = "";
     currentUnavailabilities.forEach((u, i) => {
@@ -203,7 +245,6 @@ function renderUnavailabilities() {
     });
 }
 
-// Agregar nueva ausencia
 addUnavailabilityBtn.addEventListener("click", () => {
     const start = unavailabilityStart.value;
     const end = unavailabilityEnd.value || null;
@@ -217,18 +258,15 @@ addUnavailabilityBtn.addEventListener("click", () => {
     currentUnavailabilities.push({ startDate: start, endDate: end, reason });
     renderUnavailabilities();
 
-    // reset inputs
     unavailabilityStart.value = "";
     unavailabilityEnd.value = "";
     unavailabilityReason.value = "";
 });
 
-// Eliminar
 function removeUnavailability(index) {
     currentUnavailabilities.splice(index, 1);
     renderUnavailabilities();
 }
-
 
 
 /* ===============================
@@ -247,9 +285,10 @@ form.addEventListener("submit", async e => {
         emailNotificationsEnabled: mailStatus.checked,
         entryDate: personEntryDate.value,
         exitDate: personExitDate.value || null,
+        groupId: $('#personGroup').val() || null,
         workingDays: $('#personDays').val(),
         functionIds: $("#personFunctions").val().map(Number),
-        unavailabilities: currentUnavailabilities // 🔹 acá se envía el array
+        unavailabilities: currentUnavailabilities
     };
 
     const url = editingPersonId
@@ -258,17 +297,13 @@ form.addEventListener("submit", async e => {
 
     const method = editingPersonId ? "PUT" : "POST";
 
-    // 🔥 GUARDAMOS EL RESPONSE
     const res = await secureFetch(url, {
         method,
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
     });
 
     if (!res.ok) {
-
         showAlert(`
         <div class="d-flex align-items-start gap-2">
             <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
@@ -279,8 +314,7 @@ form.addEventListener("submit", async e => {
                 </small>
             </div>
         </div>
-    `, "danger", true);   // 👈 true = dentro del modal
-
+    `, "danger", true);
         return;
     }
 
@@ -290,7 +324,6 @@ form.addEventListener("submit", async e => {
         const result = await res.json();
         personId = result.personId;
 
-        // 🔥 Mostrar password temporal al admin
         showAlert(`
             <i class="bi bi-check2-circle text-success fs-5"></i>
             <span class="fw-bold">Persona creada correctamente</span><br>
@@ -300,7 +333,6 @@ form.addEventListener("submit", async e => {
             `, "success");
     }
 
-    // Subida de imagen
     const file = photoInput.files[0];
     if (file) {
         await uploadProfileImage(personId, file);
@@ -309,10 +341,7 @@ form.addEventListener("submit", async e => {
     bootstrap.Modal.getInstance(modalEl).hide();
     resetForm();
     loadPersons();
-
 });
-
-
 
 
 /* ===============================
@@ -324,6 +353,7 @@ function editPerson(id) {
     if (!p) return;
 
     editingPersonId = id;
+
     modalTitle.innerHTML = `
         <i class="bi bi-person-check me-2"></i>Editar persona
     `;
@@ -336,6 +366,8 @@ function editPerson(id) {
     personStatus.checked = p.active;
     personEntryDate.value = p.entryDate;
     personExitDate.value = p.exitDate || "";
+    document.getElementById("personGroup").value = p.groupId || "";
+
     currentUnavailabilities = p.unavailabilities ? [...p.unavailabilities] : [];
     renderUnavailabilities();
 
@@ -346,7 +378,6 @@ function editPerson(id) {
         ? p.profileImageUrl
         : "/person-circle.svg";
 
-
     new bootstrap.Modal(modalEl).show();
 }
 
@@ -355,19 +386,19 @@ function editPerson(id) {
    DELETE
 ================================ */
 
-// Abrir modal
 function openDeletePersonModal(id, name) {
     personIdToDelete = id;
-    personNameToDelete = name; // 👈 guardamos el string
+    personNameToDelete = name;
+
     document.getElementById("deletePersonName").textContent = name;
 
     const modal = new bootstrap.Modal(
         document.getElementById("deletePersonModal")
     );
+
     modal.show();
 }
 
-// Confirmar eliminación
 document
     .getElementById("confirmDeletePersonBtn")
     .addEventListener("click", async function () {
@@ -420,41 +451,55 @@ document
         loadPersons();
     });
 
+
 /* ===============================
    RESET FORM
 ================================ */
 
 function resetForm() {
+
     editingPersonId = null;
+
     currentUnavailabilities = [];
+
     renderUnavailabilities();
 
     modalTitle.innerHTML = `<i class="bi bi-person-plus me-2"></i>Agregar persona`;
+
     form.reset();
 
     $("#personFunctions").val(null).trigger("change");
     $("#personDays").val(null).trigger("change");
 
     photoPreview.src = "/person-circle.svg";
-    if (photoInput) { photoInput.value = ""; }
+
+    if (photoInput) {
+        photoInput.value = "";
+    }
 
     unavailabilityStart.value = "";
     unavailabilityEnd.value = "";
     unavailabilityReason.value = "";
+
+    document.getElementById("personGroup").value = "";
 }
 
 
 /* ===============================
-   SELECT2 (MODAL SAFE)
+   SELECT2
 ================================ */
 
 modalEl.addEventListener("shown.bs.modal", () => {
+
     [
         { id: "#personFunctions", placeholder: "Seleccioná funciones" },
         { id: "#personDays", placeholder: "Seleccioná días de trabajo" }
     ]
+
         .forEach(cfg => {
+
             const $el = $(cfg.id);
+
             if ($el.hasClass("select2-hidden-accessible")) return;
 
             $el.select2({
@@ -462,7 +507,9 @@ modalEl.addEventListener("shown.bs.modal", () => {
                 width: "100%",
                 dropdownAutoWidth: true
             });
+
         });
+
 });
 
 modalEl.addEventListener("hidden.bs.modal", resetForm);
@@ -473,66 +520,134 @@ modalEl.addEventListener("hidden.bs.modal", resetForm);
 ================================ */
 
 photoInput.addEventListener("change", function () {
+
     const file = this.files[0];
+
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
+
         showAlert("Solo se permiten imágenes", "danger");
+
         this.value = "";
+
         return;
+
     }
 
     if (file.size > 2 * 1024 * 1024) {
+
         showAlert("La imagen no puede superar los 2MB", "danger");
+
         this.value = "";
+
         return;
+
     }
 
     const reader = new FileReader();
+
     reader.onload = e => {
+
         photoPreview.src = e.target.result;
+
     };
+
     reader.readAsDataURL(file);
+
 });
 
 
 async function loadFunctions() {
+
     const res = await fetch("/api/functions");
+
     const functions = await res.json();
 
     const select = $("#personFunctions");
+
     select.empty();
 
     functions.forEach(f => {
+
         select.append(
+
             `<option value="${f.id}">${f.name}</option>`
+
         );
+
     });
 
     select.trigger("change");
+
 }
+
+
+async function loadGroups() {
+
+    const res = await fetch("/api/groups");
+
+    const groups = await res.json();
+
+    const select = document.getElementById("personGroup");
+    const filter = document.getElementById("groupFilter");
+
+    select.innerHTML = `<option value="">Sin grupo</option>`;
+
+    if (filter) {
+        filter.innerHTML = `<option value="ALL">Todos los grupos</option>`;
+    }
+
+    groups.forEach(g => {
+
+        const option = document.createElement("option");
+        option.value = g.id;
+        option.textContent = g.name;
+        select.appendChild(option);
+
+        if (filter) {
+            const filterOption = document.createElement("option");
+            filterOption.value = g.id;
+            filterOption.textContent = g.name;
+            filter.appendChild(filterOption);
+        }
+
+    });
+
+}
+
 
 /* ===============================
    UPLOAD PROFILE IMAGE
 ================================ */
+
 async function uploadProfileImage(personId, file) {
 
     const formData = new FormData();
+
     formData.append("file", file);
 
     const res = await secureFetch(`/api/persons/${personId}/profile-image`, {
+
         method: "POST",
+
         body: formData
+
     });
 
     if (!res.ok) {
+
         showAlert("Error al subir la imagen", "danger");
+
     }
+
 }
 
 
 /* ===============================
    INIT
 ================================ */
+
 loadFunctions();
 loadPersons();
+loadGroups();

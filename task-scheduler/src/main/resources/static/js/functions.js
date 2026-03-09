@@ -10,6 +10,8 @@ let editingFunctionId = null;
 const functionCache = {};
 const draftFunctions = {};
 
+let allFunctions = {}; // FILTRO
+
 /* ===========================================
     FORMATEO
 =========================================== */
@@ -40,7 +42,8 @@ function render(tasks) {
                     <td class="text-center fw-semibold">${index + 1}</td>
                     <td class="fw-semibold">${f.name}</td>
                     <td>
-                        <span class="badge ${f.sequential ? "bg-warning text-dark" : "bg-secondary"} me-1">
+                        <span class="badge ${f.sequential ? "bg-info-subtle text-info"
+                                                        : "bg-warning-subtle text-warning"} me-1">
                             ${f.sequential ? "Secuencial" : "Aleatoria"}
                         </span>
                     </td>
@@ -59,6 +62,39 @@ function render(tasks) {
 }
 
 /* ===========================================
+    FILTRO POR TIPO
+=========================================== */
+function applyFunctionFilter() {
+
+    const filter = document.getElementById("filterType");
+
+    if (!filter) {
+        render(allFunctions);
+        return;
+    }
+
+    const value = filter.value;
+
+    if (value === "ALL") {
+        render(allFunctions);
+        return;
+    }
+
+    const filtered = Object.fromEntries(
+        Object.entries(allFunctions).filter(([k, f]) => {
+
+            if (value === "COMPATIBLE") return f.sequential === true;
+            if (value === "INCOMPATIBLE") return f.sequential === false;
+            if (value === "SOFT_INCOMPATIBLE") return false;
+
+            return true;
+        })
+    );
+
+    render(filtered);
+}
+
+/* ===========================================
     LOAD (DB)
 =========================================== */
 async function loadFunctions() {
@@ -69,10 +105,16 @@ async function loadFunctions() {
     Object.keys(functionCache).forEach(k => delete functionCache[k]);
     data.forEach(t => functionCache[t.id] = t);
 
-    render({ ...functionCache, ...draftFunctions });
+    allFunctions = { ...functionCache, ...draftFunctions };
+    applyFunctionFilter();
 }
 
-document.addEventListener("DOMContentLoaded", loadFunctions);
+document.addEventListener("DOMContentLoaded", () => {
+    loadFunctions();
+
+    const filter = document.getElementById("filterType");
+    if (filter) filter.addEventListener("change", applyFunctionFilter);
+});
 
 /* ===========================================
     LOAD WORD
@@ -98,7 +140,8 @@ async function loadFunctionsFromWord() {
         }
     });
 
-    render({ ...functionCache, ...draftFunctions });
+    allFunctions = { ...functionCache, ...draftFunctions };
+    applyFunctionFilter();
 }
 
 /* ===========================================
@@ -115,7 +158,11 @@ function editFunction(key) {
     if (!functionData) return;
 
     editingFunctionId = key;
-    modalTitle.textContent = "Editar función";
+
+    modalTitle.innerHTML = `
+        <i class="bi bi-pencil me-1"></i>
+        Editar función
+    `;
 
     document.getElementById("functionName").value = functionData.name;
     document.getElementById("sequential").value = String(functionData.sequential);
@@ -171,7 +218,9 @@ form.addEventListener("submit", async e => {
 
     bootstrap.Modal.getInstance(modalEl).hide();
     resetForm();
-    render({ ...functionCache, ...draftFunctions });
+
+    allFunctions = { ...functionCache, ...draftFunctions };
+    applyFunctionFilter();
 });
 
 function resetForm() {
@@ -260,8 +309,11 @@ document
         `, "success");
 
         functionIdToDelete = null;
-        render({ ...functionCache, ...draftFunctions });
+
+        allFunctions = { ...functionCache, ...draftFunctions };
+        applyFunctionFilter();
     });
+
 /* ===========================================
     SAVE
 =========================================== */

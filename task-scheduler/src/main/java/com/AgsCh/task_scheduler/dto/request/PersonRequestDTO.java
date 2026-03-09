@@ -25,6 +25,8 @@ public class PersonRequestDTO {
 
     private boolean active = true;
 
+    private Long groupId;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate entryDate;
 
@@ -96,6 +98,14 @@ public class PersonRequestDTO {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
     }
 
     public LocalDate getEntryDate() {

@@ -53,6 +53,9 @@ public class UserController {
         if (user.getHouse() != null) {
             dto.setHouseName(user.getHouse().getName());
         }
+        if (user.getPerson().getGroup() != null) {
+            dto.setGroupName(user.getPerson().getGroup().getName());
+        }
 
         return dto;
     }
@@ -83,8 +86,7 @@ public class UserController {
                 .map(u -> new PersonUnavailabilityDTO(
                         u.getStartDate(),
                         u.getEndDate(),
-                        u.getReason()
-                ))
+                        u.getReason()))
                 .collect(Collectors.toList());
     }
 

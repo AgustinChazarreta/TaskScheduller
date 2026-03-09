@@ -63,6 +63,10 @@ public class Person {
     @JoinColumn(name = "house_id", nullable = false)
     private House house;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private Group group;
+
     @OneToOne(mappedBy = "person")
     private User user;
 
@@ -226,6 +230,14 @@ public class Person {
 
     public House getHouse() {
         return house;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
     }
 
     public void setUser(User user) {

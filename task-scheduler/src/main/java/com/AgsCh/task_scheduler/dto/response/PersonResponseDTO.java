@@ -22,6 +22,8 @@ public class PersonResponseDTO {
     private Set<PersonUnavailabilityDTO> unavailabilities;
     private String profileImageUrl;
     private String role;
+    private Long groupId;
+    private String groupName;
     private String houseName;
 
     // Constructor full
@@ -40,6 +42,8 @@ public class PersonResponseDTO {
             Set<PersonUnavailabilityDTO> unavailabilities,
             String profileImageUrl,
             String role,
+            Long groupId,
+            String groupName,
             String houseName) {
 
         this.id = id;
@@ -56,6 +60,8 @@ public class PersonResponseDTO {
         this.unavailabilities = unavailabilities;
         this.profileImageUrl = profileImageUrl;
         this.role = role;
+        this.groupId = groupId;
+        this.groupName = groupName;
         this.houseName = houseName;
     }
 
@@ -76,7 +82,12 @@ public class PersonResponseDTO {
 
         // llama al constructor full pasando nulls para lo que falta
         this(id, fullName, nickName, birthDate, email, emailNotificationsEnabled, active,
-                entryDate, exitDate, workingDays, functions, null, profileImageUrl, null, null);
+                entryDate, exitDate, workingDays, functions, null, profileImageUrl, null, null, null, null);
+    }
+
+    public PersonResponseDTO(Long id,
+            String fullName) {
+        this(id, fullName, null, null, null, false, false, null, null, null, null, null, null, null, null, null, null);
     }
 
     // ---------------- Getters ----------------
@@ -136,6 +147,14 @@ public class PersonResponseDTO {
         return role;
     }
 
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
     public String getHouseName() {
         return houseName;
     }
@@ -151,5 +170,13 @@ public class PersonResponseDTO {
 
     public void setUnavailabilities(Set<PersonUnavailabilityDTO> unavailabilities) {
         this.unavailabilities = unavailabilities;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
     }
 }

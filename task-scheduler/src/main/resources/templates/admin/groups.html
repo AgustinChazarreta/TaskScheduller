@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
+
+<section>
+
+    <main class="container-fluid py-4">
+
+        <!-- ALERTAS -->
+        <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index:1055;"></div>
+
+        <!-- HEADER -->
+        <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft
+d-flex justify-content-between align-items-center">
+
+            <h2 class="fw-bold mb-0">
+                <i class="bi bi-diagram-3 text-primary me-2"></i>
+                Grupos de Personas
+            </h2>
+
+            <button class="btn btn-primary rounded-pill px-4" onclick="openCreateGroupModal()">
+                <i class="bi bi-plus-lg me-2"></i>
+                Nuevo Grupo
+            </button>
+
+        </div>
+
+
+        <!-- GRID DE CARDS -->
+        <div class="row g-4" id="groupsGrid">
+
+            <div class="col-12 text-center text-muted py-5">
+
+                <i class="bi bi-diagram-3 fs-3 mb-2"></i>
+                <div>Cargando grupos...</div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+
+    <!-- ===================================================== -->
+    <!-- MODAL CREAR / EDITAR -->
+    <!-- ===================================================== -->
+
+    <div class="modal fade" id="groupModal" tabindex="-1">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content rounded-4 shadow border-0">
+
+                <div class="modal-header bg-primary text-white">
+
+                    <h5 class="modal-title" id="groupModalTitle">
+                        Nuevo grupo
+                    </h5>
+
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden" id="groupId">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-12">
+
+                            <label class="form-label fw-semibold">
+                                Nombre del grupo
+                            </label>
+
+                            <input type="text" id="groupName" class="form-control rounded-3" required>
+
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Personas del grupo</label>
+                            <select id="groupPersons" class="form-select" multiple></select>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer justify-content-center">
+
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button class="btn btn-primary rounded-pill px-4" onclick="saveGroup()">
+                        <i class="bi bi-save me-1"></i>
+                        Guardar
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ======================================= -->
+    <!-- MODAL CONFIRMAR ELIMINACIÓN GRUPO -->
+    <!-- ======================================= -->
+
+    <div class="modal fade" id="deleteGroupModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow rounded-4 border-0">
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Confirmar eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
+                    </button>
+                </div>
+
+                <div class="modal-body text-center">
+                    <p class="mb-0 fs-5">
+                        ¿Seguro que deseas eliminar el grupo
+                        <span class="fw-semibold" id="deleteGroupName"></span>?
+                    </p>
+                </div>
+
+                <div class="modal-footer justify-content-center">
+
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="button" class="btn btn-danger" id="confirmDeleteGroupBtn">
+                        <i class="bi bi-trash me-1"></i>
+                        Eliminar
+                    </button>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        let groups = []
+        let groupModal
+        let persons = []
+
+        document.addEventListener("DOMContentLoaded", async () => {
+
+            groupModal = new bootstrap.Modal(document.getElementById("groupModal"))
+
+            await loadPersons()
+            initPersonsSelect()
+
+            loadGroups()
+
+        })
+
+
+        /* ================================
+        INIT SELECT2
+        ================================ */
+
+        function initPersonsSelect() {
+
+            const select = $("#groupPersons")
+
+            if (select.hasClass("select2-hidden-accessible")) return
+
+            select.select2({
+                placeholder: "Seleccionar personas",
+                width: "100%",
+                dropdownParent: $("#groupModal")
+            })
+
+        }
+
+
+        /* ================================
+        LOAD GROUPS
+        ================================ */
+
+        async function loadGroups() {
+
+            const res = await fetch("/api/groups")
+            groups = await res.json()
+
+            const grid = document.getElementById("groupsGrid")
+
+            grid.innerHTML = ""
+
+            if (groups.length === 0) {
+
+                grid.innerHTML = `
+<div class="col-12 text-center text-muted py-5">
+
+<i class="bi bi-exclamation-triangle fs-3 mb-2"></i>
+<div>No hay grupos creados</div>
+
+</div>
+`
+
+                return
+            }
+
+            groups.forEach(g => {
+
+                const personsCount = g.persons ? g.persons.length : 0
+
+                let previewMembers = ""
+                let hiddenMembers = ""
+
+                if (g.persons && g.persons.length > 0) {
+
+                    previewMembers = g.persons.slice(0, 3).map(p =>
+                        `<span class="badge bg-secondary-subtle text-secondary me-1 mb-1">
+${p.fullName}
+</span>`
+                    ).join("")
+
+                    hiddenMembers = g.persons.slice(3).map(p =>
+                        `<span class="badge bg-secondary-subtle text-secondary me-1 mb-1">
+${p.fullName}
+</span>`
+                    ).join("")
+
+                }
+
+                const card = document.createElement("div")
+
+                card.className = "col-xl-3 col-lg-4 col-md-6"
+
+                card.innerHTML = `
+<div class="card border-0 shadow-sm rounded-4 h-100 group-card">
+
+<div class="card-body d-flex flex-column">
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+
+<div>
+
+<h5 class="fw-semibold mb-1">
+<i class="bi bi-people text-primary me-2"></i>
+${g.name}
+</h5>
+
+</div>
+
+<span class="badge bg-light text-secondary border">
+${personsCount} persona${personsCount !== 1 ? "s" : ""}
+</span>
+
+</div>
+
+<div class="mb-3">
+
+<div class="members-preview">
+${previewMembers}
+</div>
+
+<div class="members-hidden d-none">
+${hiddenMembers}
+</div>
+
+${personsCount > 3 ? `
+<button class="btn btn-sm btn-link p-0 text-decoration-none"
+data-more="+${personsCount - 3} más"
+onclick="toggleMembers(this)">
+
++${personsCount - 3} más 
+<i class="bi bi-chevron-down ms-1"></i>
+
+</button>
+` : ""}
+
+</div>
+
+<div class="mt-auto d-flex justify-content-end">
+
+<button class="btn btn-sm btn-outline-secondary rounded-circle me-2"
+onclick="editGroup(${g.id})">
+<i class="bi bi-pencil"></i>
+</button>
+
+<button class="btn btn-sm btn-outline-danger rounded-circle"
+onclick="deleteGroup(${g.id})">
+<i class="bi bi-trash"></i>
+</button>
+
+</div>
+
+</div>
+
+</div>
+`
+
+                grid.appendChild(card)
+
+            })
+
+        }
+
+
+
+        /* ================================
+        CREATE GROUP
+        ================================ */
+
+        function openCreateGroupModal() {
+
+            document.getElementById("groupId").value = ""
+            document.getElementById("groupName").value = ""
+
+            document.getElementById("groupModalTitle").innerHTML =
+                `<i class="bi bi-plus-lg me-2"></i>Nuevo Grupo`
+
+            $("#groupPersons").val(null).trigger("change")
+
+            groupModal.show()
+
+        }
+
+
+
+        /* ================================
+        EDIT GROUP
+        ================================ */
+
+        function editGroup(id) {
+
+            const g = groups.find(x => x.id === id)
+
+            document.getElementById("groupId").value = g.id
+            document.getElementById("groupName").value = g.name
+
+            const ids = g.persons ? g.persons.map(p => p.id) : []
+
+            $("#groupPersons").val(ids).trigger("change")
+
+            document.getElementById("groupModalTitle").innerHTML =
+                `<i class="bi bi-pencil me-2"></i>Editar Grupo`
+
+            groupModal.show()
+
+        }
+
+
+
+        /* ================================
+        SAVE GROUP
+        ================================ */
+
+        async function saveGroup() {
+
+            const id = document.getElementById("groupId").value
+
+            const selectedPersons =
+                $("#groupPersons").val()?.map(Number) || []
+
+            const payload = {
+                name: document.getElementById("groupName").value,
+                personIds: selectedPersons
+            }
+
+            if (!payload.name) {
+                alert("El nombre es obligatorio")
+                return
+            }
+
+            if (id) {
+
+                await fetch(`/api/groups/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                })
+
+            } else {
+
+                await fetch(`/api/groups`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                })
+
+            }
+
+            groupModal.hide()
+            loadGroups()
+
+        }
+
+
+
+        /* ================================
+        DELETE GROUP
+        ================================ */
+        let deleteGroupId = null
+        let deleteGroupModal
+        document.addEventListener("DOMContentLoaded", () => {
+            deleteGroupModal = new bootstrap.Modal(
+                document.getElementById("deleteGroupModal")
+            )
+        })
+
+        function deleteGroup(id) {
+            const group = groups.find(g => g.id === id)
+            deleteGroupId = id
+            document.getElementById("deleteGroupName").textContent = group.name
+            deleteGroupModal.show()
+
+        }
+
+        document
+            .getElementById("confirmDeleteGroupBtn")
+            .addEventListener("click", async () => {
+
+                if (!deleteGroupId) return
+
+                await fetch(`/api/groups/${deleteGroupId}`, {
+                    method: "DELETE"
+                })
+
+                deleteGroupModal.hide()
+
+                deleteGroupId = null
+
+                loadGroups()
+
+            })
+
+        function toggleMembers(btn) {
+
+            const hidden = btn.parentElement.querySelector(".members-hidden")
+
+            if (hidden.classList.contains("d-none")) {
+                hidden.classList.remove("d-none")
+                btn.innerHTML = `Ver menos <i class="bi bi-chevron-up ms-1"></i>`
+            } else {
+                hidden.classList.add("d-none")
+                btn.innerHTML = btn.dataset.more + ` <i class="bi bi-chevron-down ms-1"></i>`
+            }
+
+        }
+
+
+
+        /* ================================
+        LOAD PERSONS
+        ================================ */
+
+        async function loadPersons() {
+
+            const res = await fetch("/api/persons")
+            persons = await res.json()
+
+            const select = document.getElementById("groupPersons")
+
+            select.innerHTML = ""
+
+            persons.forEach(p => {
+
+                const option = document.createElement("option")
+
+                option.value = p.id
+                option.textContent = p.fullName
+
+                select.appendChild(option)
+
+            })
+
+        }
+
+    </script>
+
+</section>
+
+</html>

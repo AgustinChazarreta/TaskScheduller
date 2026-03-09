@@ -19,6 +19,7 @@ import com.AgsCh.task_scheduler.dto.response.PersonResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Function;
+import com.AgsCh.task_scheduler.model.Group;
 import com.AgsCh.task_scheduler.model.House;
 import com.AgsCh.task_scheduler.model.Person;
 import com.AgsCh.task_scheduler.model.PersonFunction;
@@ -28,6 +29,7 @@ import com.AgsCh.task_scheduler.model.ScheduleRun;
 import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.repository.FunctionAssignmentRepository;
 import com.AgsCh.task_scheduler.repository.FunctionRepository;
+import com.AgsCh.task_scheduler.repository.GroupRepository;
 import com.AgsCh.task_scheduler.repository.HouseRepository;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.repository.ScheduleRunRepository;
@@ -54,6 +56,7 @@ public class PersonService {
     private final HouseRepository houseRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
+    private final GroupRepository groupRepository;
 
     public PersonService(
             PersonRepository repository,
@@ -65,7 +68,8 @@ public class PersonService {
             ScheduleRunRepository scheduleRunRepository,
             HouseRepository houseRepository,
             PasswordEncoder passwordEncoder,
-            UserService userService) {
+            UserService userService,
+            GroupRepository groupRepository) {
 
         this.repository = repository;
         this.functionRepository = functionRepository;
@@ -77,6 +81,7 @@ public class PersonService {
         this.houseRepository = houseRepository;
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
+        this.groupRepository = groupRepository;
 
     }
 
@@ -106,6 +111,19 @@ public class PersonService {
                 dto.getWorkingDays());
 
         person.setHouse(currentUser.getHouse());
+
+        // GROUP
+        if (dto.getGroupId() != null) {
+
+            Group group = groupRepository.findById(dto.getGroupId())
+                    .orElseThrow(() -> new RuntimeException("Group not found"));
+
+            if (!group.getHouse().getId().equals(currentUser.getHouse().getId())) {
+                throw new RuntimeException("Group does not belong to this house");
+            }
+
+            person.setGroup(group);
+        }
 
         // FUNCIONES
         if (dto.getFunctionIds() != null && !dto.getFunctionIds().isEmpty()) {
@@ -323,6 +341,8 @@ public class PersonService {
                 unavailabilities,
                 person.getProfileImageUrl(),
                 person.getUser() != null ? person.getUser().getRole().name() : null,
+                person.getGroup() != null ? person.getGroup().getId() : null,
+                person.getGroup() != null ? person.getGroup().getName() : null,
                 person.getHouse() != null ? person.getHouse().getName() : null);
     }
 
@@ -344,6 +364,20 @@ public class PersonService {
         person.setEntryDate(dto.getEntryDate());
         person.setExitDate(dto.getExitDate());
         person.setWorkingDays(dto.getWorkingDays());
+
+        // GROUP
+        if (dto.getGroupId() != null) {
+
+            Group group = groupRepository.findById(dto.getGroupId())
+                    .orElseThrow(() -> new RuntimeException("Group not found"));
+
+            person.setGroup(group);
+
+        } else {
+
+            person.setGroup(null);
+
+        }
 
         // FUNCIONES
         Set<Long> newFunctionIds = dto.getFunctionIds() != null ? dto.getFunctionIds() : Set.of();

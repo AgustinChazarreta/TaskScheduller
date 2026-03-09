@@ -1,9 +1,12 @@
 package com.AgsCh.task_scheduler.statistics.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.AgsCh.task_scheduler.model.FunctionAssignment;
 import com.AgsCh.task_scheduler.model.Person;
 import com.AgsCh.task_scheduler.model.ScheduleRun;
 import com.AgsCh.task_scheduler.repository.FunctionAssignmentRepository;
@@ -48,8 +51,11 @@ public class HouseStatisticsService {
                                         List.of());
                 }
 
+                // 🔹 Assignments del último run
+                List<FunctionAssignment> assignmentsLastRun = assignmentRepo.findByScheduleRun_Id(lastRun.getId());
+
                 // 🔹 Total assignments SOLO del último run
-                long totalAssignments = assignmentRepo.findByScheduleRun_Id(lastRun.getId()).size();
+                long totalAssignments = assignmentsLastRun.size();
 
                 // 🔹 Runs históricos
                 long historicalRuns = runRepo.countByHouse_Id(houseId);
@@ -57,28 +63,28 @@ public class HouseStatisticsService {
                 // 🔹 Personas
                 List<Person> people = personRepo.findByHouseId(houseId);
 
-                // ===== PEOPLE STATS (SOLO ÚLTIMO RUN) =====
+                // ================= PEOPLE STATS =================
 
-                var assignmentsLastRun = assignmentRepo.findByScheduleRun_Id(lastRun.getId());
-
-                var assignmentsGroupedByPerson = assignmentsLastRun.stream()
-                                .collect(java.util.stream.Collectors.groupingBy(
+                Map<Long, List<FunctionAssignment>> assignmentsGroupedByPerson = assignmentsLastRun.stream()
+                                .filter(FunctionAssignment::isAssigned)
+                                .collect(Collectors.groupingBy(
                                                 fa -> fa.getPerson().getId()));
 
                 List<PersonStatisticsDTO> peopleStats = people.stream()
                                 .map(person -> {
 
-                                        var personAssignments = assignmentsGroupedByPerson.getOrDefault(
-                                                        person.getId(),
-                                                        List.of());
+                                        List<FunctionAssignment> personAssignments = assignmentsGroupedByPerson
+                                                        .getOrDefault(
+                                                                        person.getId(),
+                                                                        List.of());
 
                                         long total = personAssignments.size();
 
-                                        // Breakdown por función
+                                        // 🔹 Breakdown por función
                                         List<FunctionStatsDTO> breakdown = personAssignments.stream()
-                                                        .collect(java.util.stream.Collectors.groupingBy(
+                                                        .collect(Collectors.groupingBy(
                                                                         fa -> fa.getFunction().getName(),
-                                                                        java.util.stream.Collectors.counting()))
+                                                                        Collectors.counting()))
                                                         .entrySet()
                                                         .stream()
                                                         .map(e -> new FunctionStatsDTO(
@@ -86,9 +92,9 @@ public class HouseStatisticsService {
                                                                         e.getValue()))
                                                         .toList();
 
-                                        // Última fecha dentro del run
+                                        // 🔹 Última fecha dentro del run
                                         java.time.LocalDate lastDate = personAssignments.stream()
-                                                        .map(fa -> fa.getDate())
+                                                        .map(FunctionAssignment::getDate)
                                                         .max(java.util.Comparator.naturalOrder())
                                                         .orElse(null);
 
@@ -96,19 +102,19 @@ public class HouseStatisticsService {
                                                         person.getId(),
                                                         person.getFullName(),
                                                         total,
-                                                        0, // totalLastMonth (si querés lo agregamos después)
+                                                        0, // totalLastMonth (se puede agregar después)
                                                         breakdown,
                                                         lastDate);
                                 })
                                 .toList();
 
-                // ================= FUNCTION STATS (solo último run) =================
+                // ================= FUNCTION STATS =================
 
-                List<FunctionStatsDTO> functionStats = assignmentRepo.findByScheduleRun_Id(lastRun.getId())
-                                .stream()
-                                .collect(java.util.stream.Collectors.groupingBy(
+                List<FunctionStatsDTO> functionStats = assignmentsLastRun.stream()
+                                .filter(FunctionAssignment::isAssigned)
+                                .collect(Collectors.groupingBy(
                                                 fa -> fa.getFunction().getName(),
-                                                java.util.stream.Collectors.counting()))
+                                                Collectors.counting()))
                                 .entrySet()
                                 .stream()
                                 .map(e -> new FunctionStatsDTO(
@@ -116,9 +122,10 @@ public class HouseStatisticsService {
                                                 e.getValue()))
                                 .toList();
 
-                // ================= MONTHLY STATS (solo último run) =================
+                // ================= MONTHLY STATS =================
 
-                List<MonthlyStatsDTO> monthlyStats = assignmentRepo.countAssignmentsByRun(lastRun.getId())
+                List<MonthlyStatsDTO> monthlyStats = assignmentRepo
+                                .countAssignmentsByRun(lastRun.getId())
                                 .stream()
                                 .map(row -> {
 
@@ -128,7 +135,9 @@ public class HouseStatisticsService {
 
                                         String formattedMonth = String.format("%04d-%02d", year, month);
 
-                                        return new MonthlyStatsDTO(formattedMonth, count);
+                                        return new MonthlyStatsDTO(
+                                                        formattedMonth,
+                                                        count);
                                 })
                                 .toList();
 

@@ -217,6 +217,22 @@
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
+
+        .actions-col {
+            width: clamp(90px, 8vw, 110px);
+            min-width: 75px;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .group-card {
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+
+        .group-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .12);
+        }
     </style>
 </head>
 
@@ -325,7 +341,7 @@
                             </li>
                             <li class="nav-item">
                                 <a href="/admin/statistics" class="nav-link">
-                                    <i class="nav-icon bi bi-bar-chart-line-fill"></i>
+                                    <i class="nav-icon bi bi-bar-chart-line"></i>
                                     <p>Estadísticas</p>
                                 </a>
                             </li>
@@ -351,6 +367,12 @@
                                 <a href="/admin/persons" class="nav-link">
                                     <i class="nav-icon bi bi-people"></i>
                                     <p>Personas</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/admin/groups" class="nav-link">
+                                    <i class="bi bi-diagram-3 me-1"></i>
+                                    <p>Grupos</p>
                                 </a>
                             </li>
 

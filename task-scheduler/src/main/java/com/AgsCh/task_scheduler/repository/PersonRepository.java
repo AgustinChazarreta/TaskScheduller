@@ -4,10 +4,18 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.AgsCh.task_scheduler.model.Group;
 import com.AgsCh.task_scheduler.model.House;
 import com.AgsCh.task_scheduler.model.Person;
 
 public interface PersonRepository extends JpaRepository<Person, Long> {
     List<Person> findByHouse(House house);
+    
     List<Person> findByHouseId(Long houseId);
+
+    List<Person> findByGroup(Group group);
+
+    List<Person> findByGroupId(Long groupId);
+
+    List<Person> findByHouseAndGroup(House house, Group group);
 }
