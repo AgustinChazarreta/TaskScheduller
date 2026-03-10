@@ -11,6 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+
         private final CustomUserDetailsService userDetailsService;
 
         public SecurityConfig(CustomUserDetailsService userDetailsService) {
@@ -27,23 +28,30 @@ public class SecurityConfig {
 
                 http
                                 .userDetailsService(userDetailsService)
+
                                 .csrf(csrf -> csrf
-                                                .ignoringRequestMatchers("/h2-console/**",
-                                                                "/api/**"))
+                                                .ignoringRequestMatchers("/h2-console/**", "/api/**"))
+
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(
                                                                 "/login",
+                                                                "/forgot-password",
+                                                                "/reset-password",
                                                                 "/css/**",
                                                                 "/js/**",
                                                                 "/images/**",
                                                                 "/h2-console/**")
                                                 .permitAll()
+
                                                 .requestMatchers("/webmaster/**").hasRole("WEBMASTER")
                                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                                 .requestMatchers("/user/**").hasRole("USER")
+
                                                 .anyRequest().authenticated())
+
                                 .headers(headers -> headers
                                                 .frameOptions(frame -> frame.sameOrigin()))
+
                                 .formLogin(form -> form
                                                 .loginPage("/login")
                                                 .successHandler((request, response, authentication) -> {
@@ -73,10 +81,15 @@ public class SecurityConfig {
                                                         }
                                                 })
                                                 .permitAll())
+
+                                .rememberMe(remember -> remember
+                                                .rememberMeParameter("remember-me")
+                                                .tokenValiditySeconds(60 * 60 * 24 * 30) // 30 días
+                                                .userDetailsService(userDetailsService))
+
                                 .logout(logout -> logout
                                                 .logoutSuccessUrl("/login?logout=true"));
 
                 return http.build();
         }
-
 }
