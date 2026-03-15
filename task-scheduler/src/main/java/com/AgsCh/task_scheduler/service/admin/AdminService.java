@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.AgsCh.task_scheduler.dto.ScheduleMapper;
 import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
 import com.AgsCh.task_scheduler.model.FunctionRule;
+import com.AgsCh.task_scheduler.model.House;
 import com.AgsCh.task_scheduler.model.Role;
 import com.AgsCh.task_scheduler.model.Schedule;
 import com.AgsCh.task_scheduler.model.User;
@@ -14,6 +15,7 @@ import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.repository.UserRepository;
 import com.AgsCh.task_scheduler.repository.FunctionRepository;
 import com.AgsCh.task_scheduler.repository.FunctionRuleRepository;
+import com.AgsCh.task_scheduler.repository.HouseRepository;
 
 @Service
 public class AdminService {
@@ -23,19 +25,22 @@ public class AdminService {
     private final PersonRepository personRepository;
     private final UserRepository userRepository;
     private final FunctionRuleRepository functionRuleRepository;
+    private final HouseRepository houseRepository;
 
     public AdminService(
             AdminScheduleService adminScheduleService,
             FunctionRepository functionRepository,
             UserRepository userRepository,
             PersonRepository personRepository,
-            FunctionRuleRepository functionRuleRepository) {
+            FunctionRuleRepository functionRuleRepository,
+            HouseRepository houseRepository) {
 
         this.adminScheduleService = adminScheduleService;
         this.functionRepository = functionRepository;
         this.personRepository = personRepository;
         this.userRepository = userRepository;
         this.functionRuleRepository = functionRuleRepository;
+        this.houseRepository = houseRepository;
     }
 
     /*
@@ -68,11 +73,19 @@ public class AdminService {
     }
 
     // actualizar admin
-    public User updateAdmin(Long id, String username, boolean active) {
-        User admin = getAdminById(id); // buscar admin por id
-        admin.setUsername(username); // actualizar username
-        admin.setActive(active); // actualizar estado
-        return userRepository.save(admin); // guardar cambios
+    public void updateAdmin(Long id, String username, boolean active, Long houseId) {
+        User admin = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Admin no encontrado"));
+
+        admin.setUsername(username);
+        admin.setActive(active);
+
+        if (houseId != null) {
+            House house = houseRepository.findById(houseId)
+                    .orElseThrow(() -> new RuntimeException("House no encontrada"));
+            admin.setHouse(house);
+        }
+
+        userRepository.save(admin);
     }
 
     // eliminar admin

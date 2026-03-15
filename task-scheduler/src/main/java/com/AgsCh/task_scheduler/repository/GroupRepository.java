@@ -11,4 +11,5 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     List<Group> findByHouse(House house);
 
+    List<Group> findByHouseId(Long houseId);
 }

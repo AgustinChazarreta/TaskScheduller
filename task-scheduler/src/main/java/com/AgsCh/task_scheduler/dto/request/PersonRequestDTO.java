@@ -19,6 +19,10 @@ public class PersonRequestDTO {
 
     private LocalDate birthDate;
 
+    private String profileImageUrl;
+
+    private String profileImagePublicId;
+
     private String email;
 
     private boolean emailNotificationsEnabled = false;
@@ -26,6 +30,8 @@ public class PersonRequestDTO {
     private boolean active = true;
 
     private Long groupId;
+
+    private Long houseId;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate entryDate;
@@ -76,6 +82,22 @@ public class PersonRequestDTO {
         this.birthDate = birthDate;
     }
 
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public String getProfileImagePublicId() {
+        return profileImagePublicId;
+    }
+
+    public void setProfileImagePublicId(String profileImagePublicId) {
+        this.profileImagePublicId = profileImagePublicId;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -106,6 +128,14 @@ public class PersonRequestDTO {
 
     public void setGroupId(Long groupId) {
         this.groupId = groupId;
+    }
+
+    public Long getHouseId() {
+        return houseId;
+    }
+
+    public void setHouseId(Long houseId) {
+        this.houseId = houseId;
     }
 
     public LocalDate getEntryDate() {

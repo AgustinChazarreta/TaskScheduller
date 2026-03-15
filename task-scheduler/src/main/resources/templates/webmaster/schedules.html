@@ -8,7 +8,6 @@
         <!-- HEADER -->
         <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
             <div class="d-flex justify-content-between align-items-center">
-
                 <div>
                     <h2 class="fw-bold mb-1">
                         <i class="bi bi-clock-history text-primary me-2"></i>
@@ -18,10 +17,8 @@
                         Historial global de ejecuciones del sistema
                     </small>
                 </div>
-
             </div>
         </div>
-
 
         <!-- TABLA -->
         <div class="card border-0 shadow-sm rounded-4">
@@ -29,7 +26,6 @@
 
                 <div class="table-responsive">
                     <table class="table align-middle mb-0 table-hover">
-
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-4">Fecha</th>
@@ -39,86 +35,9 @@
                                 <th class="pe-4">Estado</th>
                             </tr>
                         </thead>
-
-                        <tbody>
-
-                            <!-- FILAS -->
-                            <tr th:each="run : ${scheduleRuns}">
-
-                                <!-- Fecha -->
-                                <td class="ps-4">
-                                    <div class="fw-semibold"
-                                        th:text="${#temporals.format(run.createdAt, 'dd ''de'' MMMM yyyy')}">
-                                    </div>
-                                    <small class="text-muted"
-                                        th:text="${#temporals.format(run.createdAt, 'HH:mm')} + ' hs'">
-                                    </small>
-                                </td>
-
-                                <!-- House -->
-                                <td class="fw-semibold">
-                                    <span class="badge bg-primary-subtle text-primary" th:text="${run.house.name}">
-                                    </span>
-                                </td>
-
-                                <!-- Rango -->
-                                <td>
-                                    <div class="d-flex align-items-center gap-3 text-muted">
-                                        <div>
-                                            <small>Inicio</small>
-                                            <div class="fw-semibold"
-                                                th:text="${#temporals.format(run.startDate, 'dd MMM yyyy')}">
-                                            </div>
-                                        </div>
-
-                                        <i class="bi bi-arrow-right-circle text-secondary fs-5"></i>
-
-                                        <div>
-                                            <small>Fin</small>
-                                            <div class="fw-semibold"
-                                                th:text="${#temporals.format(run.endDate, 'dd MMM yyyy')}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <!-- Score -->
-                                <td>
-                                    <span class="fw-semibold" th:text="${run.score}">
-                                    </span>
-                                </td>
-
-                                <!-- Estado -->
-                                <td class="pe-4">
-
-                                    <span class="badge bg-success-subtle text-success"
-                                        th:if="${run.status.name() == 'ACTIVE'}">
-                                        Active
-                                    </span>
-
-                                    <span class="badge bg-secondary-subtle text-secondary"
-                                        th:if="${run.status.name() == 'ARCHIVED'}">
-                                        Archived
-                                    </span>
-
-                                    <span class="badge bg-danger-subtle text-danger"
-                                        th:if="${run.status.name() == 'INVALIDATED'}">
-                                        Invalidated
-                                    </span>
-
-                                </td>
-
-                            </tr>
-
-                            <!-- EMPTY -->
-                            <tr th:if="${#lists.isEmpty(scheduleRuns)}">
-                                <td colspan="5" class="text-center py-5 text-muted">
-                                    No hay ejecuciones registradas.
-                                </td>
-                            </tr>
-
+                        <tbody id="scheduleRunsTableBody">
+                            <!-- Las filas se llenarán con JS -->
                         </tbody>
-
                     </table>
                 </div>
 
@@ -126,6 +45,75 @@
         </div>
 
     </main>
+
+    <script>
+        async function loadScheduleRuns() {
+            try {
+                const res = await fetch('/api/webmaster/houses/schedule-runs');
+                if (!res.ok) throw new Error("Error al obtener las ejecuciones");
+                const scheduleRuns = await res.json();
+
+                const tbody = document.getElementById('scheduleRunsTableBody');
+                tbody.innerHTML = '';
+
+                if (scheduleRuns.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">
+                                    No hay ejecuciones registradas.
+                               </td></tr>`;
+                    return;
+                }
+
+                scheduleRuns.forEach(run => {
+                    const createdAt = run.createdAt ? new Date(run.createdAt) : null;
+                    const startDate = run.startDate ? new Date(run.startDate) : null;
+                    const endDate = run.endDate ? new Date(run.endDate) : null;
+
+                    const statusClass = run.status === 'ACTIVE' ? 'bg-success-subtle text-success' :
+                        run.status === 'ARCHIVED' ? 'bg-secondary-subtle text-secondary' :
+                            'bg-danger-subtle text-danger';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                <td class="ps-4">
+                    <div class="fw-semibold">${createdAt ? createdAt.toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' }) : '-'}</div>
+                    <small class="text-muted">${createdAt ? createdAt.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs' : '-'}</small>
+                </td>
+                <td class="fw-semibold">
+                    <span class="badge bg-primary-subtle text-primary">${run.house?.name || '-'}</span>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-3 text-muted">
+                        <div>
+                            <small>Inicio</small>
+                            <div class="fw-semibold">${startDate ? startDate.toLocaleDateString('es-AR') : '-'}</div>
+                        </div>
+                        <i class="bi bi-arrow-right-circle text-secondary fs-5"></i>
+                        <div>
+                            <small>Fin</small>
+                            <div class="fw-semibold">${endDate ? endDate.toLocaleDateString('es-AR') : '-'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="fw-semibold">${run.score || '-'}</span></td>
+                <td class="pe-4">
+                    <span class="badge ${statusClass}">${run.status || '-'}</span>
+                </td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error(error);
+                const tbody = document.getElementById('scheduleRunsTableBody');
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">
+                                Error al cargar las ejecuciones.
+                           </td></tr>`;
+            }
+        }
+
+        // Cargar tabla al abrir la página
+        loadScheduleRuns();
+    </script>
 
 </section>
 

@@ -20,11 +20,14 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String username;
 
     @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
+    private boolean passwordTemporary = false;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -81,7 +84,17 @@ public class User implements UserDetails {
     }
 
     public void setUsername(String username) {
+
+        if (username != null && username.equals(this.username)) {
+            return;
+        }
+
         this.username = username;
+
+        // sincronizar con Person
+        if (this.person != null && username != null && !username.equals(this.person.getEmail())) {
+            this.person.setEmail(username);
+        }
     }
 
     public String getPassword() {
@@ -90,6 +103,14 @@ public class User implements UserDetails {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public boolean isPasswordTemporary() {
+        return passwordTemporary;
+    }
+
+    public void setPasswordTemporary(boolean passwordTemporary) {
+        this.passwordTemporary = passwordTemporary;
     }
 
     public Role getRole() {
@@ -131,5 +152,14 @@ public class User implements UserDetails {
 
     public void setPerson(Person person) {
         this.person = person;
+
+        if (person != null && person.getUser() != this) {
+            person.setUser(this);
+        }
+
+        // sincronizar username/email
+        if (person != null && this.username != null) {
+            person.setEmail(this.username);
+        }
     }
 }

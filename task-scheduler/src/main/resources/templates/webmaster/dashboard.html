@@ -13,11 +13,47 @@
                 <p class="text-muted mb-0">Vista general del sistema</p>
             </div>
 
-            <div>
-                <div class="d-flex align-items-center gap-2 bg-dark px-3 py-2 rounded-pill text-white">
+            <div class="dropdown">
+
+                <button class="btn btn-dark rounded-pill px-3 py-2 d-flex align-items-center gap-2"
+                    data-bs-toggle="dropdown" data-bs-display="static">
+
                     <i class="bi bi-person-circle fs-5"></i>
                     <span class="fw-semibold" sec:authentication="name"></span>
-                </div>
+
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+
+                    <li>
+                        <a class="dropdown-item" href="/change-email">
+                            <i class="bi bi-envelope me-2"></i>
+                            Cambiar email
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item" href="/change-password">
+                            <i class="bi bi-key me-2"></i>
+                            Cambiar contraseña
+                        </a>
+                    </li>
+
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+
+                    <li>
+                        <form th:action="@{/logout}" method="post">
+                            <button class="dropdown-item text-danger">
+                                <i class="bi bi-box-arrow-right me-2"></i>
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </li>
+
+                </ul>
+
             </div>
 
         </div>
@@ -37,7 +73,7 @@
 
                     <div class="text-muted small fw-bold">Houses</div>
 
-                    <div class="fs-4 fw-bold my-1" th:text="${totalHouses}">0</div>
+                    <div class="fs-4 fw-bold my-1" id="totalHouses">0</div>
 
                     <small class="text-muted">
                         Registradas en el sistema
@@ -57,7 +93,7 @@
 
                     <div class="text-muted small fw-bold">Usuarios</div>
 
-                    <div class="fs-4 fw-bold my-1" th:text="${totalUsers}">0</div>
+                    <div class="fs-4 fw-bold my-1" id="totalUsers">0</div>
 
                     <small class="text-muted">
                         Total de Usuarios registrados
@@ -77,7 +113,7 @@
 
                     <div class="text-muted small fw-bold">Admins</div>
 
-                    <div class="fs-4 fw-bold my-1" th:text="${totalAdmins}">0</div>
+                    <div class="fs-4 fw-bold my-1" id="totalAdmins">0</div>
 
                     <small class="text-muted">
                         Con permisos administrativos
@@ -128,9 +164,9 @@
                         </div>
                     </a>
                 </div>
-                
+
                 <div class="col-md-6">
-                    <a href="/webmaster/users" class="text-decoration-none text-dark">
+                    <a th:href="@{/webmaster/users}" class="text-decoration-none text-dark">
                         <div class="p-4 bg-light rounded-4 h-100 module-hover">
                             <i class="bi bi-people fs-3 text-success mb-3 d-block"></i>
                             <h6 class="fw-semibold">Gestión de Cuentas</h6>
@@ -138,9 +174,9 @@
                         </div>
                     </a>
                 </div>
-                
+
                 <div class="col-md-6">
-                    <a href="/webmaster/schedules" class="text-decoration-none text-dark">
+                    <a th:href="@{/webmaster/schedules}" class="text-decoration-none text-dark">
                         <div class="p-4 bg-light rounded-4 h-100 module-hover">
                             <i class="bi bi-clock-history fs-3 text-secondary mb-3 d-block"></i>
                             <h6 class="fw-semibold">Schedule Runs</h6>
@@ -148,9 +184,9 @@
                         </div>
                     </a>
                 </div>
-                
+
                 <div class="col-md-6">
-                    <a href="/webmaster/statistics" class="text-decoration-none text-dark">
+                    <a th:href="@{/webmaster/statistics}" class="text-decoration-none text-dark">
                         <div class="p-4 bg-light rounded-4 h-100 module-hover">
                             <i class="nav-icon bi bi-bar-chart-line fs-3 text-warning mb-3 d-block"></i>
                             <h6 class="fw-semibold">Estadísticas</h6>
@@ -185,6 +221,37 @@
 
         </div>
     </div>
+
+    <script>
+
+        async function loadDashboardStats() {
+
+            try {
+
+                const housesRes = await fetch("/api/webmaster/houses");
+                const houses = await housesRes.json();
+
+                const usersRes = await fetch("/api/webmaster/users");
+                const users = await usersRes.json();
+
+                const adminsRes = await fetch("/api/webmaster/admins");
+                const admins = await adminsRes.json();
+
+                document.getElementById("totalHouses").textContent = houses.length;
+                document.getElementById("totalUsers").textContent = users.length;
+                document.getElementById("totalAdmins").textContent = admins.length;
+
+            } catch (error) {
+
+                console.error("Error cargando dashboard", error);
+
+            }
+
+        }
+
+        document.addEventListener("DOMContentLoaded", loadDashboardStats);
+
+    </script>
 
 </section>
 

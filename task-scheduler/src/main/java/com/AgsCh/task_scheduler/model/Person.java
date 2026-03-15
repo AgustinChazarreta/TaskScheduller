@@ -157,7 +157,18 @@ public class Person {
     }
 
     public void setEmail(String email) {
+
+        // evitar trabajo innecesario
+        if (email != null && email.equals(this.email)) {
+            return;
+        }
+
         this.email = email;
+
+        // sincronizar con el User si existe
+        if (this.user != null && email != null && !email.equals(this.user.getUsername())) {
+            this.user.setUsername(email);
+        }
     }
 
     public void setEmailNotificationsEnabled(boolean enabled) {
@@ -242,6 +253,15 @@ public class Person {
 
     public void setUser(User user) {
         this.user = user;
+
+        if (user != null && user.getPerson() != this) {
+            user.setPerson(this);
+        }
+
+        // sincronizar email/username
+        if (user != null && this.email != null) {
+            user.setUsername(this.email);
+        }
     }
 
     public User getUser() {

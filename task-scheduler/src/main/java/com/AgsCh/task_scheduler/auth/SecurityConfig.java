@@ -8,14 +8,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.AgsCh.task_scheduler.model.User;
+import com.AgsCh.task_scheduler.repository.UserRepository;
+
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
         private final CustomUserDetailsService userDetailsService;
+        private final UserRepository userRepository;
 
-        public SecurityConfig(CustomUserDetailsService userDetailsService) {
+        public SecurityConfig(CustomUserDetailsService userDetailsService, UserRepository userRepository) {
                 this.userDetailsService = userDetailsService;
+                this.userRepository = userRepository;
         }
 
         @Bean
@@ -43,6 +48,8 @@ public class SecurityConfig {
                                                                 "/h2-console/**")
                                                 .permitAll()
 
+                                                .requestMatchers("/change-password").authenticated()
+
                                                 .requestMatchers("/webmaster/**").hasRole("WEBMASTER")
                                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                                 .requestMatchers("/user/**").hasRole("USER")
@@ -56,24 +63,32 @@ public class SecurityConfig {
                                                 .loginPage("/login")
                                                 .successHandler((request, response, authentication) -> {
 
+                                                        var principal = (org.springframework.security.core.userdetails.User) authentication
+                                                                        .getPrincipal();
+
+                                                        String username = principal.getUsername();
+
+                                                        User user = userRepository.findByUsername(username)
+                                                                        .orElseThrow();
+
+                                                        // 🔐 FORZAR CAMBIO DE CONTRASEÑA
+                                                        if (user.isPasswordTemporary()) {
+                                                                response.sendRedirect("/change-password");
+                                                                return;
+                                                        }
+
                                                         var authorities = authentication.getAuthorities();
 
-                                                        if (authorities.stream()
-                                                                        .anyMatch(a -> a.getAuthority()
-                                                                                        .equals("ROLE_WEBMASTER"))) {
-
+                                                        if (authorities.stream().anyMatch(a -> a.getAuthority()
+                                                                        .equals("ROLE_WEBMASTER"))) {
                                                                 response.sendRedirect("/webmaster/dashboard");
 
-                                                        } else if (authorities.stream()
-                                                                        .anyMatch(a -> a.getAuthority()
-                                                                                        .equals("ROLE_ADMIN"))) {
-
+                                                        } else if (authorities.stream().anyMatch(
+                                                                        a -> a.getAuthority().equals("ROLE_ADMIN"))) {
                                                                 response.sendRedirect("/admin/dashboard");
 
-                                                        } else if (authorities.stream()
-                                                                        .anyMatch(a -> a.getAuthority()
-                                                                                        .equals("ROLE_USER"))) {
-
+                                                        } else if (authorities.stream().anyMatch(
+                                                                        a -> a.getAuthority().equals("ROLE_USER"))) {
                                                                 response.sendRedirect("/user");
 
                                                         } else {
@@ -84,7 +99,7 @@ public class SecurityConfig {
 
                                 .rememberMe(remember -> remember
                                                 .rememberMeParameter("remember-me")
-                                                .tokenValiditySeconds(60 * 60 * 24 * 30) // 30 días
+                                                .tokenValiditySeconds(60 * 60 * 24 * 30)
                                                 .userDetailsService(userDetailsService))
 
                                 .logout(logout -> logout

@@ -6,6 +6,7 @@ const tbody = document.getElementById("personsBody");
 const form = document.getElementById("personForm");
 const modalEl = document.getElementById("personModal");
 const modalTitle = document.getElementById("modalTitle");
+const saveBtn = document.getElementById("savePersonBtn");
 
 const photoInput = document.getElementById("personPhoto");
 const photoPreview = document.getElementById("personPhotoPreview");
@@ -13,6 +14,7 @@ const photoPreview = document.getElementById("personPhotoPreview");
 let editingPersonId = null;
 let personIdToDelete = null;
 let personNameToDelete = null;
+let pendingAlert = null;
 const personsCache = {};
 
 let allPersons = []; // 🔹 para el filtro
@@ -51,6 +53,20 @@ function formatDays(days = []) {
             </span>`
         )
         .join("");
+}
+
+function setLoadingButton(button, loading = true) {
+    if (loading) {
+        button.disabled = true;
+        button.dataset.originalText = button.innerHTML;
+        button.innerHTML = `
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Guardando...
+        `;
+    } else {
+        button.disabled = false;
+        button.innerHTML = button.dataset.originalText;
+    }
 }
 
 /* ===============================
@@ -275,6 +291,7 @@ function removeUnavailability(index) {
 
 form.addEventListener("submit", async e => {
     e.preventDefault();
+    setLoadingButton(saveBtn, true);
 
     const payload = {
         fullName: personName.value.trim(),
@@ -304,6 +321,7 @@ form.addEventListener("submit", async e => {
     });
 
     if (!res.ok) {
+        setLoadingButton(saveBtn, false);
         showAlert(`
         <div class="d-flex align-items-start gap-2">
             <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
@@ -324,19 +342,24 @@ form.addEventListener("submit", async e => {
         const result = await res.json();
         personId = result.personId;
 
-        showAlert(`
-            <i class="bi bi-check2-circle text-success fs-5"></i>
-            <span class="fw-bold">Persona creada correctamente</span><br>
-            Email: <strong>${payload.email}</strong><br>
-            Password temporal: <strong>${result.temporaryPassword}</strong><br>
-            El usuario deberá cambiarla al ingresar.
-            `, "success");
+        pendingAlert = {
+            message: `
+        <i class="bi bi-check2-circle text-success fs-5"></i>
+        <span class="fw-bold">Persona creada correctamente</span><br>
+        Email: <strong>${payload.email}</strong><br>
+        Password temporal: <strong>${result.temporaryPassword}</strong><br>
+        El usuario deberá cambiarla al ingresar.
+    `,
+            type: "success"
+        };
     }
 
     const file = photoInput.files[0];
     if (file) {
         await uploadProfileImage(personId, file);
     }
+
+    setLoadingButton(saveBtn, false);
 
     bootstrap.Modal.getInstance(modalEl).hide();
     resetForm();
@@ -512,7 +535,13 @@ modalEl.addEventListener("shown.bs.modal", () => {
 
 });
 
-modalEl.addEventListener("hidden.bs.modal", resetForm);
+modalEl.addEventListener("hidden.bs.modal", () => {
+    resetForm();
+    if (pendingAlert) {
+        showAlert(pendingAlert.message, pendingAlert.type);
+        pendingAlert = null;
+    }
+});
 
 
 /* ===============================

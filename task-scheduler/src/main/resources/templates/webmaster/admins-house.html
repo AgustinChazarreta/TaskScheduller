@@ -1,77 +1,42 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-    th:replace="~{layout/main :: layout(~{::section})}">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
 
 <section>
+
+    <div id="alertContainer" class="container-fluid mt-3"></div>
+
     <main class="container-fluid py-4">
 
         <!-- HEADER -->
         <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
             <div class="d-flex justify-content-between align-items-center">
-
                 <div>
                     <h2 class="fw-bold mb-1">
                         <i class="bi bi-people text-primary me-2"></i>
-                        Gestión de Administradores de <span th:text="${house.name}">House</span>
+                        Gestión de Administradores de <span id="houseName">Cargando...</span>
                     </h2>
                 </div>
-
                 <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal"
                     data-bs-target="#createAdminModal">
-                    <i class="bi bi-plus-lg me-2"></i>
-                    Nuevo Admin
+                    <i class="bi bi-plus-lg me-2"></i> Nuevo Admin
                 </button>
-
             </div>
         </div>
 
         <!-- TABLA ADMINS -->
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body p-0">
-                <div th:if="${#lists.isEmpty(admins)}" class="p-3 text-center text-muted">
-                    <i class="bi bi-person-x fs-2 mb-2"></i>
-                    <p class="mb-0">No hay administradores creados para esta house.</p>
-                </div>
-
-                <div th:if="${!#lists.isEmpty(admins)}" class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 table-hover" id="adminsTable">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-4">Nombre</th>
+                                <th class="ps-4">Username</th>
                                 <th>Estado</th>
                                 <th>Fecha de creación</th>
                                 <th class="text-end pe-4">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr th:each="admin : ${admins}">
-                                <td class="ps-4 fw-semibold" th:text="${admin.username}"></td>
-                                <td>
-                                    <span class="badge bg-success-subtle text-success"
-                                        th:if="${admin.active}">Activo</span>
-                                    <span class="badge bg-secondary-subtle text-secondary"
-                                        th:if="${!admin.active}">Inactivo</span>
-                                </td>
-                                <td>
-                                    <div class="fw-semibold"
-                                        th:text="${#temporals.format(admin.createdAt, 'dd ''de'' MMMM yyyy')}"></div>
-                                    <small class="text-muted"
-                                        th:text="${#temporals.format(admin.createdAt, 'HH:mm')} + ' hs'"></small>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <!-- EDIT -->
-                                    <button class="btn btn-sm btn-outline-secondary rounded-circle me-2"
-                                        data-bs-toggle="modal" th:data-bs-target="'#editModal-' + ${admin.id}">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-
-                                    <!-- DELETE -->
-                                    <button class="btn btn-sm btn-outline-danger rounded-circle" data-bs-toggle="modal"
-                                        th:data-bs-target="'#deleteModal-' + ${admin.id}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
+                        <tbody id="adminsTableBody">
                         </tbody>
                     </table>
                 </div>
@@ -83,116 +48,449 @@
     <!-- MODAL CREAR ADMIN -->
     <div class="modal fade" id="createAdminModal">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow border-0">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
 
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-person-plus-fill me-2"></i>
-                        Nuevo Admin
-                    </h5>
-                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <!-- HEADER -->
+                <div class="modal-header border-0 pb-2 bg-primary bg-opacity-10 rounded-top-4">
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center"
+                            style="width:48px;height:48px;">
+                            <i class="bi bi-shield-lock text-white fs-5"></i>
+                        </div>
+
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0 text-primary">
+                                Crear administrador
+                            </h5>
+                            <small class="text-muted">
+                                Cuenta con permisos de gestión del sistema
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
-                <div class="modal-body">
-                    <form th:action="@{/webmaster/houses/{id}/admins/create(id=${house.id})}" method="post">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Username</label>
-                            <input type="text" name="username" class="form-control rounded-3"
-                                placeholder="Ej: admin_central" required>
+                <!-- BODY -->
+                <div class="modal-body pt-4">
+
+                    <form id="createAdminForm">
+                        <div id="createAdminAlertContainer"></div>
+                        <input type="hidden" id="houseId" value="0"> <!-- Thymeleaf lo actualiza -->
+
+                        <div class="card border-primary border-opacity-25 bg-light-subtle rounded-4 p-3 mb-3">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    Correo Electrónico (Username)
+                                </label>
+                                <input type="text" id="adminUsername" class="form-control rounded-3"
+                                    placeholder="Ej: admin_central" required>
+                            </div>
+
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Password</label>
-                            <input type="password" name="password" class="form-control rounded-3"
-                                placeholder="Contraseña segura" required>
-                        </div>
-
-                        <div class="text-end pt-2">
-                            <button type="button" class="btn btn-secondary rounded-pill px-3 me-2"
+                        <!-- FOOTER -->
+                        <div class="modal-footer border-0 justify-content-center pt-3">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
                                 data-bs-dismiss="modal">
                                 Cancelar
                             </button>
-                            <button class="btn btn-primary rounded-pill px-4">
-                                Crear
+
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                                <i class="bi bi-check-lg me-1"></i>
+                                Crear cuenta
                             </button>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- MODAL EDIT ADMIN -->
-    <div th:each="admin : ${admins}" class="modal fade" th:id="'editModal-' + ${admin.id}" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow">
-
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-pencil me-2"></i>
-                        Editar Admin
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-
-                <div class="modal-body">
-                    <form th:action="@{/webmaster/admins/edit/{id}(id=${admin.id})}" method="post">
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Username</label>
-                            <input type="text" name="username" th:value="${admin.username}"
-                                class="form-control rounded-3" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Estado</label>
-                            <select name="active" class="form-select rounded-3">
-                                <option value="true" th:selected="${admin.active}">Activo</option>
-                                <option value="false" th:selected="${!admin.active}">Inactivo</option>
-                            </select>
-                        </div>
-
-                        <div class="modal-footer justify-content-center">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                        </div>
-
-                    </form>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- MODAL DELETE ADMIN -->
-    <div th:each="admin : ${admins}" class="modal fade" th:id="'deleteModal-' + ${admin.id}" tabindex="-1">
+    <!-- MODAL ELIMINAR ADMIN -->
+    <div class="modal fade" id="deleteAdminModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content shadow">
-
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title">
                         <i class="bi bi-exclamation-triangle me-2"></i>
-                        Eliminar Admin
+                        Confirmar Eliminación
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-
                 <div class="modal-body text-center">
-                    <p class="mb-0 fs-5">
-                        ¿Seguro que desea eliminar a <span class="fw-semibold" th:text="${admin.username}"></span>?
-                    </p>
+                    <p id="deleteAdminMessage" class="fs-5"></p>
                 </div>
-
                 <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <form th:action="@{/webmaster/admins/delete/{id}(id=${admin.id})}" method="post">
-                        <button type="submit" class="btn btn-danger">Eliminar</button>
-                    </form>
+                    <button class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger rounded-pill px-4" id="confirmDeleteAdminBtn">Eliminar</button>
                 </div>
-
             </div>
         </div>
     </div>
+
+    <script>
+        const houseId = window.location.pathname.split('/')[3];
+        const tableBody = document.getElementById("adminsTableBody");
+        const houseNameSpan = document.getElementById("houseName");
+
+        let adminIdToDelete = null;
+        let adminUsernameToDelete = "";
+
+        // ================= ALERT =================
+        function showAlert(message, type = "success", showIcon = true) {
+            const container = document.getElementById("alertContainer");
+            const alert = document.createElement("div");
+
+            let iconHtml = '';
+            if (showIcon) {
+                if (type === "success") iconHtml = '<i class="bi bi-check-circle-fill me-2"></i>';
+                else if (type === "danger") iconHtml = '<i class="bi bi-x-circle-fill me-2"></i>';
+            }
+
+            alert.className = `alert alert-${type} alert-dismissible fade show d-flex align-items-center`;
+            alert.innerHTML = `${iconHtml}${message}<button class="btn-close ms-auto" data-bs-dismiss="alert"></button>`;
+            container.appendChild(alert);
+
+            setTimeout(() => alert.remove(), 6000);
+        }
+
+        // ================= LOAD ADMINS =================
+        async function loadAdmins() {
+
+            tableBody.innerHTML = "";
+
+            try {
+
+                const houseRes = await fetch(`/api/webmaster/houses/${houseId}`);
+                const house = await houseRes.json();
+                houseNameSpan.textContent = house.name;
+
+                const res = await fetch(`/api/webmaster/admins/houses/${houseId}`);
+                if (!res.ok) throw new Error("Error al cargar admins");
+
+                const admins = await res.json();
+
+                if (admins.length === 0) {
+                    tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                        No hay administradores creados para esta casa.
+                    </td>
+                </tr>`;
+                    return;
+                }
+
+                admins.forEach(admin => {
+
+                    const parts = admin.createdAt.split(" ");
+                    const date = parts.slice(0, 3).join(" ");
+                    const time = parts[3];
+
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+                <td class="ps-4 fw-semibold">${admin.username}</td>
+
+                <td>
+                    <span class="badge ${admin.active
+                            ? "bg-success-subtle text-success"
+                            : "bg-secondary-subtle text-secondary"}">
+                        ${admin.active ? "Activo" : "Inactivo"}
+                    </span>
+                </td>
+
+                <td>
+                    <div class="fw-semibold">${date}</div>
+                    <small class="text-muted">${time} hs</small>
+                </td>
+
+                <td class="text-end pe-4">
+
+                    <button class="btn btn-sm btn-outline-secondary rounded-circle me-2"
+                        onclick="showEditAdminModal(${admin.adminId}, '${admin.username}', ${admin.active})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+
+                    <button class="btn btn-sm btn-outline-danger rounded-circle"
+                        onclick="showDeleteAdminModal(${admin.adminId}, '${admin.username}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+
+                </td>
+            `;
+
+                    tableBody.appendChild(row);
+                });
+
+            } catch (err) {
+
+                console.error(err);
+
+                tableBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-danger text-center py-5">
+                    No se pudieron cargar los administradores
+                </td>
+            </tr>`;
+            }
+        }
+
+        // ================= CREATE ADMIN =================
+        document.getElementById("createAdminForm").addEventListener("submit", async e => {
+
+            e.preventDefault();
+
+            const username = document.getElementById("adminUsername").value.trim();
+
+            try {
+                const res = await fetch(
+                    `/api/webmaster/admins/houses/${houseId}?username=${encodeURIComponent(username)}`,
+                    { method: "POST" }
+                );
+
+                const text = await res.text(); // siempre texto
+                let data;
+
+                try {
+                    data = JSON.parse(text); // intenta parsear JSON
+                } catch {
+                    data = null;
+                }
+
+                if (!res.ok) {
+                    const mensaje =
+                        data?.details?.[0] ||
+                        data?.error ||
+                        text ||
+                        "Error inesperado";
+                    showModalAlert("createAdmin", mensaje); // ⚡ aquí usamos el modal
+                    return;
+                }
+
+                const admin = data;
+
+                showAlert(`
+<div class="d-flex flex-column">
+    <div><i class="bi bi-check-circle-fill me-2"></i>
+        Admin <strong>${admin.username}</strong> creado correctamente.
+    </div>
+    <div class="mt-3 ms-4">
+        Contraseña temporal: 
+        <strong>${admin.temporaryPassword}</strong>
+        <button class="btn btn-sm btn-outline-secondary ms-2"
+            onclick="copyTempPassword('${admin.temporaryPassword}')">
+            <i class="bi bi-clipboard"></i>
+        </button>
+    </div>
+</div>
+`, "success", false);
+
+                bootstrap.Modal.getInstance(document.getElementById("createAdminModal")).hide();
+                document.getElementById("createAdminForm").reset();
+                loadAdmins();
+
+            } catch (err) {
+                console.error(err);
+                showAlert("Error del servidor", "danger");
+            }
+        });
+
+        // ================= DELETE ADMIN =================
+        function showDeleteAdminModal(id, username) {
+
+            adminIdToDelete = id;
+            adminUsernameToDelete = username;
+
+            document.getElementById("deleteAdminMessage").innerHTML =
+                `¿Seguro que desea eliminar <strong>${username}</strong>?`;
+
+            const modal = new bootstrap.Modal(document.getElementById("deleteAdminModal"));
+
+            modal.show();
+        }
+
+        document.getElementById("confirmDeleteAdminBtn").addEventListener("click", async () => {
+
+            if (!adminIdToDelete) return;
+
+            try {
+
+                const res = await fetch(`/api/webmaster/admins/${adminIdToDelete}`, {
+                    method: "DELETE"
+                });
+
+                if (!res.ok) throw new Error("Error al eliminar admin");
+
+                showAlert(`Admin&nbsp;<strong>${adminUsernameToDelete}</strong>&nbsp;eliminado correctamente`);
+
+                loadAdmins();
+
+            } catch (err) {
+
+                console.error(err);
+                showAlert("No se pudo eliminar el admin", "danger");
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById("deleteAdminModal")).hide();
+
+            adminIdToDelete = null;
+            adminUsernameToDelete = "";
+        });
+
+        // ================= EDIT ADMIN =================
+        function showEditAdminModal(id, username, active) {
+
+            const modalHtml = `
+            <div class="modal fade" id="editAdminModal">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4 shadow border-0">
+                        <form id="editAdminForm">
+                        <!-- HEADER -->
+                        <div class="modal-header border-0 pb-2 bg-primary bg-opacity-10 rounded-top-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center"
+                                style="width:48px;height:48px;">
+                                <i class="bi bi-pencil text-white fs-5"></i>
+                                </div>
+                                <div>
+                                    <h5 class="modal-title fw-bold mb-0 text-primary">
+                                    Editar administrador
+                                    </h5>
+                                    <small class="text-muted">
+                                        Modifique los datos del administrador
+                                    </small>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                                    
+                        <!-- BODY -->
+                        <div class="modal-body pt-4">
+                            <div id="editAdminAlertContainer"></div>
+                            <input type="hidden" id="editAdminId" value="${id}">
+                            <div class="card border-primary border-opacity-25 bg-light-subtle rounded-4 p-3 mb-3">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold text-primary">
+                                    Correo Electrónico (Username)
+                                    </label>
+                                    <input type="text" id="editAdminUsername" class="form-control rounded-3"
+                                    value="${username}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold text-primary">
+                                    Estado
+                                    </label>
+                                    <select id="editAdminActive" class="form-select rounded-3">
+                                        <option value="true" ${active ? "selected" : ""}>Activo</option>
+                                        <option value="false" ${!active ? "selected" : ""}>Inactivo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- FOOTER -->
+                        <div class="modal-footer border-0 justify-content-center pt-3">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                                <i class="bi bi-save me-1"></i>
+                                Guardar cambios
+                            </button>
+                        </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+
+            document.body.insertAdjacentHTML("beforeend", modalHtml);
+
+            const modalEl = document.getElementById("editAdminModal");
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+
+            document.getElementById("editAdminForm").addEventListener("submit", async e => {
+                e.preventDefault();
+
+                const body = {
+                    username: document.getElementById("editAdminUsername").value.trim(),
+                    active: document.getElementById("editAdminActive").value === "true"
+                };
+
+                try {
+                    const res = await fetch(
+                        `/api/webmaster/admins/${id}?username=${encodeURIComponent(body.username)}&active=${body.active}`,
+                        { method: "PUT" }
+                    );
+
+                    const text = await res.text();
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch {
+                        data = null;
+                    }
+
+                    if (!res.ok) {
+                        const mensaje =
+                            data?.details?.[0] ||
+                            data?.error ||
+                            text ||
+                            "Error inesperado";
+                        showModalAlert("editAdmin", mensaje);
+                        return;
+                    }
+
+                    showAlert(`Admin&nbsp;<strong>${body.username}</strong>&nbsp;actualizado correctamente`, "success");
+
+                    modal.hide();
+                    modalEl.remove();
+                    loadAdmins();
+
+                } catch (err) {
+                    console.error(err);
+                    showAlert("Error al actualizar admin", "danger");
+                }
+            });
+
+            modalEl.addEventListener("hidden.bs.modal", () => modalEl.remove());
+        }
+
+        function copyTempPassword(password) {
+            navigator.clipboard.writeText(password);
+            showAlert("Contraseña copiada al portapapeles", "success");
+        }
+
+        function showModalAlert(modalId, message, type = "danger", showIcon = true) {
+            const container = document.getElementById(`${modalId}AlertContainer`);
+            if (!container) return;
+
+            container.innerHTML = ""; // limpiamos cualquier alert previo
+
+            let iconHtml = "";
+            if (showIcon) {
+                iconHtml = type === "success"
+                    ? '<i class="bi bi-check-circle-fill me-2"></i>'
+                    : '<i class="bi bi-x-circle-fill me-2"></i>';
+            }
+
+            const alert = document.createElement("div");
+            alert.className = `alert alert-${type} alert-dismissible fade show d-flex align-items-center`;
+            alert.innerHTML = `${iconHtml}${message}
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>`;
+            container.appendChild(alert);
+        }
+
+        // ================= INIT =================
+        loadAdmins();
+    </script>
 
 </section>
 

@@ -43,7 +43,7 @@ function render(tasks) {
                     <td class="fw-semibold">${f.name}</td>
                     <td>
                         <span class="badge ${f.sequential ? "bg-info-subtle text-info"
-                                                        : "bg-warning-subtle text-warning"} me-1">
+                    : "bg-warning-subtle text-warning"} me-1">
                             ${f.sequential ? "Secuencial" : "Aleatoria"}
                         </span>
                     </td>
@@ -99,7 +99,18 @@ function applyFunctionFilter() {
 =========================================== */
 async function loadFunctions() {
     const res = await fetch("/api/functions");
-    if (!res.ok) return;
+    if (!res.ok) {
+        showAlert(`
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+            <div>
+                <div class="fw-semibold">Error cargando funciones</div>
+                <small class="text-muted">No se pudieron obtener los datos del servidor.</small>
+            </div>
+        </div>
+    `, "danger");
+        return;
+    }
 
     const data = await res.json();
     Object.keys(functionCache).forEach(k => delete functionCache[k]);
@@ -121,7 +132,18 @@ document.addEventListener("DOMContentLoaded", () => {
 =========================================== */
 async function loadFunctionsFromWord() {
     const file = document.getElementById("wordFile").files[0];
-    if (!file) return alert("Seleccioná un Word");
+    if (!file) {
+        showAlert(`
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-exclamation-triangle-fill text-warning fs-5 mt-1"></i>
+            <div>
+                <div class="fw-semibold">Seleccioná un archivo Word</div>
+                <small class="text-muted">Debés subir un archivo .docx para importar funciones.</small>
+            </div>
+        </div>
+    `, "warning");
+        return;
+    }
 
     const fd = new FormData();
     fd.append("file", file);
@@ -131,7 +153,18 @@ async function loadFunctionsFromWord() {
         body: fd
     });
 
-    if (!res.ok) return alert("Error leyendo el Word");
+    if (!res.ok) {
+        showAlert(`
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+            <div>
+                <div class="fw-semibold">Error leyendo el archivo Word</div>
+                <small class="text-muted">No se pudieron importar las funciones.</small>
+            </div>
+        </div>
+    `, "danger");
+        return;
+    }
 
     const data = await res.json();
     Object.entries(data).forEach(([name, days]) => {
@@ -199,6 +232,18 @@ form.addEventListener("submit", async e => {
                     ...functionData,
                     dirty: true
                 };
+
+                showAlert(`
+                <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-pencil-fill text-success fs-5 mt-1"></i>
+                    <div>
+                        <div class="fw-semibold">Función actualizada</div>
+                        <small class="text-muted">
+                            Los cambios en <strong>"${functionData.name}"</strong> se aplicaron correctamente.
+                        </small>
+                    </div>
+                </div>
+                `, "success");
 
             } catch {
                 showAlert(`
@@ -321,7 +366,18 @@ async function saveFunctions() {
     const fdraft = Object.values(draftFunctions);
     const dirtyPersisted = Object.values(functionCache).some(t => t.dirty);
 
-    if (!fdraft.length && !dirtyPersisted) return alert("No hay funciones nuevas ni cambios pendientes para guardar.");
+    if (!fdraft.length && !dirtyPersisted) {
+        showAlert(`
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-info-circle-fill text-primary fs-5 mt-1"></i>
+            <div>
+                <div class="fw-semibold">No hay cambios para guardar</div>
+                <small class="text-muted">No se detectaron funciones nuevas ni modificaciones.</small>
+            </div>
+        </div>
+    `, "info");
+        return;
+    }
 
     if (fdraft.length) {
         const res = await secureFetch("/api/functions", {
@@ -329,7 +385,22 @@ async function saveFunctions() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(fdraft)
         });
-        if (!res.ok) { const text = await res.text(); console.error("Error backend:", text); return alert("Error guardando funciones"); }
+        if (!res.ok) {
+            const text = await res.text();
+            console.error("Error backend:", text);
+
+            showAlert(`
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+            <div>
+                <div class="fw-semibold">Error guardando funciones</div>
+                <small class="text-muted">El servidor no pudo procesar los cambios.</small>
+            </div>
+        </div>
+        `, "danger");
+
+            return;
+        }
         Object.keys(draftFunctions).forEach(k => delete draftFunctions[k]);
     }
 
@@ -360,8 +431,13 @@ function showAlert(message, type = "success") {
     const container = document.getElementById("alertContainer");
     if (!container) return;
 
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
     const alert = document.createElement("div");
-    alert.className = `alert alert-${type} alert-dismissible fade show rounded-3 shadow-sm`;
+    alert.className = `alert alert-${type} alert-dismissible fade show rounded-3 shadow-sm mb-3`;
 
     alert.innerHTML = `
         ${message}

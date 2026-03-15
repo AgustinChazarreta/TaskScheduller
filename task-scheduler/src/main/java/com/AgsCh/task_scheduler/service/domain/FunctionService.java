@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.AgsCh.task_scheduler.dto.request.FunctionRequestDTO;
+import com.AgsCh.task_scheduler.dto.response.FunctionResponseDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Function;
 import com.AgsCh.task_scheduler.model.House;
@@ -30,8 +31,8 @@ public class FunctionService {
     private final UserRepository userRepository;
     private final AdminScheduleService scheduleService;
 
-
-    public FunctionService(FunctionRepository repository, UserRepository userRepository, AdminScheduleService scheduleService) {
+    public FunctionService(FunctionRepository repository, UserRepository userRepository,
+            AdminScheduleService scheduleService) {
         this.repository = repository;
         this.userRepository = userRepository;
         this.scheduleService = scheduleService;
@@ -61,8 +62,19 @@ public class FunctionService {
                 .orElseThrow(() -> new RuntimeException("Function not found"));
     }
 
-    public List<Function> findByHouseId(Long houseId) {
-        return repository.findByHouseIdAndActiveTrue(houseId);
+    public List<FunctionResponseDTO> findDTOByHouseId(Long houseId) {
+        return repository.findByHouseIdAndActiveTrue(houseId)
+                .stream()
+                .map(this::map)
+                .toList();
+    }
+
+    private FunctionResponseDTO map(Function function) {
+        return new FunctionResponseDTO(
+                function.getId(),
+                function.getName(),
+                function.isSequential(),
+                function.getAssignedDays());
     }
 
     // -------- UPDATE --------

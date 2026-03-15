@@ -11,6 +11,65 @@
     <!-- ALERTAS -->
     <div id="alertContainer" class="mb-4"></div>
 
+    <!-- ================= USER DASHBOARD HEADER ================= -->
+    <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+
+            <!-- Título y subtítulo -->
+            <div>
+                <h2 class="fw-bold mb-1">Bienvenido al Dashboard</h2>
+                <p class="text-muted mb-0">
+                    Gestión de tu perfil y configuraciones
+                </p>
+            </div>
+
+            <!-- Dropdown de usuario -->
+            <div class="dropdown mt-3 mt-md-0">
+
+                <button class="btn btn-dark rounded-pill px-3 py-2 d-flex align-items-center gap-2"
+                    data-bs-toggle="dropdown" data-bs-display="static">
+
+                    <i class="bi bi-person-circle fs-5"></i>
+                    <span class="fw-semibold" th:text="${userName}">Usuario</span>
+                    <i class="bi bi-chevron-down fs-6"></i> <!-- icono pequeño para indicar dropdown -->
+
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2" href="/change-email">
+                            <i class="bi bi-envelope fs-5"></i>
+                            Cambiar email
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-2" href="/change-password">
+                            <i class="bi bi-key fs-5"></i>
+                            Cambiar contraseña
+                        </a>
+                    </li>
+
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+
+                    <li>
+                        <form th:action="@{/logout}" method="post">
+                            <button class="dropdown-item d-flex align-items-center gap-2 text-danger">
+                                <i class="bi bi-box-arrow-right fs-5"></i>
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </li>
+
+                </ul>
+
+            </div>
+
+        </div>
+    </div>
     <!-- PERFIL COMPLETO -->
     <div class="card border-0 shadow-sm rounded-4 px-3 pt-3 pb-2">
 
@@ -321,7 +380,7 @@
             document.getElementById('profileBirthDateDisplay').textContent = formatDateDisplay(data.birthDate);
             document.getElementById('profileEntryDateDisplay').textContent = formatDateDisplay(data.entryDate);
             document.getElementById('profileExitDateDisplay').textContent = formatDateDisplay(data.exitDate);
-            
+
             // Rol y Casa con iconos
             document.getElementById('profileRoleDisplay').innerHTML = `<i class="bi bi-person-fill me-1"></i>${data.role || ''}`;
             document.getElementById('profileHouseDisplay').innerHTML = `<i class="bi bi-house-fill me-1"></i>${data.houseName || ''}`;

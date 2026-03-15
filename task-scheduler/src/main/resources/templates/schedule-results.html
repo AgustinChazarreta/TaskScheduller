@@ -85,6 +85,8 @@
         }
     </style>
 
+    <div id="alertContainer" class="container-fluid mt-3"></div>
+
     <main class="container-fluid py-2">
         <div
             class="bg-white rounded-4 shadow-sm p-3 mb-4 border-soft d-flex justify-content-between align-items-center">
@@ -153,6 +155,31 @@
                     renderCalendar();
                 }
             });
+
+        // ================= ALERT =================
+        function showAlert(message, type = "success", showIcon = true) {
+
+            const container = document.getElementById("alertContainer");
+            const alert = document.createElement("div");
+
+            let iconHtml = '';
+            if (showIcon) {
+                if (type === "success") iconHtml = '<i class="bi bi-check-circle-fill me-2"></i>';
+                else if (type === "danger") iconHtml = '<i class="bi bi-x-circle-fill me-2"></i>';
+            }
+
+            alert.className = `alert alert-${type} alert-dismissible fade show d-flex align-items-center`;
+            alert.innerHTML = `${iconHtml}${message}<button class="btn-close ms-auto" data-bs-dismiss="alert"></button>`;
+
+            container.appendChild(alert);
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+            setTimeout(() => alert.remove(), 6000);
+        }
 
         async function loadPersons() {
             try {
@@ -438,13 +465,13 @@
                 if (!res.ok) {
                     const errorText = await res.text();
                     console.error("Error backend:", errorText);
-                    alert("Error backend: " + errorText);
+                    showAlert("Error backend: " + errorText, "danger");
                     return;
                 }
 
                 const updatedSchedule = await res.json();
 
-                alert('Schedule guardado como nueva versión.');
+                showAlert("Schedule guardado como nueva versión.");
 
                 scheduleModified = false;
                 document.getElementById('saveChangesBtn').style.display = 'none';
@@ -455,7 +482,7 @@
 
             } catch (e) {
                 console.error(e);
-                alert('Error al guardar el schedule.');
+                showAlert("Error al guardar el schedule.", "danger");
             }
         });
 
@@ -721,7 +748,7 @@
                 if (!res.ok) {
                     const errorText = await res.text();
                     console.error("Error backend:", errorText);
-                    alert("Error generando PDF");
+                    showAlert("Error generando PDF", "danger");
                     return;
                 }
 
@@ -739,7 +766,7 @@
 
             } catch (error) {
                 console.error("Error inesperado:", error);
-                alert("Error inesperado generando PDF");
+                showAlert("Error inesperado generando PDF", "danger");
             }
         }
     </script>

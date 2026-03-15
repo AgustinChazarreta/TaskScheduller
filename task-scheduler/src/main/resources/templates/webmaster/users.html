@@ -4,28 +4,35 @@
 
 <section>
 
+    <style>
+        /* efecto hover para todas las role-card */
+        .role-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        /* ADMIN */
+        #chooseAdmin:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+            /* azul suave */
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 123, 255, 0.2);
+        }
+
+        /* USER */
+        #chooseUser:hover {
+            background-color: rgba(255, 193, 7, 0.1);
+            /* amarillo suave */
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(255, 193, 7, 0.2);
+        }
+    </style>
+
+    <div id="alertContainer" class="container-fluid mt-3"></div>
+
     <main class="container-fluid py-4">
 
-        <!-- Mensajes de éxito / error -->
-        <div th:if="${successMessage}" th:unless="${createdUserEmail}"
-            class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm">
-            <strong th:text="${successMessage}"></strong>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-
-        <div th:if="${createdUserEmail}" class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm">
-            <strong>Usuario creado correctamente</strong><br>
-            Username: <strong th:text="${createdUserEmail}"></strong><br>
-            Password temporal: <strong th:text="${temporaryPassword}"></strong>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-
-        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm">
-            <strong th:text="${errorMessage}"></strong>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-
-        <!-- HEADER -->
+        <!-- ================= HEADER ================= -->
         <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
             <div class="d-flex justify-content-between align-items-center flex-wrap">
                 <div>
@@ -36,13 +43,11 @@
                     <small class="text-muted">Control de usuarios y admins</small>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                    <!-- FILTRO POR ROL -->
                     <select id="roleFilter" class="form-select form-select-sm" style="width:180px;">
                         <option value="ALL">Todos los roles</option>
                         <option value="ADMIN">Admins</option>
                         <option value="USER">Users</option>
                     </select>
-
                     <button class="btn btn-primary rounded-pill px-4" id="btnOpenRoleChoice">
                         <i class="bi bi-plus-lg me-2"></i>
                         Nueva Cuenta
@@ -51,7 +56,7 @@
             </div>
         </div>
 
-        <!-- TABLA DE USUARIOS -->
+        <!-- ================= TABLA ================= -->
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -67,45 +72,10 @@
                             </tr>
                         </thead>
                         <tbody id="usersTable">
-                            <tr th:each="user : ${users}" th:attr="data-role=${user.role.name()}">
-                                <td class="ps-4 fw-semibold"
-                                    th:text="${user.role.name() == 'USER' ? (user.person != null ? user.person.fullName : user.username) : user.username}">
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    Cargando usuarios...
                                 </td>
-                                <td>
-                                    <span class="badge bg-primary-subtle text-primary"
-                                        th:if="${user.role.name() == 'ADMIN'}">Admin</span>
-                                    <span class="badge bg-warning-subtle text-warning"
-                                        th:if="${user.role.name() == 'USER'}">User</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-success-subtle text-success"
-                                        th:if="${user.active}">Activo</span>
-                                    <span class="badge bg-secondary-subtle text-secondary"
-                                        th:if="${!user.active}">Inactivo</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info-subtle text-dark"
-                                        th:text="${user.house != null ? user.house.name : '-'}"></span>
-                                </td>
-                                <td>
-                                    <div class="fw-semibold"
-                                        th:text="${#temporals.format(user.createdAt,'dd ''de'' MMMM yyyy')}"></div>
-                                    <small class="text-muted"
-                                        th:text="${#temporals.format(user.createdAt,'HH:mm')} + ' hs'"></small>
-                                </td>
-                                <td class="text-end pe-4">
-                                    <button class="btn btn-sm btn-outline-secondary rounded-circle me-2"
-                                        data-bs-toggle="modal" th:data-bs-target="'#editUserModal-' + ${user.id}">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger rounded-circle" data-bs-toggle="modal"
-                                        th:data-bs-target="'#deleteUserModal-' + ${user.id}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr th:if="${#lists.isEmpty(users)}">
-                                <td colspan="6" class="text-center py-5 text-muted">No hay usuarios registrados.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -115,152 +85,725 @@
 
     </main>
 
-    <!-- MODAL DE ELECCIÓN DE ROL -->
-    <div class="modal fade" id="roleChoiceModal" tabindex="-1" aria-labelledby="roleChoiceModalLabel" aria-hidden="true"
-        data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Crear Usuario</h5>
+    <!-- ================= MODALES ================= -->
+    <!-- ================= MODAL SELECCIÓN TIPO DE CUENTA ================= -->
+    <div class="modal fade" id="roleChoiceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+
+                <!-- HEADER -->
+                <div class="modal-header border-0 pb-0">
+                    <div>
+                        <h5 class="modal-title fw-bold">
+                            <i class="bi bi-person-plus me-2 text-primary"></i>
+                            Crear nueva cuenta
+                        </h5>
+                        <small class="text-muted">
+                            Seleccione el tipo de cuenta que desea registrar en el sistema
+                        </small>
+                    </div>
+
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body pt-4 pb-4">
+
+                    <div class="row g-4">
+
+                        <!-- ADMIN -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100 role-card" id="chooseAdmin"
+                                style="cursor:pointer; transition:all .2s ease;">
+
+                                <div class="card-body text-center p-4">
+
+                                    <div class="mb-3">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center"
+                                            style="width:70px;height:70px;">
+                                            <i class="bi bi-shield-lock fs-3 text-primary"></i>
+                                        </div>
+                                    </div>
+
+                                    <h5 class="fw-semibold mb-2">
+                                        Administrador
+                                    </h5>
+
+                                    <p class="text-muted small mb-3">
+                                        Puede gestionar usuarios, asignar permisos
+                                        y administrar la configuración del sistema.
+                                    </p>
+
+                                    <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-2">
+                                        Acceso avanzado
+                                    </span>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- USER -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100 role-card" id="chooseUser"
+                                style="cursor:pointer; transition:all .2s ease;">
+
+                                <div class="card-body text-center p-4">
+
+                                    <div class="mb-3">
+                                        <div class="rounded-circle bg-warning bg-opacity-25 d-inline-flex align-items-center justify-content-center"
+                                            style="width:70px;height:70px;">
+                                            <i class="bi bi-person fs-3 text-warning"></i>
+                                        </div>
+                                    </div>
+
+                                    <h5 class="fw-semibold mb-2">
+                                        Usuario
+                                    </h5>
+
+                                    <p class="text-muted small mb-3">
+                                        Cuenta estándar utilizada para operar
+                                        dentro del sistema con permisos limitados.
+                                    </p>
+
+                                    <span class="badge bg-warning-subtle text-dark fw-semibold px-3 py-2">
+                                        Acceso estándar
+                                    </span>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL CREAR ADMIN ================= -->
+    <div class="modal fade" id="createAdminModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+
+                <!-- HEADER -->
+                <div class="modal-header border-0 pb-2 bg-primary bg-opacity-10 rounded-top-4">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center"
+                            style="width:48px;height:48px;">
+                            <i class="bi bi-shield-lock text-white fs-5"></i>
+                        </div>
+
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0 text-primary">
+                                Crear administrador
+                            </h5>
+                            <small class="text-muted">
+                                Cuenta con permisos de gestión del sistema
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body pt-4">
+
+                    <form id="createAdminForm">
+
+                        <div class="card border-primary border-opacity-25 bg-light-subtle rounded-4 p-3 mb-3">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    Correo Electrónico (Username)
+                                </label>
+
+                                <input type="text" id="newAdminUsername" class="form-control rounded-3"
+                                    placeholder="ej: admin.juan" required>
+                            </div>
+
+                            <div>
+                                <label class="form-label fw-semibold text-primary">
+                                    House
+                                </label>
+
+                                <select id="newAdminHouse" class="form-select rounded-3">
+                                    <!-- dinámico -->
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <!-- FOOTER -->
+                        <div class="modal-footer border-0 justify-content-center pt-3">
+
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+
+                                <i class="bi bi-check-lg me-1"></i>
+                                Crear cuenta
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================= -->
+    <!-- MODAL CREAR USER -->
+    <!-- ============================= -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content rounded-4 shadow border-0">
+
+                <form id="createUserForm">
+
+                    <!-- HEADER -->
+                    <div class="modal-header border-0 pb-2 bg-warning bg-opacity-10 rounded-top-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center"
+                                style="width:48px;height:48px;">
+                                <i class="bi bi-person text-dark fs-5"></i>
+                            </div>
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0 text-warning-emphasis">
+                                    Nueva cuenta de usuario
+                                </h5>
+                                <small class="text-muted">
+                                    Complete los datos del usuario para registrarlo en el sistema
+                                </small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <!-- BODY -->
+                    <div class="modal-body">
+
+                        <div id="modalAlertContainer"></div>
+
+                        <div class="card border-warning border-opacity-25 bg-light-subtle rounded-4 p-3 mb-4">
+                            <h5 class="fw-semibold text-warning-emphasis mb-3">
+                                <i class="bi bi-person-badge me-1"></i>
+                                Datos personales
+                            </h5>
+
+                            <div class="row g-4">
+
+                                <!-- FOTO -->
+                                <div class="col-md-4 text-center">
+                                    <div class="mb-3">
+                                        <img src="/person-circle.svg" alt="Foto de perfil"
+                                            class="rounded-circle img-fluid border border-warning border-opacity-25 shadow-sm"
+                                            style="width:140px;height:140px;object-fit:cover;" id="newUserPhotoPreview">
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <input type="file" class="form-control form-control-sm" accept="image/*"
+                                            id="newUserPhoto">
+                                        <small class="text-muted">
+                                            JPG o PNG · máx 2MB
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- DATOS -->
+                                <div class="col-md-8">
+                                    <div class="row g-3">
+
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Nombre completo</label>
+                                            <input id="newUserFullName" class="form-control rounded-3" required>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Nombre de fantasía</label>
+                                            <input id="newUserNickname" class="form-control rounded-3" required>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Fecha de nacimiento</label>
+                                            <input id="newUserBirthDate" type="date" class="form-control rounded-3"
+                                                required>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Email</label>
+                                            <input id="newUserEmail" type="email" class="form-control rounded-3"
+                                                required>
+                                            <div class="form-check form-switch mt-2">
+                                                <input class="form-check-input mailStatus" type="checkbox"
+                                                    id="newUserMailStatus" checked>
+                                                <label class="form-check-label">Recibir notificaciones</label>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ESTADO Y FECHAS -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label d-block fw-semibold">Estado</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input userStatus" type="checkbox" id="newUserStatus"
+                                            checked>
+                                        <label class="form-check-label">Activo</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Fecha de entrada</label>
+                                    <input id="newUserEntryDate" type="date" class="form-control rounded-3" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Fecha de salida</label>
+                                    <input id="newUserExitDate" type="date" class="form-control rounded-3">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ASIGNACIONES -->
+                        <div class="card border-warning border-opacity-25 bg-light-subtle rounded-4 p-3 mb-4">
+                            <h5 class="fw-semibold text-warning-emphasis mb-3">
+                                <i class="bi bi-diagram-3 me-1"></i>
+                                Asignaciones
+                            </h5>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Grupo</label>
+                                    <select id="newUserGroup" class="form-select rounded-3">
+                                        <option value="">Sin grupo</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Funciones</label>
+                                    <select id="newUserFunctions" class="form-control select2 rounded-3" multiple
+                                        style="width:100%;">
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">House</label>
+                                    <select id="newUserHouse" class="form-select rounded-3">
+                                        <!-- acá cargamos dinámicamente todas las Houses -->
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Días de trabajo</label>
+                                    <select id="newUserDays" class="form-control select2 rounded-3" multiple required
+                                        style="width:100%;">
+                                        <option value="MONDAY">Lunes</option>
+                                        <option value="TUESDAY">Martes</option>
+                                        <option value="WEDNESDAY">Miércoles</option>
+                                        <option value="THURSDAY">Jueves</option>
+                                        <option value="FRIDAY">Viernes</option>
+                                        <option value="SATURDAY">Sábado</option>
+                                        <option value="SUNDAY">Domingo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UNAVAILABILITIES -->
+                        <div class="card border-warning border-opacity-25 bg-light-subtle rounded-4 p-3 mb-3">
+                            <h5 class="fw-semibold text-warning-emphasis mb-3">
+                                <i class="bi bi-calendar-x me-1"></i>
+                                Ausencias / No disponibles
+                            </h5>
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">
+                                        Fecha inicio
+                                    </label>
+                                    <input type="date" id="newUserUnavailabilityStart" class="form-control rounded-3">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">
+                                        Fecha fin
+                                    </label>
+                                    <input type="date" id="newUserUnavailabilityEnd" class="form-control rounded-3">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold">
+                                        Motivo
+                                    </label>
+                                    <input type="text" id="newUserUnavailabilityReason" class="form-control rounded-3"
+                                        placeholder="Ej: Vacaciones">
+                                </div>
+
+                                <div class="col-md-1 d-grid">
+                                    <button type="button" class="btn btn-warning rounded-circle shadow-sm"
+                                        id="addNewUserUnavailabilityBtn" style="width:42px;height:42px;">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="fw-semibold mb-3 text-secondary">
+                                    Ausencias agendadas
+                                </div>
+                                <div id="newUserUnavailabilitiesList" class="d-flex flex-column gap-2"></div>
+                                <div id="noUnavailabilitiesMsg" class="text-center text-muted py-3 small">
+                                    No hay ausencias cargadas
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER -->
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                            data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-warning rounded-pill px-4">
+                            <i class="bi bi-save me-1"></i> Guardar
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ELIMINAR CUENTA -->
+    <div class="modal fade" id="deleteUserModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Confirmar Eliminación
+                    </h5>
+                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center">
-                    <p>Seleccione el tipo de cuenta a crear:</p>
-                    <button class="btn btn-primary me-2" id="chooseAdmin">Admin</button>
-                    <button class="btn btn-warning" id="chooseUser">User</button>
+                    <p id="deleteUserMessage" class="fs-5"></p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button class="btn btn-danger rounded-pill px-4" id="confirmDeleteUserBtn">
+                        Eliminar
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL CREAR ADMIN -->
-    <div class="modal fade" id="createAdminModal" tabindex="-1" aria-labelledby="createAdminModalLabel"
-        aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Crear Admin</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="createAdminForm" th:action="@{/webmaster/users/create-admin}" method="post">
-                        <div class="mb-3">
-                            <label for="adminHouse" class="form-label">House</label>
-                            <select id="adminHouse" name="houseId" class="form-select" required>
-                                <option th:each="house : ${houses}" th:value="${house.id}" th:text="${house.name}">
-                                </option>
-                            </select>
+    <!-- ================= MODAL EDITAR ADMIN ================= -->
+    <div class="modal fade" id="editAdminModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow border-0">
+
+                <form id="editAdminForm">
+
+                    <!-- HEADER -->
+                    <div class="modal-header border-0 pb-2 bg-primary bg-opacity-10 rounded-top-4">
+
+                        <div class="d-flex align-items-center gap-3">
+
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center"
+                                style="width:48px;height:48px;">
+                                <i class="bi bi-shield-lock text-white fs-5"></i>
+                            </div>
+
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0 text-primary">
+                                    Editar administrador
+                                </h5>
+                                <small class="text-muted">
+                                    Modifique los datos del administrador
+                                </small>
+                            </div>
+
                         </div>
-                        <div class="mb-3">
-                            <label for="adminUsername" class="form-label">Usuario</label>
-                            <input type="text" class="form-control" id="adminUsername" name="username" required>
+
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                    </div>
+
+                    <!-- BODY -->
+                    <div class="modal-body pt-4">
+
+                        <input type="hidden" id="editAdminId">
+
+                        <div class="card border-primary border-opacity-25 bg-light-subtle rounded-4 p-3 mb-3">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    Correo Electrónico (Username)
+                                </label>
+                                <input type="text" id="editAdminUsername" class="form-control rounded-3" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    Estado
+                                </label>
+                                <select id="editAdminActive" class="form-select rounded-3">
+                                    <option value="true">Activo</option>
+                                    <option value="false">Inactivo</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="form-label fw-semibold text-primary">
+                                    House
+                                </label>
+                                <select id="editAdminHouse" class="form-select rounded-3">
+                                </select>
+                            </div>
+
                         </div>
-                        <div class="mb-3">
-                            <label for="adminPassword" class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="adminPassword" name="password" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" form="createAdminForm" class="btn btn-primary">Guardar</button>
-                </div>
+
+                    </div>
+
+                    <!-- FOOTER -->
+                    <div class="modal-footer border-0 justify-content-center pt-3">
+
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                            data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                            <i class="bi bi-save me-1"></i>
+                            Guardar cambios
+                        </button>
+
+                    </div>
+
+                </form>
+
             </div>
         </div>
     </div>
 
-    <!-- MODAL CREAR USER -->
-    <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true"
-        data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Crear Usuario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="createUserForm" th:action="@{/webmaster/users/create-user}" method="post"
-                        enctype="multipart/form-data">
-                        <!-- Aquí van los campos específicos de usuario -->
-                        <div class="mb-3">
-                            <label for="userHouse" class="form-label">House</label>
-                            <select id="userHouse" name="houseId" class="form-select" required>
-                                <option th:each="house : ${houses}" th:value="${house.id}" th:text="${house.name}">
-                                </option>
-                            </select>
+    <!-- ================= MODAL EDITAR USER ADAPTADO ================= -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content rounded-4 shadow border-0">
+                <form id="editUserForm">
+
+                    <input type="hidden" id="editUserId">
+
+                    <!-- HEADER -->
+                    <div class="modal-header border-0 pb-2 bg-warning bg-opacity-10 rounded-top-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center"
+                                style="width:48px;height:48px;">
+                                <i class="bi bi-person text-dark fs-5"></i>
+                            </div>
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0 text-warning-emphasis">
+                                    Editar cuenta de usuario
+                                </h5>
+                                <small class="text-muted">
+                                    Modifique los datos del usuario
+                                </small>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="personFullName" class="form-label">Nombre completo</label>
-                            <input type="text" class="form-control" id="personFullName" name="personFullName" required>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <!-- BODY -->
+                    <div class="modal-body">
+
+                        <div id="modalAlertContainer"></div>
+
+                        <!-- DATOS PERSONALES -->
+                        <div class="card border-warning border-opacity-25 bg-light-subtle rounded-4 p-3 mb-4">
+                            <h5 class="fw-semibold text-warning-emphasis mb-3">
+                                <i class="bi bi-person-badge me-1"></i>
+                                Datos personales
+                            </h5>
+                            <div class="row g-4">
+
+                                <!-- FOTO -->
+                                <div class="col-md-4 text-center">
+                                    <div class="mb-3">
+                                        <img src="/person-circle.svg" alt="Foto de perfil"
+                                            class="rounded-circle img-fluid border border-warning border-opacity-25 shadow-sm"
+                                            style="width:140px;height:140px;object-fit:cover;"
+                                            id="editUserPhotoPreview">
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <input type="file" class="form-control form-control-sm" accept="image/*"
+                                            id="editUserPhoto">
+                                        <small class="text-muted">
+                                            JPG o PNG · máx 2MB
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- DATOS -->
+                                <div class="col-md-8">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Nombre completo</label>
+                                            <input id="editUserFullName" class="form-control rounded-3" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Nombre de fantasía</label>
+                                            <input id="editUserNickname" class="form-control rounded-3" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Fecha de nacimiento</label>
+                                            <input id="editUserBirthDate" type="date" class="form-control rounded-3"
+                                                required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Email</label>
+                                            <input id="editUserEmail" type="email" class="form-control rounded-3"
+                                                required>
+                                            <div class="form-check form-switch mt-2">
+                                                <input class="form-check-input mailStatus" type="checkbox"
+                                                    id="editUserMailStatus" checked>
+                                                <label class="form-check-label">Recibir notificaciones</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- ESTADO Y FECHAS -->
+                            <div class="row g-3 mt-4">
+                                <div class="col-md-4">
+                                    <label class="form-label d-block fw-semibold">Estado</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input userStatus" type="checkbox" id="editUserStatus"
+                                            checked>
+                                        <label class="form-check-label">Activo</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Fecha de entrada</label>
+                                    <input id="editUserEntryDate" type="date" class="form-control rounded-3" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Fecha de salida</label>
+                                    <input id="editUserExitDate" type="date" class="form-control rounded-3">
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="personEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="personEmail" name="personEmail" required>
+
+                        <!-- ASIGNACIONES -->
+                        <div class="card border-warning border-opacity-25 bg-light-subtle rounded-4 p-3 mb-4">
+                            <h5 class="fw-semibold text-warning-emphasis mb-3">
+                                <i class="bi bi-diagram-3 me-1"></i>
+                                Asignaciones
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Grupo</label>
+                                    <select id="editUserGroup" class="form-select rounded-3">
+                                        <option value="">Sin grupo</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Funciones</label>
+                                    <select id="editUserFunctions" class="form-control select2 rounded-3" multiple
+                                        style="width:100%;"></select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">House</label>
+                                    <select id="editUserHouse" class="form-select rounded-3"></select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Días de trabajo</label>
+                                    <select id="editUserDays" class="form-control select2 rounded-3" multiple required
+                                        style="width:100%;">
+                                        <option value="MONDAY">Lunes</option>
+                                        <option value="TUESDAY">Martes</option>
+                                        <option value="WEDNESDAY">Miércoles</option>
+                                        <option value="THURSDAY">Jueves</option>
+                                        <option value="FRIDAY">Viernes</option>
+                                        <option value="SATURDAY">Sábado</option>
+                                        <option value="SUNDAY">Domingo</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="personBirthDate" class="form-label">Fecha de nacimiento</label>
-                            <input type="date" class="form-control" id="personBirthDate" name="personBirthDate"
-                                required>
+
+                        <!-- AUSENCIAS / NO DISPONIBLES -->
+                        <div class="card border-warning border-opacity-25 bg-light-subtle rounded-4 p-3 mb-3">
+                            <h5 class="fw-semibold text-warning-emphasis mb-3">
+                                <i class="bi bi-calendar-x me-1"></i>
+                                Ausencias / No disponibles
+                            </h5>
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Fecha inicio</label>
+                                    <input type="date" id="editUserUnavailabilityStart" class="form-control rounded-3">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Fecha fin</label>
+                                    <input type="date" id="editUserUnavailabilityEnd" class="form-control rounded-3">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold">Motivo</label>
+                                    <input type="text" id="editUserUnavailabilityReason" class="form-control rounded-3"
+                                        placeholder="Ej: Vacaciones">
+                                </div>
+                                <div class="col-md-1 d-grid">
+                                    <button type="button" class="btn btn-warning rounded-circle shadow-sm"
+                                        id="editUserUnavailabilityBtn" style="width:42px;height:42px;">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="fw-semibold mb-3 text-secondary">
+                                    Ausencias agendadas
+                                </div>
+                                <div id="editUserUnavailabilitiesList" class="d-flex flex-column gap-2 mb-3"></div>
+                                <div id="noEditUnavailabilitiesMsg" class="text-center text-muted py-3 small">
+                                    No hay ausencias cargadas
+                                </div>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="personEntryDate" class="form-label">Fecha de ingreso</label>
-                            <input type="date" class="form-control" id="personEntryDate" name="personEntryDate"
-                                required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="personPhoto" class="form-label">Foto (opcional)</label>
-                            <input type="file" class="form-control" id="personPhoto" name="personPhoto">
-                        </div>
-                        <!-- Más campos según tu DTO -->
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" form="createUserForm" class="btn btn-primary">Guardar</button>
-                </div>
+
+                    </div>
+
+                    <!-- FOOTER -->
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                            data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-warning rounded-pill px-4 shadow-sm">
+                            <i class="bi bi-save me-1"></i>
+                            Guardar cambios
+                        </button>
+                    </div>
+
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- ============================= -->
-    <!-- SCRIPT FILTRO POR ROL Y MODALES -->
-    <!-- ============================= -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // FILTRO POR ROL
-            const roleFilter = document.getElementById("roleFilter");
-            const rows = document.querySelectorAll("#usersTable tr[data-role]");
-            roleFilter.addEventListener("change", function () {
-                const selected = this.value;
-                rows.forEach(row => {
-                    row.style.display = (selected === "ALL" || row.getAttribute("data-role") === selected) ? "" : "none";
-                });
-            });
-
-            // MODALES
-            const roleChoiceModalEl = document.getElementById('roleChoiceModal');
-            const createAdminModalEl = document.getElementById('createAdminModal');
-            const createUserModalEl = document.getElementById('createUserModal');
-
-            const roleChoiceModal = new bootstrap.Modal(roleChoiceModalEl, { backdrop: 'static', keyboard: false });
-            const createAdminModal = new bootstrap.Modal(createAdminModalEl, { backdrop: 'static', keyboard: false });
-            const createUserModal = new bootstrap.Modal(createUserModalEl, { backdrop: 'static', keyboard: false });
-
-            document.getElementById('btnOpenRoleChoice').addEventListener('click', () => {
-                roleChoiceModal.show();
-            });
-
-            document.getElementById('chooseAdmin').addEventListener('click', () => {
-                roleChoiceModal.hide();
-                createAdminModal.show();
-            });
-
-            document.getElementById('chooseUser').addEventListener('click', () => {
-                roleChoiceModal.hide();
-                createUserModal.show();
-            });
-        });
-    </script>
+    <script src="/js/webmaster-users.js"></script>
 
 </section>
 

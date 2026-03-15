@@ -153,6 +153,7 @@ public class PersonService {
         User user = new User();
         user.setUsername(dto.getEmail());
         user.setPassword(passwordEncoder.encode(temporaryPassword));
+        user.setPasswordTemporary(true);
         user.setRole(Role.USER);
         user.setHouse(currentUser.getHouse());
         user.setPerson(savedPerson);
@@ -172,6 +173,11 @@ public class PersonService {
     @Transactional
     public PersonCreatedResponseDTO createForHouse(Long houseId, PersonRequestDTO dto) {
 
+        // validamos datos obligatorios
+        if (dto.getFullName() == null || dto.getEmail() == null) {
+            throw new RuntimeException("FullName y Email son obligatorios");
+        }
+
         User currentUser = getCurrentUser();
 
         if (currentUser.getRole() == Role.ADMIN) {
@@ -187,18 +193,29 @@ public class PersonService {
             throw new RuntimeException("Email already in use in this house");
         }
 
+        // crear persona con valores por defecto si vienen nulos
         Person person = new Person(
                 dto.getFullName(),
-                dto.getNickName(),
+                dto.getNickName() != null ? dto.getNickName() : "",
                 dto.getBirthDate(),
                 dto.getEmail(),
                 dto.isEmailNotificationsEnabled(),
                 dto.isActive(),
                 dto.getEntryDate(),
                 dto.getExitDate(),
-                dto.getWorkingDays());
+                dto.getWorkingDays() != null ? dto.getWorkingDays() : Set.of());
 
         person.setHouse(house);
+
+        // GROUP
+        if (dto.getGroupId() != null) {
+            Group group = groupRepository.findById(dto.getGroupId())
+                    .orElseThrow(() -> new RuntimeException("Group not found"));
+            if (!group.getHouse().getId().equals(houseId)) {
+                throw new RuntimeException("Group does not belong to this house");
+            }   
+            person.setGroup(group);
+        }
 
         // FUNCIONES
         if (dto.getFunctionIds() != null && !dto.getFunctionIds().isEmpty()) {
@@ -214,7 +231,10 @@ public class PersonService {
         // UNAVAILABILITIES
         if (dto.getUnavailabilities() != null && !dto.getUnavailabilities().isEmpty()) {
             for (PersonUnavailabilityDTO u : dto.getUnavailabilities()) {
-                PersonUnavailability pu = new PersonUnavailability(u.getStartDate(), u.getEndDate(), u.getReason());
+                PersonUnavailability pu = new PersonUnavailability(
+                        u.getStartDate(),
+                        u.getEndDate(),
+                        u.getReason() != null ? u.getReason() : "");
                 person.addUnavailability(pu);
             }
         }
@@ -227,6 +247,7 @@ public class PersonService {
         User user = new User();
         user.setUsername(dto.getEmail());
         user.setPassword(passwordEncoder.encode(temporaryPassword));
+        user.setPasswordTemporary(true);
         user.setRole(Role.USER);
         user.setHouse(house);
         user.setPerson(savedPerson);
@@ -535,7 +556,7 @@ public class PersonService {
         return user.getPerson();
     }
 
-    private String generateTemporaryPassword() {
+    public String generateTemporaryPassword() {
         return UUID.randomUUID()
                 .toString()
                 .replace("-", "")

@@ -1,5 +1,7 @@
 package com.AgsCh.task_scheduler.dto.response;
 
+import com.AgsCh.task_scheduler.model.Person;
+
 public class PersonCreatedResponseDTO {
 
     private Long personId;
@@ -12,6 +14,13 @@ public class PersonCreatedResponseDTO {
         this.fullName = fullName;
         this.email = email;
         this.temporaryPassword = temporaryPassword;
+    }
+
+    public PersonCreatedResponseDTO(Person person) {
+        this.personId = person.getId();
+        this.fullName = person.getFullName();
+        this.email = person.getEmail();
+        this.temporaryPassword = null; // no hace falta en edición
     }
 
     // Getters

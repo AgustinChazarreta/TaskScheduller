@@ -15,7 +15,7 @@ public class DataInitializer implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UserRepository userRepository,
-                            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -30,6 +30,7 @@ public class DataInitializer implements CommandLineRunner {
             webmaster.setPassword(passwordEncoder.encode("admin123"));
             webmaster.setRole(Role.WEBMASTER);
             webmaster.setActive(true);
+            webmaster.setPasswordTemporary(true);
 
             userRepository.save(webmaster);
 

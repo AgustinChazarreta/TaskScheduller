@@ -10,7 +10,7 @@ import com.AgsCh.task_scheduler.model.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
-    
+
     List<User> findByRole(Role role);
 
     boolean existsByRole(Role role);
@@ -22,4 +22,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
 
     boolean existsByUsernameAndHouse(String username, House house);
+
+    boolean existsByUsernameIgnoreCase(String email);
+
+    Optional<User> findByUsernameAndHouseId(String username, Long long1);
 }

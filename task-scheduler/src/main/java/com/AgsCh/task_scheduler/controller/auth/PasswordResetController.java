@@ -37,9 +37,9 @@ public class PasswordResetController {
     }
 
     @PostMapping("/forgot-password")
-    public String processForgotPassword(String username, Model model) {
+    public String processForgotPassword(String email, Model model) {
 
-        User user = userRepository.findByUsername(username).orElse(null);
+        User user = userRepository.findByUsername(email).orElse(null);
 
         if (user == null) {
 
@@ -92,17 +92,23 @@ public class PasswordResetController {
         if (resetToken == null || resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
             return "redirect:/login?errorToken";
         }
+        if (!isValidPassword(password)) {
+            model.addAttribute("error",
+                    "La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y símbolo.");
+            model.addAttribute("token", token);
+            return "reset-password";
+        }
 
         User user = resetToken.getUser();
-
         user.setPassword(passwordEncoder.encode(password));
-
         userRepository.save(user);
-
         tokenRepository.delete(resetToken);
 
-        model.addAttribute("message", "Contraseña actualizada correctamente.");
-
         return "redirect:/login?passwordResetSuccess";
+    }
+
+    private boolean isValidPassword(String password) {
+        return password.matches(
+                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&._-])[A-Za-z\\d@$!%*?&._-]{8,}$");
     }
 }

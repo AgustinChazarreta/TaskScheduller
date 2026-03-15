@@ -1,16 +1,27 @@
 package com.AgsCh.task_scheduler.service.admin;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
+import com.AgsCh.task_scheduler.dto.response.PersonCreatedResponseDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
+import com.AgsCh.task_scheduler.model.Function;
+import com.AgsCh.task_scheduler.model.Group;
 import com.AgsCh.task_scheduler.model.House;
 import com.AgsCh.task_scheduler.model.Person;
+import com.AgsCh.task_scheduler.model.PersonFunction;
+import com.AgsCh.task_scheduler.model.PersonUnavailability;
 import com.AgsCh.task_scheduler.model.Role;
 import com.AgsCh.task_scheduler.model.User;
+import com.AgsCh.task_scheduler.repository.FunctionRepository;
+import com.AgsCh.task_scheduler.repository.GroupRepository;
 import com.AgsCh.task_scheduler.repository.HouseRepository;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.repository.UserRepository;
@@ -25,33 +36,39 @@ public class UserService {
     private final HouseRepository houseRepository;
     private final PasswordEncoder passwordEncoder;
     private final PersonRepository personRepository;
+    private final GroupRepository groupRepository;
+    private final FunctionRepository functionRepository;
 
     public UserService(
             UserRepository userRepository,
             HouseRepository houseRepository,
             PasswordEncoder passwordEncoder,
-            PersonRepository personRepository) {
+            PersonRepository personRepository,
+            GroupRepository groupRepository,
+            FunctionRepository functionRepository) {
 
         this.userRepository = userRepository;
         this.houseRepository = houseRepository;
         this.passwordEncoder = passwordEncoder;
         this.personRepository = personRepository;
+        this.groupRepository = groupRepository;
+        this.functionRepository = functionRepository;
     }
 
-    public User createAdmin(Long houseId, String username, String rawPassword) {
+    @Transactional
+    public User createAdmin(Long houseId, String username, String temporaryPassword) {
 
-        // Validar username duplicado
-        if (userRepository.existsByUsername(username)) {
-            throw new BusinessException("Ya existe un admin con ese username");
-        }
-
-        // Buscar house
         House house = houseRepository.findById(houseId)
                 .orElseThrow(() -> new BusinessException("House no encontrada"));
 
+        if (userRepository.existsByUsername(username)) {
+            throw new BusinessException("Ya existe un usuario con ese email");
+        }
+
         User admin = new User();
         admin.setUsername(username);
-        admin.setPassword(passwordEncoder.encode(rawPassword));
+        admin.setPassword(passwordEncoder.encode(temporaryPassword));
+        admin.setPasswordTemporary(true);
         admin.setRole(Role.ADMIN);
         admin.setHouse(house);
         admin.setActive(true);
@@ -70,6 +87,11 @@ public class UserService {
                 .toList();
     }
 
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
+
     public List<User> getAllUsersPerson() {
         return userRepository.findByRole(Role.USER);
     }
@@ -83,36 +105,85 @@ public class UserService {
         if (auth == null || !auth.isAuthenticated()) {
             throw new BusinessException("No hay usuario autenticado");
         }
-        String username = auth.getName(); // el username logueado
-        return userRepository.findByUsername(username)
+        return userRepository.findByUsername(auth.getName())
                 .orElseThrow(() -> new BusinessException("Usuario no encontrado"));
     }
 
-    public void updateUser(Long id, String username, boolean active, Long houseId) {
-
+    public PersonCreatedResponseDTO updateUser(Long id, PersonRequestDTO dto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Usuario no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Evitar modificar WEBMASTER
-        if (user.getRole() == Role.WEBMASTER) {
-            throw new BusinessException("No se puede modificar el usuario WEBMASTER");
+        if (user.getRole() != Role.USER)
+            throw new RuntimeException("Solo se pueden actualizar usuarios normales");
+
+        Person person = user.getPerson();
+        if (person == null)
+            throw new RuntimeException("El usuario no tiene persona asociada");
+
+        // DATOS BÁSICOS
+        person.setFullName(dto.getFullName());
+        person.setNickName(dto.getNickName());
+        person.setBirthDate(dto.getBirthDate());
+        person.setEmail(dto.getEmail());
+        person.setEmailNotificationsEnabled(dto.isEmailNotificationsEnabled());
+        person.setActive(dto.isActive());
+
+        // FECHAS
+        person.setEntryDate(dto.getEntryDate());
+        person.setExitDate(dto.getExitDate());
+
+        // CASA
+        if (dto.getHouseId() != null) {
+            House house = houseRepository.findById(dto.getHouseId())
+                    .orElseThrow(() -> new RuntimeException("House no encontrada"));
+            person.setHouse(house);
+            user.setHouse(house);
         }
 
-        // Validar username duplicado (si cambió)
-        if (!user.getUsername().equals(username)
-                && userRepository.existsByUsername(username)) {
-            throw new BusinessException("Ya existe un usuario con ese username");
+        // GRUPO
+        if (dto.getGroupId() != null) {
+            Group group = groupRepository.findById(dto.getGroupId())
+                    .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
+            person.setGroup(group);
+            person.setHouse(group.getHouse());
+            user.setHouse(group.getHouse());
         }
 
-        // Buscar nueva house
-        House house = houseRepository.findById(houseId)
-                .orElseThrow(() -> new BusinessException("House no encontrada"));
+        // FUNCIONES
+        List<PersonFunction> currentFunctions = new ArrayList<>(person.getPersonFunctions());
+        Set<Long> newFunctionIds = new HashSet<>(dto.getFunctionIds());
+        currentFunctions.stream()
+                .filter(pf -> !newFunctionIds.contains(pf.getFunction().getId()))
+                .forEach(person::removePersonFunction);
+        for (Long fid : newFunctionIds) {
+            boolean exists = person.getPersonFunctions().stream()
+                    .anyMatch(pf -> pf.getFunction().getId().equals(fid));
+            if (!exists) {
+                Function f = functionRepository.findById(fid)
+                        .orElseThrow(() -> new RuntimeException("Función no encontrada: " + fid));
+                PersonFunction pf = new PersonFunction();
+                pf.setPerson(person);
+                pf.setFunction(f);
+                person.addPersonFunction(pf);
+            }
+        }
 
-        user.setUsername(username);
-        user.setActive(active);
-        user.setHouse(house);
+        // DÍAS DE TRABAJO
+        person.setWorkingDays(dto.getWorkingDays());
 
+        // AUSENCIAS
+        person.getUnavailabilities().clear();
+        if (dto.getUnavailabilities() != null) {
+            dto.getUnavailabilities().stream()
+                    .map(u -> new PersonUnavailability(u.getStartDate(), u.getEndDate(), u.getReason()))
+                    .forEach(person::addUnavailability);
+        }
+
+        personRepository.save(person);
         userRepository.save(user);
+
+        // 🚀 RETORNAR personId para poder subir la foto
+        return new PersonCreatedResponseDTO(person);
     }
 
     @Transactional
@@ -136,14 +207,43 @@ public class UserService {
         Person person = user.getPerson();
 
         if (person != null) {
-            // romper relación bidireccional
             user.setPerson(null);
-            person.setUser(null);
-
-            userRepository.save(user); // actualizar FK a null
             personRepository.delete(person);
         }
 
         userRepository.delete(user);
+    }
+
+    @Transactional
+    public void changeMyPassword(String newPassword) {
+
+        User user = getAuthenticatedUser();
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordTemporary(false);
+
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void changeMyEmail(String email) {
+
+        if (userRepository.existsByUsername(email)) {
+            throw new BusinessException("El email ya está en uso");
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        String currentEmail = auth.getName();
+
+        User user = userRepository.findByUsername(currentEmail)
+                .orElseThrow();
+
+        user.setUsername(email);
+
+        userRepository.save(user);
+    }
+
+    public boolean emailExists(String email) {
+        return userRepository.existsByUsernameIgnoreCase(email);
     }
 }

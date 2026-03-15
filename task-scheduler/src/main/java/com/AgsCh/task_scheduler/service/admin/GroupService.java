@@ -55,6 +55,21 @@ public class GroupService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<GroupResponseDTO> findByHouseId(Long houseId) {
+
+        return groupRepository.findByHouseId(houseId)
+                .stream()
+                .map(g -> new GroupResponseDTO(
+                        g.getId(),
+                        g.getName(),
+                        g.getPersons()
+                                .stream()
+                                .map(this::mapPerson)
+                                .collect(Collectors.toList())))
+                .collect(Collectors.toList());
+    }
+
     /*
      * =========================================
      * CREAR GRUPO
