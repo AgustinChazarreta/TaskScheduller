@@ -14,6 +14,7 @@ import com.AgsCh.task_scheduler.dto.response.FunctionAssignmentResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Function;
+import com.AgsCh.task_scheduler.model.FunctionAssignment;
 import com.AgsCh.task_scheduler.model.Person;
 import com.AgsCh.task_scheduler.model.Schedule;
 import com.AgsCh.task_scheduler.model.ScheduleRun;
@@ -28,6 +29,7 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 
 import org.springframework.http.HttpHeaders;
@@ -52,6 +54,8 @@ import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.layout.properties.UnitValue;
 import java.util.Locale;
+import java.util.Map;
+
 import com.itextpdf.layout.element.Table;
 
 import com.itextpdf.kernel.geom.Rectangle;
@@ -377,5 +381,50 @@ public class ScheduleController {
                         e.printStackTrace();
                         return ResponseEntity.status(500).build();
                 }
+        }
+
+        @PostMapping("/send-pdfs")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<Map<String, Object>> sendAllPdfs() { // 🔥 ya no recibe houseId
+
+                List<Person> persons = personRepository.findAll();
+
+                if (persons.isEmpty()) {
+                        return ResponseEntity.badRequest()
+                                        .body(Map.of("message", "No hay personas registradas"));
+                }
+
+                // 🔥 Tomamos la houseId de la primera persona
+                Long houseId = persons.get(0).getHouse().getId();
+
+                ScheduleRun activeRun = scheduleService.getActiveRunByHouse(houseId);
+
+                if (activeRun == null) {
+                        return ResponseEntity.badRequest()
+                                        .body(Map.of("message", "No hay schedule activo para esta House"));
+                }
+
+                List<FunctionAssignment> allAssignments = activeRun.getAssignments();
+
+                List<String> failDetails = new ArrayList<>();
+                int successCount = 0;
+
+                for (Person person : persons) {
+                        try {
+                                scheduleService.sendPdfToPerson(person, allAssignments);
+                                successCount++;
+                        } catch (Exception e) {
+                                failDetails.add(String.format("Error enviando PDF a %s: %s",
+                                                person.getFullName(), e.getMessage()));
+                                e.printStackTrace();
+                        }
+                }
+
+                Map<String, Object> response = Map.of(
+                                "successCount", successCount,
+                                "failCount", failDetails.size(),
+                                "failDetails", failDetails);
+
+                return ResponseEntity.ok(response);
         }
 }
