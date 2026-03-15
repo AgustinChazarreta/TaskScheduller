@@ -16,12 +16,12 @@
         <div class="d-flex justify-content-between align-items-center flex-wrap">
 
             <!-- Título y subtítulo -->
-            <div>
-                <h2 class="fw-bold mb-1">Bienvenido al Dashboard</h2>
-                <p class="text-muted mb-0">
-                    Gestión de tu perfil y configuraciones
-                </p>
+            <div class="mb-3 mb-md-0">
+                <h1 class="fw-bold mb-1" style="font-size:1.8rem;">Bienvenido, <span
+                        th:text="${userName}">Usuario</span></h1>
+                <p class="text-secondary mb-0" style="font-size:1rem;">Gestión de tu perfil y configuraciones</p>
             </div>
+
 
             <!-- Dropdown de usuario -->
             <div class="dropdown mt-3 mt-md-0">

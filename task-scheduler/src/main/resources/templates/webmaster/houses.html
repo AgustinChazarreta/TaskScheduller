@@ -47,33 +47,69 @@
 
     </main>
 
-    <!-- MODAL CREAR -->
+    <!-- MODAL CREAR HOUSE -->
     <div class="modal fade" id="createHouseModal">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow border-0">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i> Nueva House</h5>
-                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+
+                <!-- HEADER -->
+                <div class="modal-header border-0 pb-2 bg-primary bg-opacity-10 rounded-top-4">
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center"
+                            style="width:48px;height:48px;">
+                            <i class="bi bi-plus-circle text-white fs-5"></i>
+                        </div>
+
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0 text-primary">
+                                Nueva House
+                            </h5>
+                            <small class="text-muted">
+                                Cree una nueva house con sus propiedades
+                            </small>
+                        </div>
+
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+
+                <!-- BODY -->
+                <div class="modal-body pt-4">
+
                     <form id="createHouseForm">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Nombre</label>
-                            <input type="text" name="name" class="form-control rounded-3" required>
+                        <div id="createHouseAlertContainer"></div>
+
+                        <div class="card border-primary border-opacity-25 bg-light-subtle rounded-4 p-3 mb-3">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">Nombre</label>
+                                <input type="text" name="name" class="form-control rounded-3" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">Estado</label>
+                                <select name="active" class="form-select rounded-3">
+                                    <option value="true">Activa</option>
+                                    <option value="false">Inactiva</option>
+                                </select>
+                            </div>
+
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Estado</label>
-                            <select name="active" class="form-select rounded-3">
-                                <option value="true">Activa</option>
-                                <option value="false">Inactiva</option>
-                            </select>
-                        </div>
-                        <div class="text-end pt-2">
-                            <button type="button" class="btn btn-secondary rounded-pill px-3 me-2"
-                                data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary rounded-pill px-4">Crear</button>
+
+                        <!-- FOOTER -->
+                        <div class="modal-footer border-0 justify-content-center pt-3">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                                <i class="bi bi-check-lg me-1"></i>
+                                Crear
+                            </button>
                         </div>
                     </form>
+
                 </div>
             </div>
         </div>
