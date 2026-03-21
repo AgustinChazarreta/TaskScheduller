@@ -63,7 +63,7 @@ public class PasswordResetController {
 
         tokenRepository.save(resetToken);
 
-        String resetLink = "http://localhost:8080/reset-password?token=" + token;
+        String resetLink = "http://www.funcoescheznous.org/reset-password?token=" + token;
 
         emailService.sendPasswordResetEmail(email, resetLink);
 
