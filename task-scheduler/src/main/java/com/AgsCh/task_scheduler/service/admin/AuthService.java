@@ -54,7 +54,7 @@ public class AuthService {
 
         pendingRepo.save(pending);
 
-        String link = "http://localhost:8080/auth/verify?token=" + token;
+        String link = "https://www.funcoescheznous.org/auth/verify?token=" + token;
         emailService.sendVerificationEmail(request.getEmail(), link);
     }
 
