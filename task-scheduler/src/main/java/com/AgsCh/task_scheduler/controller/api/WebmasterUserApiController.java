@@ -30,9 +30,15 @@ public class WebmasterUserApiController {
     // ================= LISTAR TODOS LOS USUARIOS =================
     @GetMapping
     public List<UserResponseDTO> listAllUsers() {
-        List<User> users = userService.getAllUsers();
-        users.forEach(u -> System.out.println(u.getUsername() + " active=" + u.isActive()));
-        return userService.getAllUsers().stream()
+        List<User> users = userService.getAllUsersWithAdminData();
+        return users.stream()
+                .map(UserResponseDTO::new)
+                .toList();
+    }
+
+    @GetMapping("/persons")
+    public List<UserResponseDTO> listRoleUser() {
+        return userService.getAllUsersPerson().stream()
                 .map(UserResponseDTO::new)
                 .toList();
     }

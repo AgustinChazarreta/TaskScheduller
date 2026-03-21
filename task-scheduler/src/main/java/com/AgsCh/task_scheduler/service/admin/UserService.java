@@ -76,10 +76,6 @@ public class UserService {
         return userRepository.save(admin);
     }
 
-    public List<User> getAdminsByHouse(Long houseId) {
-        return userRepository.findByHouseIdAndRole(houseId, Role.ADMIN);
-    }
-
     public List<User> getAllUsers() {
         return userRepository.findAll()
                 .stream()
@@ -96,8 +92,22 @@ public class UserService {
         return userRepository.findByRole(Role.USER);
     }
 
+    // Trae todos los admins con AdminData incluido
     public List<User> getAllAdmins() {
-        return userRepository.findByRole(Role.ADMIN);
+        return userRepository.findAllAdminsWithAdminData();
+    }
+
+    // Trae los admins de una casa específica con AdminData incluido
+    public List<User> getAdminsByHouse(Long houseId) {
+        return userRepository.findAdminsByHouseIdWithAdminData(houseId);
+    }
+
+    // Trae los admins pendientes (inactivos) con AdminData incluido
+    public List<User> getPendingAdmins() {
+        return userRepository.findAllAdminsWithAdminData()
+                .stream()
+                .filter(u -> !u.isActive())
+                .toList();
     }
 
     public User getAuthenticatedUser() {
@@ -245,5 +255,13 @@ public class UserService {
 
     public boolean emailExists(String email) {
         return userRepository.existsByUsernameIgnoreCase(email);
+    }
+
+    public List<User> getAllUsersWithAdminData() {
+        // Trae todos los usuarios, carga AdminData para admins y filtra WEBMASTER
+        return userRepository.findAllWithAdminData()
+                .stream()
+                .filter(u -> u.getRole() != Role.WEBMASTER)
+                .toList();
     }
 }

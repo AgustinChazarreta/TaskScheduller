@@ -35,13 +35,16 @@ public class SecurityConfig {
                                 .userDetailsService(userDetailsService)
 
                                 .csrf(csrf -> csrf
-                                                .ignoringRequestMatchers("/h2-console/**", "/api/**"))
+                                                .ignoringRequestMatchers("/h2-console/**", "/api/**",
+                                                                "/auth/register/admin")) // <-- agregar
 
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(
                                                                 "/login",
                                                                 "/forgot-password",
                                                                 "/reset-password",
+                                                                "/auth/register/**",
+                                                                "/auth/verify",
                                                                 "/css/**",
                                                                 "/js/**",
                                                                 "/images/**",
@@ -61,6 +64,14 @@ public class SecurityConfig {
 
                                 .formLogin(form -> form
                                                 .loginPage("/login")
+                                                .failureHandler((request, response, exception) -> {
+
+                                                        if (exception instanceof org.springframework.security.authentication.DisabledException) {
+                                                                response.sendRedirect("/login?disabled=true");
+                                                        } else {
+                                                                response.sendRedirect("/login?error=true");
+                                                        }
+                                                })
                                                 .successHandler((request, response, authentication) -> {
 
                                                         var principal = (org.springframework.security.core.userdetails.User) authentication
@@ -94,16 +105,13 @@ public class SecurityConfig {
                                                         } else {
                                                                 response.sendRedirect("/");
                                                         }
-                                                })
-                                                .permitAll())
+                                                }).permitAll())
 
-                                .rememberMe(remember -> remember
-                                                .rememberMeParameter("remember-me")
+                                .rememberMe(remember -> remember.rememberMeParameter("remember-me")
                                                 .tokenValiditySeconds(60 * 60 * 24 * 30)
                                                 .userDetailsService(userDetailsService))
 
-                                .logout(logout -> logout
-                                                .logoutSuccessUrl("/login?logout=true"));
+                                .logout(logout -> logout.logoutSuccessUrl("/login?logout=true"));
 
                 return http.build();
         }

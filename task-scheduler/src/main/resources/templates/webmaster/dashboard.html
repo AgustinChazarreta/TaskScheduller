@@ -231,7 +231,7 @@
                 const housesRes = await fetch("/api/webmaster/houses");
                 const houses = await housesRes.json();
 
-                const usersRes = await fetch("/api/webmaster/users");
+                const usersRes = await fetch("/api/webmaster/users/persons");
                 const users = await usersRes.json();
 
                 const adminsRes = await fetch("/api/webmaster/admins");

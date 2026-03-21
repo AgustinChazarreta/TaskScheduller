@@ -12,6 +12,8 @@ import com.AgsCh.task_scheduler.model.PasswordResetToken;
 import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.repository.PasswordResetTokenRepository;
 import com.AgsCh.task_scheduler.repository.UserRepository;
+import com.AgsCh.task_scheduler.service.admin.EmailService;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Controller
@@ -20,15 +22,18 @@ public class PasswordResetController {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public PasswordResetController(
             UserRepository userRepository,
             PasswordResetTokenRepository tokenRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            EmailService emailService) {
 
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     @GetMapping("/forgot-password")
@@ -60,9 +65,7 @@ public class PasswordResetController {
 
         String resetLink = "http://localhost:8080/reset-password?token=" + token;
 
-        System.out.println("--------------------------------------------------------------------------------");
-        System.out.println("LINK DE RECUPERACION: " + resetLink);
-        System.out.println("--------------------------------------------------------------------------------");
+        emailService.sendPasswordResetEmail(email, resetLink);
 
         model.addAttribute("message",
                 "Si el email existe, recibirás un enlace para restablecer tu contraseña.");

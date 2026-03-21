@@ -33,6 +33,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AdminData adminData;
+
     private boolean active = true;
 
     private LocalDateTime createdAt;
@@ -119,6 +122,18 @@ public class User implements UserDetails {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public AdminData getAdminData() {
+        return adminData;
+    }
+
+    public void setAdminData(AdminData adminData) {
+        this.adminData = adminData;
+
+        if (adminData != null && adminData.getUser() != this) {
+            adminData.setUser(this);
+        }
     }
 
     public boolean isActive() {

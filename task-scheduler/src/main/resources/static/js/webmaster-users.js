@@ -12,22 +12,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (users.length === 0) {
             tableBody.innerHTML = `
-<tr>
-<td colspan="6" class="text-center py-5 text-muted">
-No hay usuarios registrados.
-</td>
-</tr>`;
+            <tr>
+            <td colspan="6" class="text-center py-5 text-muted">
+            No hay usuarios registrados.
+            </td>
+            </tr>`;
             return;
         }
 
-        users.forEach(user => {
+        console.log(users)
 
+
+        users.forEach(user => {
             usersCache[user.id] = user;
+            const adminData = user.role === "ADMIN" ? user.adminData : null;
 
             const row = document.createElement("tr");
             row.setAttribute("data-role", user.role);
 
-            const name = user.role === "USER" ? (user.fullName ?? user.username) : user.username;
+            // Nombre: si es USER, usamos fullName o username; si es ADMIN, usamos adminData nombre
+            const name = user.role === "USER"
+                ? (user.fullName ?? user.username)
+                : (adminData?.nombre ?? user.username);
 
             const roleBadge =
                 user.role === "ADMIN"
@@ -45,6 +51,9 @@ No hay usuarios registrados.
             const created = date.toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" });
             const time = date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 
+            // Mostramos Orden solo si es Admin
+            const orden = adminData ? `<span class="badge bg-secondary-subtle text-dark">${formatOrden(adminData.orden)}</span>` : "-";
+
             row.innerHTML = `
 <td class="ps-4 fw-semibold">
     ${name}
@@ -53,6 +62,7 @@ No hay usuarios registrados.
 <td>${roleBadge}</td>
 <td>${activeBadge}</td>
 <td><span class="badge bg-info-subtle text-dark">${house}</span></td>
+<td>${orden}</td>
 <td><div class="fw-semibold">${created}</div><small class="text-muted">${time} hs</small></td>
 <td class="text-end pe-4">
 <button class="btn btn-sm btn-outline-secondary rounded-circle me-2"
@@ -64,6 +74,7 @@ onclick="openDeleteModal(${user.id}, '${name}')">
 <i class="bi bi-trash"></i>
 </button>
 </td>`;
+
             tableBody.appendChild(row);
         });
     }
@@ -130,7 +141,7 @@ onclick="openDeleteModal(${user.id}, '${name}')">
         if (role === "ADMIN") {
             document.getElementById("editAdminId").value = id;
             document.getElementById("editAdminUsername").value = username;
-            document.getElementById("editAdminActive").checked = active;
+            document.getElementById("editAdminActive").value = active;
             await loadHouses(houseId);
             new bootstrap.Modal(document.getElementById("editAdminModal")).show();
         } else {
@@ -231,7 +242,7 @@ onclick="openDeleteModal(${user.id}, '${name}')">
         const workingDays = $('#editUserDays').val() || [];
 
         const unavailabilities = Array.from(
-            document.querySelectorAll("#newUserUnavailabilitiesList > div")
+            document.querySelectorAll("#editUserUnavailabilitiesList > div")
         ).map(div => ({
             startDate: div.dataset.start,
             endDate: div.dataset.end,
@@ -299,7 +310,7 @@ onclick="openDeleteModal(${user.id}, '${name}')">
         e.preventDefault();
         const id = document.getElementById("editAdminId").value;
         const username = document.getElementById("editAdminUsername").value;
-        const active = document.getElementById("editAdminActive").checked;
+        const active = document.getElementById("editAdminActive").value;
         const houseId = document.getElementById("editAdminHouse").value;
 
         try {
@@ -819,5 +830,20 @@ data-password="${data.temporaryPassword}">
 
         reader.readAsDataURL(file);
     });
+
+    // función para formatear "ORDEN_I" → "Orden I"
+    function formatOrden(orden) {
+        if (!orden) return "-";
+        // reemplazamos "_" por espacio
+        const withSpaces = orden.replace(/_/g, " ");
+        // separamos en palabras
+        const words = withSpaces.split(" ");
+        // primera palabra: primera letra mayúscula, resto minúscula
+        words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase();
+        // segunda palabra (si existe), la dejamos tal cual (para I, II, III)
+        if (words[1]) words[1] = words[1].toUpperCase();
+        return words.join(" ");
+    }
+
 
 });

@@ -3,6 +3,8 @@ package com.AgsCh.task_scheduler.repository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.AgsCh.task_scheduler.model.House;
 import com.AgsCh.task_scheduler.model.Role;
@@ -26,4 +28,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsernameIgnoreCase(String email);
 
     Optional<User> findByUsernameAndHouseId(String username, Long long1);
+
+    // Todos los admins con AdminData cargado
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.adminData WHERE u.role = 'ADMIN'")
+    List<User> findAllAdminsWithAdminData();
+
+    // Todos los usuarios con AdminData cargado (opcional, si querés mostrar todos)
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.adminData")
+    List<User> findAllWithAdminData();
+
+    // Administradores de una casa específica con AdminData
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.adminData WHERE u.role = 'ADMIN' AND u.house.id = :houseId")
+    List<User> findAdminsByHouseIdWithAdminData(@Param("houseId") Long houseId);
 }

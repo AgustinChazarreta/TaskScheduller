@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.AgsCh.task_scheduler.dto.response.AdminCreatedResponseDTO;
+import com.AgsCh.task_scheduler.dto.response.AdminPendingResponseDTO;
 import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.service.admin.AdminService;
 import com.AgsCh.task_scheduler.service.admin.UserService;
@@ -72,5 +73,23 @@ public class WebmasterAdminApiController {
     @DeleteMapping("/{id}")
     public void deleteAdmin(@PathVariable Long id) {
         adminService.deleteAdmin(id);
+    }
+
+    @GetMapping("/pending")
+    public List<AdminPendingResponseDTO> getPendingAdmins() {
+        return userService.getPendingAdmins()
+                .stream()
+                .map(AdminPendingResponseDTO::new)
+                .toList();
+    }
+
+    @PutMapping("/{id}/activate")
+    public void completeAndActivateAdmin(
+            @PathVariable Long id,
+            @RequestParam Long houseId,
+            @RequestParam String sede,
+            @RequestParam String encargado) {
+
+        adminService.completeAndActivateAdmin(id, houseId, sede, encargado);
     }
 }

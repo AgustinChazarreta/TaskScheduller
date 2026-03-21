@@ -77,7 +77,9 @@ public class AdminService {
         User admin = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Admin no encontrado"));
 
         admin.setUsername(username);
+        System.out.println("ANTES: " + admin.isActive());
         admin.setActive(active);
+        System.out.println("DESPUÉS: " + admin.isActive());
 
         if (houseId != null) {
             House house = houseRepository.findById(houseId)
@@ -109,5 +111,21 @@ public class AdminService {
     public Long getHouseIdByAdmin(Long id) {
         User admin = getAdminById(id);
         return admin.getHouse().getId();
+    }
+
+    public void completeAndActivateAdmin(Long id, Long houseId, String sede, String encargado) {
+        User admin = getAdminById(id);
+        House house = houseRepository.findById(houseId)
+                .orElseThrow(() -> new RuntimeException("House no encontrada"));
+
+        admin.setHouse(house);
+        if (admin.getAdminData() == null) {
+            throw new RuntimeException("AdminData no encontrada");
+        }
+
+        admin.getAdminData().setSedeResidencia(sede);
+        admin.getAdminData().setEncargado(encargado);
+        admin.setActive(true);
+        userRepository.save(admin);
     }
 }

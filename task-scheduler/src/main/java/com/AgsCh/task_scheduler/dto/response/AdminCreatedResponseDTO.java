@@ -13,14 +13,15 @@ public class AdminCreatedResponseDTO {
     private String houseName;
     private String createdAt; // fecha formateada
     private String temporaryPassword; // opcional, solo al crear
+    private AdminDataDTO adminData;
 
     // Constructor para listar admins
     public AdminCreatedResponseDTO(User user) {
         this.adminId = user.getId();
         this.username = user.getUsername();
         this.active = user.isActive();
-        this.houseId = user.getHouse().getId();
-        this.houseName = user.getHouse().getName();
+        this.houseId = user.getHouse() != null ? user.getHouse().getId() : null;
+        this.houseName = user.getHouse() != null ? user.getHouse().getName() : null;
         // Formateo la fecha como en tu JSON
         if (user.getCreatedAt() != null) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy HH:mm");
@@ -29,6 +30,11 @@ public class AdminCreatedResponseDTO {
             this.createdAt = null;
         }
         this.temporaryPassword = null; // solo se llena al crear
+
+        // Inicializar AdminDataDTO desde la entidad
+        if (user.getAdminData() != null) {
+            this.adminData = new AdminDataDTO(user.getAdminData());
+        }
     }
 
     // Constructor para crear admin y devolver contraseña temporal
@@ -64,5 +70,9 @@ public class AdminCreatedResponseDTO {
 
     public String getTemporaryPassword() {
         return temporaryPassword;
+    }
+
+    public AdminDataDTO getAdminData() {
+        return adminData;
     }
 }

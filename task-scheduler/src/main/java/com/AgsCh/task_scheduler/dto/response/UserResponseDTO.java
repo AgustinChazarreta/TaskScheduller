@@ -66,6 +66,9 @@ public class UserResponseDTO {
 
     public String temporaryPassword;
 
+    // ================= ADMIN-DATA =================
+    public AdminDataDTO adminData;
+
     // ================= CONSTRUCTORS =================
 
     public UserResponseDTO(User user) {
@@ -88,6 +91,10 @@ public class UserResponseDTO {
         if (user.getHouse() != null) {
             this.houseId = user.getHouse().getId();
             this.houseName = user.getHouse().getName();
+        }
+
+        if (user.getRole() == Role.ADMIN && user.getAdminData() != null) {
+            this.adminData = new AdminDataDTO(user.getAdminData());
         }
 
         Person p = user.getPerson();
