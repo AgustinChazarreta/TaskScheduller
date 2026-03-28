@@ -40,4 +40,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Administradores de una casa específica con AdminData
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.adminData WHERE u.role = 'ADMIN' AND u.house.id = :houseId")
     List<User> findAdminsByHouseIdWithAdminData(@Param("houseId") Long houseId);
+
+    long countByRoleAndActiveTrue(Role webmaster);
 }

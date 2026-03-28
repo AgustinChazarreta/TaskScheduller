@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.AgsCh.task_scheduler.dto.request.AdminRegisterRequest;
+import com.AgsCh.task_scheduler.dto.request.CreateAdminRequestDTO;
 import com.AgsCh.task_scheduler.dto.response.AdminCreatedResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.AdminPendingResponseDTO;
 import com.AgsCh.task_scheduler.model.User;
@@ -46,27 +48,44 @@ public class WebmasterAdminApiController {
     @PostMapping("/houses/{houseId}")
     public ResponseEntity<AdminCreatedResponseDTO> createAdmin(
             @PathVariable Long houseId,
-            @RequestParam String username) {
+            @RequestBody AdminRegisterRequest request) {
 
+        // Generar contraseña temporal
         String temporaryPassword = java.util.UUID.randomUUID()
                 .toString()
                 .replace("-", "")
                 .substring(0, 8);
 
-        User admin = userService.createAdmin(houseId, username, temporaryPassword);
+        User admin = userService.createAdmin(
+                houseId,
+                request.getEmail(),
+                temporaryPassword,
+                request.getNombre(),
+                request.getOrden(),
+                request.getSedeResidencia(),
+                request.getEncargado());
 
         AdminCreatedResponseDTO dto = new AdminCreatedResponseDTO(admin, temporaryPassword);
-
         return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/{id}")
-    public void updateAdmin(
+    public ResponseEntity<AdminCreatedResponseDTO> updateAdmin(
             @PathVariable Long id,
-            @RequestParam String username,
-            @RequestParam boolean active,
-            @RequestParam(required = false) Long houseId) { // <-- agregamos houseId
-        adminService.updateAdmin(id, username, active, houseId);
+            @RequestBody CreateAdminRequestDTO request) {
+
+        User updated = adminService.updateAdmin(
+                id,
+                request.getUsername(),
+                request.isActive(),
+                request.getHouseId(),
+                request.getNombre(),
+                request.getOrden(),
+                request.getSedeResidencia(),
+                request.getEncargado());
+
+        return ResponseEntity.ok(new AdminCreatedResponseDTO(updated));
+
     }
 
     // Eliminar admin

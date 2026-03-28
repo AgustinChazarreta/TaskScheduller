@@ -4,6 +4,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const usersCache = {};
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleFromURL = urlParams.get("role");
+    let currentRoleFilter = roleFromURL || "ALL";
+
     // ================= CARGAR USUARIOS =================
     async function loadUsers() {
         tableBody.innerHTML = "";
@@ -13,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (users.length === 0) {
             tableBody.innerHTML = `
             <tr>
-            <td colspan="6" class="text-center py-5 text-muted">
+            <td colspan="7" class="text-center py-5 text-muted">
             No hay usuarios registrados.
             </td>
             </tr>`;
@@ -24,35 +28,59 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         users.forEach(user => {
+
+            if (currentRoleFilter !== "ALL" && user.role !== currentRoleFilter) return;
+
             usersCache[user.id] = user;
-            const adminData = user.role === "ADMIN" ? user.adminData : null;
 
             const row = document.createElement("tr");
             row.setAttribute("data-role", user.role);
 
-            // Nombre: si es USER, usamos fullName o username; si es ADMIN, usamos adminData nombre
-            const name = user.role === "USER"
-                ? (user.fullName ?? user.username)
-                : (adminData?.nombre ?? user.username);
+            const isAdmin = user.role === "ADMIN";
+            const isUser = user.role === "USER";
+            const isWebmaster = user.role === "WEBMASTER";
 
-            const roleBadge =
-                user.role === "ADMIN"
-                    ? `<span class="badge bg-primary-subtle text-primary">Admin</span>`
-                    : `<span class="badge bg-warning-subtle text-warning">User</span>`;
+            const adminData = isAdmin ? user.adminData : null;
+
+            // ================= NOMBRE =================
+            let name;
+            if (isUser) {
+                name = user.fullName ?? user.username;
+            } else if (isAdmin) {
+                name = adminData?.nombre ?? user.username;
+            } else if (isWebmaster) {
+                name = user.adminData?.nombre ?? user.username;
+            }
+
+            // ================= BADGE ROL =================
+            let roleBadge;
+            if (isAdmin) {
+                roleBadge = `<span class="badge bg-primary-subtle text-primary">Admin</span>`;
+            } else if (isUser) {
+                roleBadge = `<span class="badge bg-warning-subtle text-warning">User</span>`;
+            } else if (isWebmaster) {
+                roleBadge = `<span class="badge bg-info-subtle text-info">Webmaster</span>`;
+            }
 
             const isActive = user.active;
             const activeBadge = isActive
                 ? `<span class="badge bg-success-subtle text-success">Activo</span>`
                 : `<span class="badge bg-danger-subtle text-danger">Inactivo</span>`;
 
-            const house = user.houseName ? user.houseName : "-";
+            const house = isWebmaster
+                ? "-"
+                : (user.houseName ? user.houseName : "-");
 
             const date = new Date(user.createdAt);
             const created = date.toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" });
             const time = date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 
             // Mostramos Orden solo si es Admin
-            const orden = adminData ? `<span class="badge bg-secondary-subtle text-dark">${formatOrden(adminData.orden)}</span>` : "-";
+            const orden = isAdmin
+                ? `<span class="badge bg-secondary-subtle text-dark">${formatOrden(adminData?.orden)}</span>`
+                : isWebmaster
+                    ? `<span class="badge bg-secondary-subtle text-dark">-</span>`
+                    : "-";
 
             row.innerHTML = `
 <td class="ps-4 fw-semibold">
@@ -81,35 +109,49 @@ onclick="openDeleteModal(${user.id}, '${name}')">
 
     loadUsers();
 
+    if (roleFromURL) {
+        document.getElementById("roleFilter").value = roleFromURL;
+    }
+
     // ================= FILTRO POR ROL =================
     document.getElementById("roleFilter").addEventListener("change", function () {
-        const role = this.value;
-        document.querySelectorAll("#usersTable tr").forEach(row => {
-            const r = row.getAttribute("data-role");
-            if (!r) return;
-            row.style.display = role === "ALL" || r === role ? "" : "none";
-        });
+        currentRoleFilter = this.value;
+
+        // 🔥 opcional: limpiar la URL
+        const url = new URL(window.location);
+        url.searchParams.delete("role");
+        window.history.replaceState({}, "", url);
+
+        loadUsers();
     });
 
     // ================= MODALES =================
     const roleChoiceModal = new bootstrap.Modal(document.getElementById('roleChoiceModal'));
     const createUserModal = new bootstrap.Modal(document.getElementById('createUserModal'));
     const createAdminModal = new bootstrap.Modal(document.getElementById('createAdminModal'));
+    const createWebmasterModal = new bootstrap.Modal(
+        document.getElementById('createWebmasterModal')
+    );
 
     document.getElementById('btnOpenRoleChoice').addEventListener('click', () => roleChoiceModal.show());
+
+    document.getElementById('chooseWebmaster').addEventListener('click', async () => {
+        roleChoiceModal.hide();
+        createWebmasterModal.show();
+    });
 
     document.getElementById('chooseAdmin').addEventListener('click', async () => {
         roleChoiceModal.hide();
         await loadHousesForCreate();
         createAdminModal.show();
     });
-
-    document.getElementById('chooseUser').addEventListener('click', async () => {
-        roleChoiceModal.hide();
-        await loadHousesForCreateUser();
-        createUserModal.show();
-    });
-
+    /*
+        document.getElementById('chooseUser').addEventListener('click', async () => {
+            roleChoiceModal.hide();
+            await loadHousesForCreateUser();
+            createUserModal.show();
+        });
+    */
     // ================= ELIMINAR USUARIO =================
     let userIdToDelete = null;
     let userNameToDelete = "";
@@ -124,27 +166,88 @@ onclick="openDeleteModal(${user.id}, '${name}')">
 
     document.getElementById("confirmDeleteUserBtn").addEventListener("click", async () => {
         if (!userIdToDelete) return;
-        try {
-            const res = await fetch(`/api/webmaster/users/${userIdToDelete}`, { method: "DELETE" });
-            if (!res.ok) throw new Error("No se puede eliminar el último Admin");
 
-            bootstrap.Modal.getInstance(document.getElementById("deleteUserModal")).hide();
+        const modalEl = document.getElementById("deleteUserModal");
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+
+        try {
+            const user = usersCache[userIdToDelete];
+            if (!user) throw new Error("Usuario no encontrado");
+
+            let endpoint;
+
+            if (user.role === "WEBMASTER") {
+                endpoint = `/api/webmaster/webmasters/${userIdToDelete}`;
+            } else if (user.role === "ADMIN") {
+                endpoint = `/api/webmaster/admins/${userIdToDelete}`;
+            } else {
+                endpoint = `/api/webmaster/users/${userIdToDelete}`;
+            }
+
+            const res = await fetch(endpoint, { method: "DELETE" });
+
+            if (!res.ok) {
+                let errorMessage = "No se pudo eliminar el usuario";
+
+                try {
+                    const errData = await res.json();
+
+                    errorMessage =
+                        errData.details?.[0] ||
+                        errData.messages?.[0] ||
+                        errData.message ||
+                        errorMessage;
+
+                } catch {
+                    const text = await res.text();
+                    if (text) errorMessage = text;
+                }
+
+                throw new Error(errorMessage);
+            }
+
             loadUsers();
-            showAlert(`Usuario <strong>${userNameToDelete}</strong> eliminado correctamente`, "success");
+
+            const roleLabel =
+                user.role === "ADMIN" ? "Admin" :
+                    user.role === "WEBMASTER" ? "Webmaster" :
+                        "Usuario";
+
+            showAlert(`${roleLabel} <strong>${userNameToDelete}</strong> eliminado correctamente`, "success");
+
         } catch (err) {
             showAlert(err.message, "danger");
+        } finally {
+            // 🔥 SIEMPRE se cierra
+            modalInstance.hide();
+            userIdToDelete = null;
         }
     });
 
     // ================= EDITAR USUARIO/ADMIN =================
     window.openEditModal = async function (id, role, name, username, active, houseId) {
         if (role === "ADMIN") {
-            document.getElementById("editAdminId").value = id;
-            document.getElementById("editAdminUsername").value = username;
-            document.getElementById("editAdminActive").value = active;
-            await loadHouses(houseId);
+            const admin = usersCache[id];
+
+            if (!admin) {
+                showAlert("No se pudo cargar el admin", "danger");
+                return;
+            }
+
+            const adminData = admin.adminData || {};
+
+            document.getElementById("editAdminId").value = admin.id;
+            document.getElementById("editAdminName").value = adminData.nombre || "";
+            document.getElementById("editAdminUsername").value = admin.username;
+            document.getElementById("editAdminOrden").value = adminData.orden || "";
+            document.getElementById("editAdminSede").value = adminData.sedeResidencia || "";
+            document.getElementById("editAdminEncargado").value = adminData.encargado || "";
+            document.getElementById("editAdminActive").value = admin.active;
+
+            await loadHouses(admin.houseId);
+
             new bootstrap.Modal(document.getElementById("editAdminModal")).show();
-        } else {
+        } else if (role === "USER") {
             const user = usersCache[id];
 
             if (!user) {
@@ -220,8 +323,75 @@ onclick="openDeleteModal(${user.id}, '${name}')">
 
             // ================= ABRIR MODAL =================
             new bootstrap.Modal(document.getElementById("editUserModal")).show();
+        } else if (role === "WEBMASTER") {
+            const webmaster = usersCache[id];
+
+            if (!webmaster) {
+                showAlert("No se pudo cargar el webmaster", "danger");
+                return;
+            }
+
+            // ================= CAMPOS DEL MODAL =================
+            document.getElementById("editWebmasterId").value = webmaster.id;
+            document.getElementById("editWebmasterName").value = webmaster.adminData?.nombre ?? webmaster.username;
+            document.getElementById("editWebmasterUsername").value = webmaster.username;
+            document.getElementById("editWebmasterActive").value = webmaster.active;
+
+            // ================= ABRIR MODAL =================
+            new bootstrap.Modal(document.getElementById("editWebmasterModal")).show();
         }
     };
+
+
+    // ================= SUBMIT EDIT WEBMASTER =================
+    document.getElementById("editWebmasterForm").addEventListener("submit", async e => {
+        e.preventDefault();
+
+        const submitBtn = e.target.querySelector("button[type='submit']");
+        submitBtn.disabled = true;
+        const originalContent = submitBtn.innerHTML;
+
+        // 🔹 mostrar spinner en el botón mientras se procesa
+        submitBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        Guardando...
+        `;
+
+        const id = document.getElementById("editWebmasterId").value;
+        const webmaster = usersCache[id];
+
+        const payload = {
+            id: webmaster.id,
+            username: document.getElementById("editWebmasterUsername").value,
+            active: document.getElementById("editWebmasterActive").value === "true",
+            nombre: document.getElementById("editWebmasterName").value
+        };
+
+        try {
+            const res = await fetch(`/api/webmaster/webmasters/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("Error editando webmaster:", res.status, text);
+                throw new Error("No se pudo editar el webmaster");
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById("editWebmasterModal")).hide();
+            loadUsers();
+            showAlert(`Webmaster <strong>${payload.nombre}</strong> editado correctamente`, "success");
+
+        } catch (err) {
+            showAlert(err.message, "danger");
+        } finally {
+            // 🔹 restaurar el botón a su estado original
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalContent;
+        }
+    });
 
     // ================= SUBMIT EDIT USER =================
     document.getElementById("editUserForm").addEventListener("submit", async e => {
@@ -308,25 +478,113 @@ onclick="openDeleteModal(${user.id}, '${name}')">
     // ================= FORM EDIT ADMIN =================
     document.getElementById("editAdminForm").addEventListener("submit", async e => {
         e.preventDefault();
+
         const id = document.getElementById("editAdminId").value;
-        const username = document.getElementById("editAdminUsername").value;
-        const active = document.getElementById("editAdminActive").value;
-        const houseId = document.getElementById("editAdminHouse").value;
+
+        const payload = {
+            username: document.getElementById("editAdminUsername").value,
+            active: document.getElementById("editAdminActive").value === "true",
+            houseId: Number(document.getElementById("editAdminHouse").value),
+
+            nombre: document.getElementById("editAdminName").value,
+            orden: document.getElementById("editAdminOrden").value,
+            sedeResidencia: document.getElementById("editAdminSede").value,
+            encargado: document.getElementById("editAdminEncargado").value
+        };
+
+        const submitBtn = e.target.querySelector("button[type='submit']");
+        submitBtn.disabled = true;
+        const originalContent = submitBtn.innerHTML;
+
+        submitBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Guardando...
+    `;
 
         try {
-            const res = await fetch(
-                `/api/webmaster/admins/${id}?username=${encodeURIComponent(username)}&active=${active}&houseId=${houseId}`,
-                { method: "PUT" }
-            );
-            if (!res.ok) throw new Error("No se pudo editar el admin");
+            const res = await fetch(`/api/webmaster/admins/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("Error editando admin:", res.status, text);
+                throw new Error("No se pudo editar el admin");
+            }
+
+            const data = await res.json();
 
             bootstrap.Modal.getInstance(document.getElementById("editAdminModal")).hide();
             loadUsers();
-            showAlert(`Admin <strong>${username}</strong> editado correctamente`, "success");
+
+            showAlert(
+                `Admin <strong>${data.adminData?.nombre || data.username}</strong> editado correctamente`,
+                "success"
+            );
+
         } catch (err) {
             showAlert(err.message, "danger");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalContent;
         }
     });
+
+
+
+    document.getElementById("createWebmasterForm")
+        .addEventListener("submit", async e => {
+
+            e.preventDefault();
+
+
+            const submitBtn = e.target.querySelector("button[type='submit']");
+            submitBtn.disabled = true;
+            const originalContent = submitBtn.innerHTML;
+
+            // 🔹 agregar spinner en el botón
+            submitBtn.innerHTML = `
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Creando...
+            `;
+
+            const username = document.getElementById("newWebmasterUsername").value;
+            const nombre = document.getElementById("newWebmasterName").value;
+
+            try {
+                const res = await fetch(`/api/webmaster/webmasters`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username,
+                        nombre
+                    })
+                });
+
+                if (!res.ok) throw new Error("No se pudo crear el webmaster");
+
+                const data = await res.json();
+
+                createWebmasterModal.hide();
+                loadUsers();
+
+                showAlert(`
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Webmaster <strong>${data.username}</strong> creado correctamente.
+                    <br><small>Se envió un correo con la contraseña temporal</small>
+                    `, "success", false, 5000);
+            } catch (err) {
+                showAlert(err.message, "danger");
+            } finally {
+                // 🔹 restaurar botón a su estado original
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+            }
+        });
 
     // ================= FORM CREAR ADMIN =================
     async function loadHousesForCreate() {
@@ -341,34 +599,68 @@ onclick="openDeleteModal(${user.id}, '${name}')">
             select.appendChild(option);
         });
     }
-
     document.getElementById("createAdminForm").addEventListener("submit", async e => {
         e.preventDefault();
-        const username = document.getElementById("newAdminUsername").value;
+
+        const nombre = document.getElementById("newAdminName").value.trim();
+        const email = document.getElementById("newAdminUsername").value.trim();
         const houseId = document.getElementById("newAdminHouse").value;
 
+        const orden = document.getElementById("newAdminOrden")?.value || null;
+        const sede = document.getElementById("newAdminSede")?.value.trim() || "";
+        const encargado = document.getElementById("newAdminEncargado")?.value.trim() || "";
+
+        const submitBtn = e.target.querySelector("button[type='submit']");
+        submitBtn.disabled = true;
+
+        const originalContent = submitBtn.innerHTML;
+
+        submitBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        Creando...
+    `;
+
+        const payload = {
+            nombre,
+            email,
+            password: null,
+            orden,
+            sedeResidencia: sede,
+            encargado
+        };
+
         try {
-            const res = await fetch(`/api/webmaster/admins/houses/${houseId}?username=${encodeURIComponent(username)}`, {
-                method: "POST"
+            const res = await fetch(`/api/webmaster/admins/houses/${houseId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             });
-            if (!res.ok) throw new Error("No se pudo crear el admin");
+
+            if (!res.ok) {
+                const text = await res.text();
+                console.error("Error creando admin:", res.status, text);
+                throw new Error("No se pudo crear el admin");
+            }
 
             const data = await res.json();
-            bootstrap.Modal.getInstance(document.getElementById("createAdminModal")).hide();
+            const adminData = data.adminData;
+
+            bootstrap.Modal.getInstance(
+                document.getElementById("createAdminModal")
+            ).hide();
+
             loadUsers();
 
             showAlert(`
-<div class="d-flex flex-column">
-<div><i class="bi bi-check-circle-fill me-2"></i>Admin <strong>${data.username}</strong> creado correctamente.</div>
-<div class="mt-3 ms-4">Contraseña temporal: <strong>${data.temporaryPassword}</strong>
-<button class="btn btn-sm btn-outline-secondary ms-2 copyPasswordBtn" data-password="${data.temporaryPassword}">
-<i class="bi bi-clipboard"></i>
-</button>
-</div>
-</div>
-`, "success", false, 5000);
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    Administrador <strong>${adminData.nombre}</strong> creado correctamente.
+                    <br><small>Se envió un correo con la contraseña temporal</small>
+                    `, "success", false, 5000);
         } catch (err) {
             showAlert(err.message, "danger");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalContent;
         }
     });
 

@@ -11,6 +11,15 @@
             transition: all 0.2s ease;
         }
 
+        /* WEBMASTER */
+        #chooseWebmaster:hover {
+            background-color: rgba(13, 202, 240, 0.1);
+            /* info suave */
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(13, 202, 240, 0.2);
+        }
+
+
         /* ADMIN */
         #chooseAdmin:hover {
             background-color: rgba(0, 123, 255, 0.1);
@@ -45,8 +54,8 @@
                 <div class="d-flex align-items-center gap-3">
                     <select id="roleFilter" class="form-select form-select-sm" style="width:180px;">
                         <option value="ALL">Todos los roles</option>
+                        <option value="WEBMASTER">Webmasters</option>
                         <option value="ADMIN">Admins</option>
-                        <option value="USER">Users</option>
                     </select>
                     <button class="btn btn-primary rounded-pill px-4" id="btnOpenRoleChoice">
                         <i class="bi bi-plus-lg me-2"></i>
@@ -112,6 +121,36 @@
 
                     <div class="row g-4">
 
+                        <!-- WEBMASTER -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100 role-card" id="chooseWebmaster">
+
+                                <div class="card-body text-center p-4">
+
+                                    <div class="mb-3">
+                                        <div class="rounded-circle bg-info bg-opacity-25 d-inline-flex align-items-center justify-content-center"
+                                            style="width:70px;height:70px;">
+                                            <i class="bi bi-code-slash fs-3 text-info"></i>
+                                        </div>
+                                    </div>
+
+                                    <h5 class="fw-semibold mb-2">
+                                        Webmaster
+                                    </h5>
+
+                                    <p class="text-muted small mb-3">
+                                        Usuario técnico con acceso a configuraciones,
+                                        logs y herramientas avanzadas del sistema.
+                                    </p>
+
+                                    <span class="badge bg-info-subtle text-info fw-semibold px-3 py-2">
+                                        Acceso técnico
+                                    </span>
+
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- ADMIN -->
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm h-100 role-card" id="chooseAdmin"
@@ -143,7 +182,8 @@
                             </div>
                         </div>
 
-                        <!-- USER -->
+                        <!--
+                        USER
                         <div class="col-md-6">
                             <div class="card border-0 shadow-sm h-100 role-card" id="chooseUser"
                                 style="cursor:pointer; transition:all .2s ease;">
@@ -173,8 +213,94 @@
                                 </div>
                             </div>
                         </div>
+                        -->
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL CREAR WEBMASTER ================= -->
+    <div class="modal fade" id="createWebmasterModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+
+                <!-- HEADER -->
+                <div class="modal-header border-0 pb-2 bg-info bg-opacity-10 rounded-top-4">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="rounded-circle bg-info d-flex align-items-center justify-content-center"
+                            style="width:48px;height:48px;">
+                            <i class="bi bi-code-slash text-white fs-5"></i>
+                        </div>
+
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0 text-info">
+                                Crear webmaster
+                            </h5>
+                            <small class="text-muted">
+                                Acceso técnico al sistema y gestión avanzada
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body pt-4">
+
+                    <form id="createWebmasterForm">
+
+                        <div class="card border-info border-opacity-25 bg-light-subtle rounded-4 p-3 mb-3">
+
+                            <!-- NOMBRE Y CORREO ELECTRÓNICO -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-info">
+                                    Nombre y Apellido
+                                </label>
+
+                                <input type="text" id="newWebmasterName" class="form-control rounded-3"
+                                    placeholder="ej: Juan Pérez" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-info">
+                                    Correo Electrónico
+                                </label>
+
+                                <input type="text" id="newWebmasterUsername" class="form-control rounded-3"
+                                    placeholder="ej: juan@gmail.com" required>
+                            </div>
+                            <small class="text-muted">
+                                Se generará una contraseña temporal y se enviará por email.
+                            </small>
+
+                        </div>
+
+                        <!-- FOOTER -->
+                        <div class="modal-footer border-0 justify-content-center pt-3">
+
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+
+                            <button type="submit" class="btn btn-info rounded-pill px-4 shadow-sm text-white">
+
+                                <i class="bi bi-check-lg me-1"></i>
+                                Crear cuenta
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
             </div>
         </div>
     </div>
@@ -218,14 +344,23 @@
 
                             <div class="mb-3">
                                 <label class="form-label fw-semibold text-primary">
-                                    Correo Electrónico (Username)
+                                    Nombre y Apellido
+                                </label>
+
+                                <input type="text" id="newAdminName" class="form-control rounded-3"
+                                    placeholder="ej: Juan Pérez" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    Correo Electrónico
                                 </label>
 
                                 <input type="text" id="newAdminUsername" class="form-control rounded-3"
-                                    placeholder="ej: admin.juan" required>
+                                    placeholder="ej: admin.juan@gmail.com" required>
                             </div>
 
-                            <div>
+                            <div class="mb-3">
                                 <label class="form-label fw-semibold text-primary">
                                     House
                                 </label>
@@ -233,6 +368,27 @@
                                 <select id="newAdminHouse" class="form-select rounded-3">
                                     <!-- dinámico -->
                                 </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">Orden</label>
+                                <select id="newAdminOrden" class="form-select rounded-3" required>
+                                    <option value="" disabled selected>Seleccionar orden</option>
+                                    <option value="ORDEN_I">Orden I</option>
+                                    <option value="ORDEN_II">Orden II</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">Sede de residencia</label>
+                                <input type="text" id="newAdminSede" class="form-control rounded-3"
+                                    placeholder="Ej: Buenos Aires" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">Encargado</label>
+                                <input type="text" id="newAdminEncargado" class="form-control rounded-3"
+                                    placeholder="Nombre del encargado" required>
                             </div>
 
                         </div>
@@ -511,11 +667,103 @@
         </div>
     </div>
 
-    <!-- ================= MODAL EDITAR ADMIN ================= -->
-    <div class="modal fade" id="editAdminModal">
+    <!-- ================= MODAL EDITAR WEBMASTER ================= -->
+    <div class="modal fade" id="editWebmasterModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 shadow border-0">
 
+                <form id="editWebmasterForm">
+
+                    <!-- HEADER -->
+                    <div class="modal-header border-0 pb-2 bg-info bg-opacity-10 rounded-top-4">
+
+                        <div class="d-flex align-items-center gap-3">
+
+                            <div class="rounded-circle bg-info d-flex align-items-center justify-content-center"
+                                style="width:48px;height:48px;">
+                                <i class="bi bi-code-slash text-white fs-5"></i>
+                            </div>
+
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0 text-info">
+                                    Editar webmaster
+                                </h5>
+                                <small class="text-muted">
+                                    Modifique los datos del usuario técnico
+                                </small>
+                            </div>
+
+                        </div>
+
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+                    </div>
+
+                    <!-- BODY -->
+                    <div class="modal-body pt-4">
+
+                        <input type="hidden" id="editWebmasterId">
+
+                        <div class="card border-info border-opacity-25 bg-light-subtle rounded-4 p-3 mb-3">
+
+                            <!-- NOMBRE -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-info">
+                                    Nombre y Apellido
+                                </label>
+                                <input type="text" id="editWebmasterName" class="form-control rounded-3" required>
+                            </div>
+
+                            <!-- EMAIL -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-info">
+                                    Correo Electrónico
+                                </label>
+                                <input type="text" id="editWebmasterUsername" class="form-control rounded-3" required>
+                            </div>
+
+                            <!-- ESTADO -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-info">
+                                    Estado
+                                </label>
+                                <select id="editWebmasterActive" class="form-select rounded-3">
+                                    <option value="true">Activo</option>
+                                    <option value="false">Inactivo</option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- FOOTER -->
+                    <div class="modal-footer border-0 justify-content-center pt-3">
+
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                            data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+
+                        <button type="submit" class="btn btn-info rounded-pill px-4 shadow-sm text-white">
+                            <i class="bi bi-save me-1"></i>
+                            Guardar cambios
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL EDITAR ADMIN ================= -->
+    <div class="modal fade" id="editAdminModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+
+                <!-- FORM -->
                 <form id="editAdminForm">
 
                     <!-- HEADER -->
@@ -550,13 +798,60 @@
 
                         <div class="card border-primary border-opacity-25 bg-light-subtle rounded-4 p-3 mb-3">
 
+                            <!-- NOMBRE -->
                             <div class="mb-3">
                                 <label class="form-label fw-semibold text-primary">
-                                    Correo Electrónico (Username)
+                                    Nombre y Apellido
+                                </label>
+                                <input type="text" id="editAdminName" class="form-control rounded-3" required>
+                            </div>
+
+                            <!-- EMAIL -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    Correo Electrónico
                                 </label>
                                 <input type="text" id="editAdminUsername" class="form-control rounded-3" required>
                             </div>
 
+                            <!-- HOUSE -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    House
+                                </label>
+                                <select id="editAdminHouse" class="form-select rounded-3">
+                                    <!-- dinámico -->
+                                </select>
+                            </div>
+
+                            <!-- ORDEN -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    Orden
+                                </label>
+                                <select id="editAdminOrden" class="form-select rounded-3" required>
+                                    <option value="ORDEN_I">Orden I</option>
+                                    <option value="ORDEN_II">Orden II</option>
+                                </select>
+                            </div>
+
+                            <!-- SEDE -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    Sede de residencia
+                                </label>
+                                <input type="text" id="editAdminSede" class="form-control rounded-3" required>
+                            </div>
+
+                            <!-- ENCARGADO -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-primary">
+                                    Encargado
+                                </label>
+                                <input type="text" id="editAdminEncargado" class="form-control rounded-3" required>
+                            </div>
+
+                            <!-- ESTADO -->
                             <div class="mb-3">
                                 <label class="form-label fw-semibold text-primary">
                                     Estado
@@ -564,14 +859,6 @@
                                 <select id="editAdminActive" class="form-select rounded-3">
                                     <option value="true">Activo</option>
                                     <option value="false">Inactivo</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="form-label fw-semibold text-primary">
-                                    House
-                                </label>
-                                <select id="editAdminHouse" class="form-select rounded-3">
                                 </select>
                             </div>
 

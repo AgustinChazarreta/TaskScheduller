@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.AgsCh.task_scheduler.dto.request.PersonRequestDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonCreatedResponseDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
+import com.AgsCh.task_scheduler.model.AdminData;
 import com.AgsCh.task_scheduler.model.Function;
 import com.AgsCh.task_scheduler.model.Group;
 import com.AgsCh.task_scheduler.model.House;
@@ -38,6 +39,7 @@ public class UserService {
     private final PersonRepository personRepository;
     private final GroupRepository groupRepository;
     private final FunctionRepository functionRepository;
+    private final EmailService emailService;
 
     public UserService(
             UserRepository userRepository,
@@ -45,7 +47,8 @@ public class UserService {
             PasswordEncoder passwordEncoder,
             PersonRepository personRepository,
             GroupRepository groupRepository,
-            FunctionRepository functionRepository) {
+            FunctionRepository functionRepository,
+            EmailService emailService) {
 
         this.userRepository = userRepository;
         this.houseRepository = houseRepository;
@@ -53,10 +56,49 @@ public class UserService {
         this.personRepository = personRepository;
         this.groupRepository = groupRepository;
         this.functionRepository = functionRepository;
+        this.emailService = emailService;
+    }
+
+    public List<User> getAllWebmasters() {
+        return userRepository.findByRole(Role.WEBMASTER);
+    }
+
+    public User createWebmaster(String username, String nombre, String temporaryPassword) {
+
+        if (userRepository.existsByUsername(username)) {
+            throw new BusinessException("Ya existe un usuario con ese email");
+        }
+
+        User webmaster = new User();
+        webmaster.setUsername(username);
+        webmaster.setPassword(passwordEncoder.encode(temporaryPassword));
+        webmaster.setPasswordTemporary(true);
+        webmaster.setRole(Role.WEBMASTER);
+        webmaster.setActive(false);
+
+        AdminData adminData = new AdminData();
+        adminData.setNombre(nombre);
+        adminData.setUser(webmaster);
+
+        webmaster.setAdminData(adminData);
+
+        User saved = userRepository.save(webmaster);
+
+        // 🔥 ENVIAR MAIL
+        emailService.sendWebmasterCredentialsEmail(username, nombre, temporaryPassword);
+
+        return saved;
     }
 
     @Transactional
-    public User createAdmin(Long houseId, String username, String temporaryPassword) {
+    public User createAdmin(
+            Long houseId,
+            String username,
+            String temporaryPassword,
+            String nombre,
+            String orden,
+            String sedeResidencia,
+            String encargado) {
 
         House house = houseRepository.findById(houseId)
                 .orElseThrow(() -> new BusinessException("House no encontrada"));
@@ -71,9 +113,24 @@ public class UserService {
         admin.setPasswordTemporary(true);
         admin.setRole(Role.ADMIN);
         admin.setHouse(house);
-        admin.setActive(true);
+        admin.setActive(false);
 
-        return userRepository.save(admin);
+        // Crear y setear AdminData
+        AdminData adminData = new AdminData();
+        adminData.setNombre(nombre);
+        adminData.setOrden(orden);
+        adminData.setSedeResidencia(sedeResidencia);
+        adminData.setEncargado(encargado);
+        adminData.setUser(admin);
+
+        admin.setAdminData(adminData);
+
+        User saved = userRepository.save(admin);
+
+        // 🔥 ENVIAR MAIL
+        emailService.sendAdminCredentialsEmail(username, nombre, temporaryPassword);
+
+        return saved;
     }
 
     public List<User> getAllUsers() {
@@ -202,15 +259,8 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Usuario no encontrado"));
 
-        if (user.getRole() == Role.WEBMASTER) {
-            throw new BusinessException("No se puede eliminar el WEBMASTER");
-        }
-
-        if (user.getRole() == Role.ADMIN) {
-            long adminCount = userRepository.countByRole(Role.ADMIN);
-            if (adminCount <= 1) {
-                throw new BusinessException("No se puede eliminar el último administrador");
-            }
+        if (user.getRole() != Role.USER) {
+            throw new BusinessException("Solo se pueden eliminar usuarios comunes");
         }
 
         // 🔥 Si tiene persona asociada, eliminar correctamente
@@ -258,10 +308,6 @@ public class UserService {
     }
 
     public List<User> getAllUsersWithAdminData() {
-        // Trae todos los usuarios, carga AdminData para admins y filtra WEBMASTER
-        return userRepository.findAllWithAdminData()
-                .stream()
-                .filter(u -> u.getRole() != Role.WEBMASTER)
-                .toList();
+        return userRepository.findAllWithAdminData();
     }
 }

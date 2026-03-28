@@ -61,19 +61,6 @@ public class WebmasterUserApiController {
         return new UserResponseDTO(user);
     }
 
-    // ================= CREAR ADMIN =================
-    @PostMapping("/admins")
-    public UserResponseDTO createAdmin(@RequestParam Long houseId,
-            @RequestParam String username) {
-
-        String temporaryPassword = personService.generateTemporaryPassword(); // usamos el generador de PersonService
-        User admin = userService.createAdmin(houseId, username, temporaryPassword);
-
-        // 🚨 Asegurate de tener un constructor en UserResponseDTO(User user, String
-        // tempPassword)
-        return new UserResponseDTO(admin, temporaryPassword);
-    }
-
     // ================= CREAR USUARIO NORMAL =================
     @PostMapping
     public PersonCreatedResponseDTO createUser(@RequestParam Long houseId,

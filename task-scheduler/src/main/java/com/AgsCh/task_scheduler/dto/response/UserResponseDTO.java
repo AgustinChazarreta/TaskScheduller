@@ -93,8 +93,10 @@ public class UserResponseDTO {
             this.houseName = user.getHouse().getName();
         }
 
-        if (user.getRole() == Role.ADMIN && user.getAdminData() != null) {
-            this.adminData = new AdminDataDTO(user.getAdminData());
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.WEBMASTER) {
+            if (user.getAdminData() != null) {
+                this.adminData = new AdminDataDTO(user.getAdminData());
+            }
         }
 
         Person p = user.getPerson();

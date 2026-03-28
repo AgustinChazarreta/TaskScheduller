@@ -17,13 +17,13 @@ public class AdminData {
     @Column(nullable = false)
     private String nombre;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String orden; // Orden I, Orden II
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String sedeResidencia;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String encargado;
 
     // getters y setters

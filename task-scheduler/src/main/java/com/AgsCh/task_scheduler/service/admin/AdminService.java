@@ -26,6 +26,7 @@ public class AdminService {
     private final UserRepository userRepository;
     private final FunctionRuleRepository functionRuleRepository;
     private final HouseRepository houseRepository;
+    private final EmailService emailService;
 
     public AdminService(
             AdminScheduleService adminScheduleService,
@@ -33,7 +34,8 @@ public class AdminService {
             UserRepository userRepository,
             PersonRepository personRepository,
             FunctionRuleRepository functionRuleRepository,
-            HouseRepository houseRepository) {
+            HouseRepository houseRepository,
+            EmailService emailService) {
 
         this.adminScheduleService = adminScheduleService;
         this.functionRepository = functionRepository;
@@ -41,6 +43,7 @@ public class AdminService {
         this.userRepository = userRepository;
         this.functionRuleRepository = functionRuleRepository;
         this.houseRepository = houseRepository;
+        this.emailService = emailService;
     }
 
     /*
@@ -73,13 +76,20 @@ public class AdminService {
     }
 
     // actualizar admin
-    public void updateAdmin(Long id, String username, boolean active, Long houseId) {
+    public User updateAdmin(Long id,
+            String username,
+            boolean active,
+            Long houseId,
+            String nombre,
+            String orden,
+            String sede,
+            String encargado) {
         User admin = userRepository.findById(id).orElseThrow(() -> new RuntimeException("Admin no encontrado"));
 
+        boolean wasInactive = !admin.isActive(); // guardamos si antes estaba inactivo
+
         admin.setUsername(username);
-        System.out.println("ANTES: " + admin.isActive());
         admin.setActive(active);
-        System.out.println("DESPUÉS: " + admin.isActive());
 
         if (houseId != null) {
             House house = houseRepository.findById(houseId)
@@ -87,7 +97,25 @@ public class AdminService {
             admin.setHouse(house);
         }
 
-        userRepository.save(admin);
+        // 🔹 actualizar adminData
+        if (admin.getAdminData() != null) {
+            admin.getAdminData().setNombre(nombre);
+            admin.getAdminData().setOrden(orden);
+            admin.getAdminData().setSedeResidencia(sede);
+            admin.getAdminData().setEncargado(encargado);
+        }
+
+        User updatedAdmin = userRepository.save(admin);
+
+        // 🔥 Enviar mail si se activó la cuenta
+        if (wasInactive && active) {
+            // suponiendo que tenés un EmailService similar al que usaste para crear
+            emailService.sendAdminActivationEmail(
+                    admin.getUsername(),
+                    admin.getAdminData().getNombre());
+        }
+
+        return updatedAdmin;
     }
 
     // eliminar admin
