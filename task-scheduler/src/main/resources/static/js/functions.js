@@ -18,7 +18,12 @@ let allFunctions = {}; // FILTRO
 function formatDays(days) {
     const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
     const labels = { MONDAY: "Lunes", TUESDAY: "Martes", WEDNESDAY: "Miércoles", THURSDAY: "Jueves", FRIDAY: "Viernes", SATURDAY: "Sábado", SUNDAY: "Domingo" };
-    return order.filter(d => days.includes(d)).map(d => `<span class="badge bg-primary-subtle text-primary me-1">${labels[d]}</span>`).join("");
+    if (!Array.isArray(days)) return "";
+
+    return order
+        .filter(d => days.includes(d))
+        .map(d => `<span class="badge bg-primary-subtle text-primary me-1">${labels[d]}</span>`)
+        .join("");
 }
 
 /* ===========================================
@@ -28,7 +33,7 @@ function render(tasks) {
     tbody.innerHTML = "";
 
     if (!Object.keys(tasks).length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">
         <i class="bi bi-exclamation-triangle me-2"></i>
         No hay funciones ingresadas</td></tr>`;
         return;
@@ -48,6 +53,14 @@ function render(tasks) {
                         </span>
                     </td>
                     <td>${formatDays(f.assignedDays || [])}</td>
+                    <td class="text-center">
+                        <span class="badge bg-info-subtle text-dark fw-semibold fs-6">
+                            ${(() => {
+                    const value = f.requiredPersons && f.requiredPersons > 0 ? f.requiredPersons : 1;
+                    return `${value} ${value > 1 ? "personas" : "persona"}`;
+                })()}
+                        </span>
+                    </td>
                     <td class="text-end">
                         <button class="btn btn-sm btn-outline-secondary rounded-pill me-1" onclick="editFunction('${f.id || f.name}')">
                             <i class="bi bi-pencil"></i>
@@ -167,9 +180,17 @@ async function loadFunctionsFromWord() {
     }
 
     const data = await res.json();
-    Object.entries(data).forEach(([name, days]) => {
-        if (!functionCache[name] && !draftFunctions[name]) {
-            draftFunctions[name] = { name, assignedDays: days, sequential: true };
+    console.log(data);
+    data.forEach(f => {
+        const key = f.name; // seguimos usando name como key para drafts
+
+        if (!functionCache[key] && !draftFunctions[key]) {
+            draftFunctions[key] = {
+                name: f.name,
+                assignedDays: f.assignedDays || [],
+                sequential: f.sequential ?? false,
+                requiredPersons: f.requiredPersons ?? 1
+            };
         }
     });
 
@@ -199,6 +220,7 @@ function editFunction(key) {
 
     document.getElementById("functionName").value = functionData.name;
     document.getElementById("sequential").value = String(functionData.sequential);
+    document.getElementById("requiredPersons").value = functionData.requiredPersons || 1;
     $("#personDays").val(functionData.assignedDays).trigger("change");
 
     new bootstrap.Modal(modalEl).show();
@@ -213,12 +235,19 @@ form.addEventListener("submit", async e => {
     const name = document.getElementById("functionName").value.trim();
     const days = $("#personDays").val() || [];
     const sequential = document.getElementById("sequential").value === "true";
+    const requiredPersons = parseInt(document.getElementById("requiredPersons").value) || 1;
 
-    const functionData = { name, assignedDays: days, sequential };
+    const functionData = {
+        name,
+        assignedDays: days,
+        sequential,
+        requiredPersons
+    };
 
     if (editingFunctionId) {
         if (draftFunctions[editingFunctionId]) {
-            draftFunctions[editingFunctionId] = functionData;
+            delete draftFunctions[editingFunctionId];
+            draftFunctions[name] = functionData;
         } else if (functionCache[editingFunctionId]) {
             try {
                 await secureFetch(`/api/functions/${editingFunctionId}`, {
@@ -311,7 +340,6 @@ document
         }
 
         if (functionCache[functionIdToDelete]) {
-            delete functionCache[functionIdToDelete];
 
             const res = await secureFetch(
                 `/api/functions/${functionIdToDelete}`,
@@ -320,19 +348,22 @@ document
 
             if (!res.ok) {
                 showAlert(`
-                    <div class="d-flex align-items-start gap-2">
-                        <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
-                        <div>
-                            <div class="fw-semibold">
-                                No se pudo eliminar la función
-                            </div>
-                        </div>
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+                <div>
+                    <div class="fw-semibold">
+                        No se pudo eliminar la función
                     </div>
-                `, "danger");
+                </div>
+            </div>
+        `, "danger");
 
                 functionIdToDelete = null;
                 return;
             }
+
+            // ✅ borrar SOLO si backend respondió OK
+            delete functionCache[functionIdToDelete];
         }
 
         bootstrap.Modal
@@ -450,4 +481,21 @@ function showAlert(message, type = "success") {
         alert.classList.remove("show");
         alert.remove();
     }, 8000);
+}
+
+function selectWeekdays() {
+    const weekdays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+    $("#personDays").val(weekdays).trigger("change");
+}
+
+function selectAllDays() {
+    const allDays = [
+        "MONDAY", "TUESDAY", "WEDNESDAY",
+        "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"
+    ];
+    $("#personDays").val(allDays).trigger("change");
+}
+
+function clearDays() {
+    $("#personDays").val(null).trigger("change");
 }

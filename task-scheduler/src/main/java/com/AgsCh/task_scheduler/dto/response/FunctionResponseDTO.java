@@ -9,12 +9,15 @@ public class FunctionResponseDTO {
     private String name;
     private boolean sequential;
     private Set<DayOfWeek> assignedDays;
+    private Integer requiredPersons;
 
-    public FunctionResponseDTO(Long id, String name, boolean sequential, Set<DayOfWeek> assignedDays) {
+    public FunctionResponseDTO(Long id, String name, boolean sequential, Set<DayOfWeek> assignedDays,
+            Integer requiredPersons) {
         this.id = id;
         this.name = name;
         this.sequential = sequential;
         this.assignedDays = assignedDays;
+        this.requiredPersons = requiredPersons;
     }
 
     public Long getId() {
@@ -29,8 +32,11 @@ public class FunctionResponseDTO {
         return sequential;
     }
 
-    public Set<DayOfWeek> getAssignedDays(){
+    public Set<DayOfWeek> getAssignedDays() {
         return assignedDays;
     }
 
+    public Integer getRequiredPersons() {
+        return requiredPersons;
+    }
 }

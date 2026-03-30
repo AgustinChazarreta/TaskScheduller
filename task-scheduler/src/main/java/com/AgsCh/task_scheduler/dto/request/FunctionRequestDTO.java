@@ -22,9 +22,13 @@ public class FunctionRequestDTO {
     private Set<DayOfWeek> assignedDays;
 
     @NotNull
+    private Integer requiredPersons;
+
+    @NotNull
     private boolean sequential;
 
-    public FunctionRequestDTO() {}
+    public FunctionRequestDTO() {
+    }
 
     // getters & setters
     public Long getId() {
@@ -49,6 +53,14 @@ public class FunctionRequestDTO {
 
     public void setAssignedDays(Set<DayOfWeek> assignedDays) {
         this.assignedDays = assignedDays;
+    }
+
+    public Integer getRequiredPersons() {
+        return requiredPersons;
+    }
+
+    public void setRequiredPersons(Integer requiredPersons) {
+        this.requiredPersons = requiredPersons;
     }
 
     public boolean isSequential() {

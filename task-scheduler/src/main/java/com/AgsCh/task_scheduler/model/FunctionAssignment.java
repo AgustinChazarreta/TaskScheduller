@@ -49,6 +49,8 @@ public class FunctionAssignment {
     @PlanningVariable(valueRangeProviderRefs = "personRange")
     private Person person;
 
+    private int index;
+
     /**
      * Día en el que ocurre la función
      */
@@ -58,8 +60,8 @@ public class FunctionAssignment {
     /**
      * Corrida del solver a la que pertenece
      */
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "schedule_run_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_run_id")
     private ScheduleRun scheduleRun;
 
     // =========================
@@ -73,9 +75,10 @@ public class FunctionAssignment {
     /**
      * Constructor usado por el solver (en memoria)
      */
-    public FunctionAssignment(Function function, LocalDate date) {
+    public FunctionAssignment(Function function, LocalDate date, int index) {
         this.function = function;
         this.date = date;
+        this.index = index;
     }
 
     // =========================
@@ -98,6 +101,10 @@ public class FunctionAssignment {
         return date;
     }
 
+    public int getIndex() {
+        return index;
+    }
+
     public ScheduleRun getScheduleRun() {
         return scheduleRun;
     }
@@ -114,6 +121,10 @@ public class FunctionAssignment {
         this.scheduleRun = scheduleRun;
     }
 
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
     // =========================
     // DOMAIN HELPERS
     // =========================
@@ -125,6 +136,7 @@ public class FunctionAssignment {
     @Override
     public String toString() {
         return function.getName() + " - " + date +
+                " [slot " + index + "]" +
                 (person != null ? " (" + person.getFullName() + ")" : " (UNASSIGNED)");
     }
 }

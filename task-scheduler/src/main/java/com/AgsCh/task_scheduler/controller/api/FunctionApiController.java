@@ -1,9 +1,6 @@
 package com.AgsCh.task_scheduler.controller.api;
 
-import java.time.DayOfWeek;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.AgsCh.task_scheduler.dto.request.FunctionRequestDTO;
 import com.AgsCh.task_scheduler.dto.response.FunctionResponseDTO;
 import com.AgsCh.task_scheduler.service.domain.FunctionService;
+import com.AgsCh.task_scheduler.util.word.WordParser;
 
 @RestController
 @RequestMapping("/api/functions")
@@ -43,7 +41,8 @@ public class FunctionApiController {
                         f.getId(),
                         f.getName(),
                         f.isSequential(),
-                        f.getAssignedDays()))
+                        f.getAssignedDays(),
+                        f.getRequiredPersons()))
                 .collect(Collectors.toList());
     }
 
@@ -64,9 +63,20 @@ public class FunctionApiController {
     // -------- LOAD WORD --------
     @PostMapping(value = "/from-word", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('ADMIN')")
-    public Map<String, Set<DayOfWeek>> parseFromWord(
-            @RequestParam("file") MultipartFile file) {
-        return service.parseTasksFromWord(file);
+    public List<FunctionResponseDTO> parseFromWord(@RequestParam("file") MultipartFile file) {
+        List<FunctionRequestDTO> dtos = WordParser.parseFunctionsFromWord(file);
+
+        // Convertir a DTO
+        List<FunctionResponseDTO> response = dtos.stream()
+                .map(dto -> new FunctionResponseDTO(
+                        null, // id todavía no existe
+                        dto.getName(),
+                        dto.isSequential(),
+                        dto.getAssignedDays(),
+                        dto.getRequiredPersons()))
+                .toList();
+
+        return response;
     }
 
 }

@@ -1,6 +1,9 @@
 package com.AgsCh.task_scheduler.service.domain;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -19,6 +22,7 @@ import com.AgsCh.task_scheduler.dto.response.PersonResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.ScheduleResponseDTO;
 import com.AgsCh.task_scheduler.exception.BusinessException;
 import com.AgsCh.task_scheduler.model.Function;
+import com.AgsCh.task_scheduler.model.FunctionAssignment;
 import com.AgsCh.task_scheduler.model.Group;
 import com.AgsCh.task_scheduler.model.House;
 import com.AgsCh.task_scheduler.model.Person;
@@ -27,7 +31,6 @@ import com.AgsCh.task_scheduler.model.PersonUnavailability;
 import com.AgsCh.task_scheduler.model.Role;
 import com.AgsCh.task_scheduler.model.ScheduleRun;
 import com.AgsCh.task_scheduler.model.User;
-import com.AgsCh.task_scheduler.repository.FunctionAssignmentRepository;
 import com.AgsCh.task_scheduler.repository.FunctionRepository;
 import com.AgsCh.task_scheduler.repository.GroupRepository;
 import com.AgsCh.task_scheduler.repository.HouseRepository;
@@ -51,7 +54,6 @@ public class PersonService {
     private final AdminScheduleService scheduleService;
     private final FileStorageService fileStorageService;
     private final UserRepository userRepository;
-    private final FunctionAssignmentRepository functionAssignmentRepository;
     private final ScheduleRunRepository scheduleRunRepository;
     private final HouseRepository houseRepository;
     private final PasswordEncoder passwordEncoder;
@@ -64,7 +66,6 @@ public class PersonService {
             AdminScheduleService scheduleService,
             FileStorageService fileStorageService,
             UserRepository userRepository,
-            FunctionAssignmentRepository functionAssignmentRepository,
             ScheduleRunRepository scheduleRunRepository,
             HouseRepository houseRepository,
             PasswordEncoder passwordEncoder,
@@ -75,8 +76,7 @@ public class PersonService {
         this.functionRepository = functionRepository;
         this.scheduleService = scheduleService;
         this.fileStorageService = fileStorageService;
-        this.userRepository = userRepository;
-        this.functionAssignmentRepository = functionAssignmentRepository;
+        this.userRepository = userRepository;        
         this.scheduleRunRepository = scheduleRunRepository;
         this.houseRepository = houseRepository;
         this.passwordEncoder = passwordEncoder;
@@ -213,7 +213,7 @@ public class PersonService {
                     .orElseThrow(() -> new RuntimeException("Group not found"));
             if (!group.getHouse().getId().equals(houseId)) {
                 throw new RuntimeException("Group does not belong to this house");
-            }   
+            }
             person.setGroup(group);
         }
 
@@ -307,7 +307,8 @@ public class PersonService {
                         pf.getFunction().getId(),
                         pf.getFunction().getName(),
                         pf.getFunction().isSequential(),
-                        pf.getFunction().getAssignedDays()))
+                        pf.getFunction().getAssignedDays(),
+                        pf.getFunction().getRequiredPersons()))
                 .collect(Collectors.toSet());
 
         return new PersonResponseDTO(
@@ -335,8 +336,8 @@ public class PersonService {
                         pf.getFunction().getId(),
                         pf.getFunction().getName(),
                         pf.getFunction().isSequential(),
-                        null // 🔹 no traemos assignedDays
-                ))
+                        null, // 🔹 no traemos assignedDays
+                        pf.getFunction().getRequiredPersons()))
                 .collect(Collectors.toSet());
         // UNAVAILABILITIES
         Set<PersonUnavailabilityDTO> unavailabilities = person.getUnavailabilities()
@@ -518,13 +519,47 @@ public class PersonService {
                         ScheduleRun.Status.ACTIVE)
                 .orElseThrow(() -> new RuntimeException("No active schedule"));
 
-        List<FunctionAssignmentResponseDTO> myAssignments = functionAssignmentRepository
-                .findByScheduleRun_IdAndPerson_Id(
-                        activeRun.getId(),
-                        person.getId())
-                .stream()
-                .map(FunctionAssignmentResponseDTO::fromEntity)
-                .toList();
+        // 🔥 traer TODOS los assignments del run
+        List<FunctionAssignment> allAssignments = activeRun.getAssignments();
+
+        Map<String, List<FunctionAssignment>> grouped = allAssignments.stream()
+                .collect(Collectors.groupingBy(a -> a.getFunction().getName() + "|" + a.getDate()));
+
+        List<FunctionAssignmentResponseDTO> myAssignments = new ArrayList<>();
+
+        for (List<FunctionAssignment> group : grouped.values()) {
+
+            // 👉 ver si la persona está en este grupo
+            boolean containsPerson = group.stream()
+                    .anyMatch(a -> a.getPerson() != null &&
+                            a.getPerson().getId().equals(person.getId()));
+
+            if (!containsPerson) {
+                continue;
+            }
+
+            FunctionAssignment first = group.get(0);
+
+            List<String> personNames = group.stream()
+                    .sorted(Comparator.comparingInt(FunctionAssignment::getIndex))
+                    .map(a -> a.getPerson() != null
+                            ? a.getPerson().getFullName()
+                            : "UNASSIGNED")
+                    .toList();
+
+            List<String> nicknames = group.stream()
+                    .sorted(Comparator.comparingInt(FunctionAssignment::getIndex))
+                    .map(a -> a.getPerson() != null
+                            ? a.getPerson().getNickName()
+                            : "")
+                    .toList();
+
+            myAssignments.add(new FunctionAssignmentResponseDTO(
+                    first.getDate(),
+                    first.getFunction().getName(),
+                    personNames,
+                    nicknames));
+        }
 
         return new ScheduleResponseDTO(
                 myAssignments,

@@ -348,11 +348,24 @@ public class ScheduleController {
                                 formattedDate = formattedDate.substring(0, 1).toUpperCase() +
                                                 formattedDate.substring(1);
 
-                                String person = a.getPersonName()
-                                                + (a.getPersonNickname() != null && !a.getPersonNickname().isEmpty()
-                                                                ? " (" + a.getPersonNickname() + ")"
-                                                                : "");
+                                StringBuilder personBuilder = new StringBuilder();
 
+                                for (int i = 0; i < a.getPersonNames().size(); i++) {
+                                        String name = a.getPersonNames().get(i);
+                                        String nick = a.getPersonNicknames().get(i);
+
+                                        if (i > 0) {
+                                                personBuilder.append(", ");
+                                        }
+
+                                        if (nick != null && !nick.isEmpty()) {
+                                                personBuilder.append(name).append(" (").append(nick).append(")");
+                                        } else {
+                                                personBuilder.append(name);
+                                        }
+                                }
+
+                                String person = personBuilder.toString();
                                 table.addCell(new Cell()
                                                 .add(new Paragraph(formattedDate).setFont(normalFont))
                                                 .setPadding(6));

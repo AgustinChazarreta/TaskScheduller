@@ -63,15 +63,16 @@
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-4 text-center"></th>
-                                <th>Función</th>
-                                <th>Tipo</th>
-                                <th>Días</th>
+                                <th class="text-center">Función</th>
+                                <th class="text-center">Tipo</th>
+                                <th class="text-center">Días</th>
+                                <th class="text-center">Capacidad</th>
                                 <th class="text-end pe-4">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="functionsBody">
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">No hay funciones ingresadas</td>
+                                <td colspan="6" class="text-center py-5 text-muted">No hay funciones ingresadas</td>
                             </tr>
                         </tbody>
                     </table>
@@ -92,7 +93,7 @@
             <div class="modal-content rounded-4 shadow border-0">
                 <form id="functionForm">
                     <div class="modal-header bg-primary text-white">
-                        <i class="bi bi-plus-lg me-2"></i> 
+                        <i class="bi bi-plus-lg me-2"></i>
                         <h5 class="modal-title" id="modalTitle">Agregar función</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
@@ -111,6 +112,22 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Días asignados</label>
+                            <div class="mb-2 d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill"
+                                    onclick="selectWeekdays()">
+                                    Lunes a Viernes
+                                </button>
+
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill"
+                                    onclick="selectAllDays()">
+                                    Todos los días
+                                </button>
+
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                                    onclick="clearDays()">
+                                    Limpiar
+                                </button>
+                            </div>
                             <select id="personDays" class="form-control select2 rounded-3" multiple required
                                 style="width:100%;">
                                 <option value="MONDAY">Lunes</option>
@@ -121,6 +138,10 @@
                                 <option value="SATURDAY">Sábado</option>
                                 <option value="SUNDAY">Domingo</option>
                             </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Cantidad de personas</label>
+                            <input type="number" id="requiredPersons" class="form-control rounded-3" min="1" required>
                         </div>
                     </div>
                     <div class="modal-footer justify-content-center">

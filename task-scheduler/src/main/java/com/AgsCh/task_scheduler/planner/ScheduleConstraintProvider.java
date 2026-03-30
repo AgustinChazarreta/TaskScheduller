@@ -29,8 +29,8 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 personMustBeAssignable(factory),
                                 functionMustBeScheduledOnAllowedDay(factory),
                                 noDoubleBooking(factory),
+                                noDuplicatePersonInSameFunction(factory),
                                 personCannotWorkOnBirthday(factory),
-
                                 incompatibleFunctionsSameDay(factory),
 
                                 // =========================
@@ -125,6 +125,20 @@ public class ScheduleConstraintProvider implements ConstraintProvider {
                                 Joiners.equal(FunctionAssignment::getDate))
                                 .penalize(HardMediumSoftScore.ONE_HARD)
                                 .asConstraint("No double booking per day");
+        }
+
+        private Constraint noDuplicatePersonInSameFunction(ConstraintFactory factory) {
+                return factory.forEach(FunctionAssignment.class)
+                                .filter(fa -> fa.getPerson() != null)
+                                .groupBy(
+                                                FunctionAssignment::getFunction,
+                                                FunctionAssignment::getDate,
+                                                FunctionAssignment::getPerson,
+                                                ConstraintCollectors.count())
+                                .filter((function, date, person, count) -> count > 1)
+                                .penalize(HardMediumSoftScore.ofHard(10),
+                                                (function, date, person, count) -> count - 1)
+                                .asConstraint("No duplicate person in same function per day");
         }
 
         private Constraint personCannotWorkOnBirthday(ConstraintFactory factory) {

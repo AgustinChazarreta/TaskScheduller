@@ -138,9 +138,19 @@ function bindForm() {
 
             const result = await response.json();
 
+            console.log(result)
+
             sessionStorage.setItem(
                 'scheduleResults',
                 JSON.stringify(result)
+            );
+
+            sessionStorage.setItem(
+                'schedulePeriod',
+                JSON.stringify({
+                    startDate: startDate,
+                    endDate: endDate
+                })
             );
 
             sessionStorage.setItem(
@@ -335,6 +345,7 @@ function renderFunctions(functions) {
                         <th style="padding-left: 1rem;">Función</th>
                         <th style="padding-left: 2rem;">Tipo</th>
                         <th class="text-center">Días asignados</th>
+                        <th class="text-center">Capacidad</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -354,20 +365,30 @@ function renderFunctions(functions) {
                             </td>
 
                             <!-- Tipo -->
-<td>
-    <span class="badge ${f.sequential
+                            <td>
+                                <span class="badge ${f.sequential
             ? "bg-info-subtle text-info"
             : "bg-warning-subtle text-warning"
         } px-3 py-2 fw-bold">
-        ${f.sequential ? "Secuencial" : "Aleatoria"}
-    </span>
-</td>
+                                    ${f.sequential ? "Secuencial" : "Aleatoria"}
+                                </span>
+                            </td>
 
                             <!-- Días centrados -->
                             <td class="text-center">
                                 <div class="d-flex justify-content-center flex-wrap gap-1">
                                     ${formatDays(f.assignedDays)}
                                 </div>
+                            </td>
+                                    
+                            <!-- Personas necesarias -->
+                            <td class="text-center">
+                                <span class="badge bg-info-subtle text-dark fw-semibold fs-6">
+                                    ${(() => {
+            const value = f.requiredPersons && f.requiredPersons > 0 ? f.requiredPersons : 1;
+            return `${value} ${value > 1 ? "personas" : "persona"}`;
+        })()}
+                                </span>
                             </td>
 
                         </tr>

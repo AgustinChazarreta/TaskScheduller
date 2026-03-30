@@ -29,6 +29,9 @@ public class Function {
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(nullable = false)
+    private int requiredPersons = 1; // por defecto 1
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "function_assigned_days", joinColumns = @JoinColumn(name = "function_id"))
     @Column(name = "assigned_day")
@@ -51,10 +54,11 @@ public class Function {
     public Function() {
     }
 
-    public Function(String name, boolean sequential, Set<DayOfWeek> assignedDays) {
+    public Function(String name, boolean sequential, Set<DayOfWeek> assignedDays, int requiredPersons) {
         this.name = name;
         this.sequential = sequential;
         this.assignedDays = assignedDays;
+        this.requiredPersons = requiredPersons;
     }
 
     // --------- Getters y setters ---------
@@ -72,6 +76,14 @@ public class Function {
 
     public boolean isActive() {
         return active;
+    }
+
+    public int getRequiredPersons() {
+        return requiredPersons;
+    }
+
+    public void setRequiredPersons(int requiredPersons) {
+        this.requiredPersons = requiredPersons;
     }
 
     public Set<DayOfWeek> getAssignedDays() {

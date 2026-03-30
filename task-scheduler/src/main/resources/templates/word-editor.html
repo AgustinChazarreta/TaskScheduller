@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
+
+<section>
+    <style>
+        main {
+            display: flex;
+            flex-direction: column;
+            /* 🔥 esto es lo que te falta */
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f4f6f9;
+            padding-bottom: 10px;
+        }
+
+        .editor-layout {
+            display: flex;
+            gap: 16px;
+            height: calc(100vh - 160px);
+            /* 🔥 esto es clave */
+        }
+
+
+        /* =========================
+       🧾 PREVIEW WORD (SIN TOCAR DOCX)
+    ========================= */
+
+        #preview-container {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            background: #dfe5ec;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #toolbar {
+            background: white;
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #preview-wrapper {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px;
+        }
+
+        #preview {
+            transform-origin: top center;
+        }
+
+        .doc-wrapper {
+            background: white;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.18);
+            border-radius: 8px;
+            padding: 50px;
+        }
+
+        #toolbar {
+            background: #ffffff;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            /* espacio uniforme entre los controles */
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Contenedor interno de controles */
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Botones de zoom */
+        .fit-btn {
+            background: #4f46e5;
+            /* violeta corporativo */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 8rem;
+            /* espacio entre zoom y ajustar ancho */
+        }
+
+        .fit-btn:hover {
+            background: #4338ca;
+        }
+
+        .zoom-btn {
+            background: #e0d7ff;
+            /* lila muy suave */
+            color: #4f46e5;
+            /* violeta oscuro para contraste */
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: #c4b5fd;
+            /* lila un poco más intenso */
+            color: white;
+        }
+
+        /* Barra de rango */
+        #zoom-range {
+            width: 120px;
+            height: 4px;
+            border-radius: 4px;
+            accent-color: #4f46e5;
+            /* violeta corporativo */
+            cursor: pointer;
+        }
+
+        /* Valor de zoom */
+        #zoom-value {
+            font-weight: 500;
+            font-size: 14px;
+            color: #111827;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        /* =========================
+       ✏️ INTERACCIÓN (SIN ROMPER DISEÑO)
+    ========================= */
+        .editable-cell {
+            cursor: pointer;
+            border-radius: 3px;
+            display: block;
+            /* ocupa todo el alto de la celda */
+            width: 100%;
+            height: 100%;
+            min-height: 50px;
+            /* altura mínima para click */
+            padding: 2px 4px;
+        }
+
+        .editable-cell:hover {
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        .selected-cell {
+            outline: 2px solid #6366f1;
+            background: rgba(99, 102, 241, 0.2);
+        }
+
+        /* =========================
+🎨 ESTILO PRO PARA EL PANEL
+========================= */
+
+        #panel {
+            flex: 1;
+            background: #ffffff;
+            padding: 20px;
+            border-left: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.03);
+            border-radius: 0 8px 8px 0;
+            min-width: 250px;
+        }
+
+        /* Dropzone */
+        #dropzone {
+            border: 2px dashed #cbd5e1;
+            padding: 18px;
+            text-align: center;
+            border-radius: 10px;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        #dropzone:hover {
+            background: #eef4ff;
+            border-color: #6366f1;
+            color: #1f2937;
+        }
+
+        /* Botones generales */
+        button {
+            border: none;
+            border-radius: 6px;
+            padding: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        /* Botón principal */
+        .btn-primary {
+            background: #4f46e5;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #4338ca;
+        }
+
+        /* Botón de descarga */
+        .btn-download {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #0f9d76;
+        }
+
+        /* Panel de edición */
+        #editor-panel {
+            display: none;
+            /* antes era flex */
+            flex-direction: column;
+            gap: 10px;
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 8px;
+            min-height: 60px;
+            /* más compacto */
+            max-height: 120px;
+            /* opcional, evita que crezca demasiado */
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+            font-size: 14px;
+            justify-content: center;
+            /* centrar verticalmente el texto inicial */
+            align-items: center;
+            /* centrar horizontalmente */
+        }
+
+        #editor-panel h4 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            color: #111827;
+        }
+
+        #editor-panel select {
+            border: 1px solid #d1d5db;
+            padding: 6px;
+            border-radius: 6px;
+            width: 100%;
+            font-size: 13px;
+        }
+
+        select {
+            border: 1px solid #d1d5db;
+            padding: 6px;
+            border-radius: 6px;
+            width: 100%;
+            font-size: 13px;
+        }
+
+        /* =========================
+   🖱 DRAG OVERLAY PRO
+========================= */
+
+        #drag-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(79, 70, 229, 0.15);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .drag-box {
+            border: 2px dashed #4f46e5;
+            background: white;
+            padding: 40px 60px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 500;
+            color: #1f2937;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+
+    <main class="container-fluid py-4">
+
+        <!-- HEADER -->
+        <div
+            class="bg-white rounded-4 shadow-sm p-3 mb-4 border-soft d-flex justify-content-between align-items-center">
+
+            <h2 class="fw-bold mb-0">
+                <i class="bi bi-file-earmark-word text-primary me-2"></i>
+                Editor de Word
+            </h2>
+
+        </div>
+        <!-- CONTENEDOR PRINCIPAL -->
+        <div class="editor-layout">
+
+            <!-- PREVIEW -->
+            <div id="preview-container">
+
+                <div id="toolbar">
+
+                    <button class="zoom-btn" onclick="zoomOut()" title="Reducir zoom">−</button>
+
+                    <input type="range" id="zoom-range" min="50" max="150" value="100">
+
+                    <span id="zoom-value">100%</span>
+
+                    <button class="zoom-btn" onclick="zoomIn()" title="Aumentar zoom">+</button>
+
+                    <button class="fit-btn" onclick="fitToWidth()" title="Ajustar ancho">
+                        📐 Ajustar ancho
+                    </button>
+
+                </div>
+
+                <div id="preview-wrapper">
+                    <div id="preview">Cargá o arrastrá un archivo .docx</div>
+                </div>
+
+            </div>
+
+            <!-- PANEL -->
+            <div id="panel">
+                <div id="dropzone">
+                    Subir archivo
+                    <input type="file" id="upload" accept=".docx" hidden>
+                </div>
+
+                <button class="btn btn-primary rounded-pill" onclick="procesarPlaceholders()">
+                    Aplicar Schedule
+                </button>
+
+                <div id="editor-panel">
+                    <p class="text-muted text-center mb-0">Seleccioná una celda</p>
+                </div>
+
+                <div style="flex:1"></div>
+
+                <button class="btn btn-success rounded-pill" onclick="descargarDocx()">
+                    Descargar .docx
+                </button>
+            </div>
+
+        </div>
+
+        <!-- DRAG OVERLAY -->
+        <div id="drag-overlay">
+            <div class="drag-box">
+                Soltá el archivo .docx acá
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+
+        let originalHtml = null;
+
+        let assignments = [];
+        let groupedAssignments = {};
+        let validPersons = [];
+        let assignmentIndex = {};
+        let schedulePeriod = null;
+
+        let selectedCell = null;
+
+        let originalDocxFile = null;
+
+        /* ================================
+        📥 UPLOAD WORD
+        ================================ */
+
+        const upload = document.getElementById("upload");
+        const dropzone = document.getElementById("dropzone");
+
+        dropzone.onclick = () => upload.click();
+
+        // ================================
+        // 🖱 DRAG & DROP GLOBAL PRO
+        // ================================
+
+        const overlay = document.getElementById("drag-overlay");
+
+        let dragCounter = 0;
+
+        // prevenir comportamiento default en TODA la página
+        ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
+            document.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        // detectar entrada de archivo
+        document.addEventListener("dragenter", e => {
+            if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+                dragCounter++;
+                overlay.style.display = "flex";
+            }
+        });
+
+        // cuando se mueve dentro
+        document.addEventListener("dragover", e => {
+            overlay.style.display = "flex";
+        });
+
+        // cuando sale
+        document.addEventListener("dragleave", e => {
+            dragCounter--;
+            if (dragCounter === 0) {
+                overlay.style.display = "none";
+            }
+        });
+
+        // cuando soltás
+        document.addEventListener("drop", e => {
+
+            overlay.style.display = "none";
+            dragCounter = 0;
+
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+
+            if (!file.name.endsWith(".docx")) {
+                alert("Solo se permiten archivos .docx");
+                return;
+            }
+
+            originalDocxFile = file;
+
+            cargarArchivo(file).then(() => {
+                cargarSchedule();
+            });
+        });
+
+        upload.addEventListener("change", e => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            originalDocxFile = file; // 🔥 ESTA LÍNEA NUEVA
+
+            cargarArchivo(file).then(() => {
+                cargarSchedule();
+            });
+        });
+
+        function cargarArchivo(file) {
+            return new Promise((resolve) => {
+                zoomLevel = 1;
+                updateZoomUI();
+
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const preview = document.getElementById("preview");
+
+                    docx.renderAsync(e.target.result, preview)
+                        .then(() => {
+                            const wrapper = document.createElement("div");
+                            wrapper.className = "doc-wrapper";
+                            wrapper.innerHTML = preview.innerHTML;
+                            preview.innerHTML = "";
+                            preview.appendChild(wrapper);
+
+                            originalHtml = preview.innerHTML;
+
+                            resolve(); // indicamos que terminó
+                        });
+                };
+
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        /* ================================
+        📊 LOAD SCHEDULE
+        ================================ */
+
+        async function cargarSchedule() {
+
+            const periodRaw = sessionStorage.getItem('schedulePeriod');
+            if (periodRaw) schedulePeriod = JSON.parse(periodRaw);
+
+            const res = await fetch('/api/admin/schedule/current');
+            const data = await res.json();
+
+            console.log("RAW DATA:", data);
+            console.log("ASSIGNMENTS:", data.assignments);
+
+            assignments = (data.assignments || []).flatMap(a => {
+                return a.personNames.map((name, index) => ({
+                    functionName: a.functionName,
+                    day: a.day, // 🔥 ESTA LÍNEA ES LA CLAVE
+                    personName: name,
+                    personNickname: a.personNicknames[index] || ""
+                }));
+            });
+
+            groupedAssignments = buildGrouped(assignments);
+            validPersons = extractValidPersons(assignments);
+        }
+
+        /* ================================
+        🧠 GROUPING
+        ================================ */
+
+        function buildGrouped(assignments) {
+            const map = {};
+
+            assignments.forEach(a => {
+
+                if (!map[a.functionName]) {
+                    map[a.functionName] = {};
+                }
+
+                if (!map[a.functionName][a.day]) {
+                    map[a.functionName][a.day] = [];
+                }
+
+                // 🔥 ahora usamos los campos correctos
+                map[a.functionName][a.day].push({
+                    name: a.personName,
+                    nickname: a.personNickname
+                });
+
+            });
+
+            return map;
+        }
+
+        function extractValidPersons(assignments) {
+
+            const map = {};
+
+            assignments.forEach(a => {
+                map[a.personName] = {
+                    name: a.personName,
+                    nickname: a.personNickname
+                };
+            });
+
+            return Object.values(map);
+        }
+
+        /* ================================
+        📅 FORMAT DATE
+        ================================ */
+
+        function formatDate(dateStr) {
+            if (!dateStr) return "";
+            return new Date(dateStr).toLocaleDateString("es-AR");
+        }
+
+        /* ================================
+        🔄 PLACEHOLDERS
+        ================================ */
+
+        function procesarPlaceholders() {
+
+            if (!originalHtml) return;
+
+            const container = document.getElementById("preview");
+            container.innerHTML = originalHtml;
+
+            // 🔥 reaplicar zoom después de render
+            setTimeout(() => applyZoom(), 0);
+
+            assignmentIndex = {};
+            console.log("GROUPED:", groupedAssignments);
+            recorrer(container);
+
+            // 🔹 mostrar panel de edición ahora que hay un archivo
+            const editorPanel = document.getElementById("editor-panel");
+            editorPanel.style.display = "flex";
+        }
+
+        /* ================================
+        🌳 RECORRER DOM
+        ================================ */
+
+        function recorrer(nodo) {
+            if (nodo.nodeType === 3) procesarTexto(nodo);
+            else nodo.childNodes.forEach(recorrer);
+        }
+
+        /* ================================
+        🔍 REEMPLAZO
+        ================================ */
+
+        function procesarTexto(nodo) {
+            const regex = /#(.*?)#/g;
+            const text = nodo.nodeValue;
+
+            if (!regex.test(text)) return;
+
+            const span = document.createElement("span");
+
+            span.innerHTML = text.replace(regex, (match, key) => {
+
+                if (key === "Fecha_Inicio") return formatDate(schedulePeriod?.startDate);
+                if (key === "Fecha_Final") return formatDate(schedulePeriod?.endDate);
+
+                const td = nodo.parentElement.closest("td");
+                const col = td ? td.cellIndex : 0;
+
+                const dayMap = {
+                    0: "MONDAY",
+                    1: "TUESDAY",
+                    2: "WEDNESDAY",
+                    3: "THURSDAY",
+                    4: "FRIDAY",
+                    5: "SATURDAY",
+                    6: "SUNDAY"
+                };
+
+                const day = dayMap[col];
+
+                let entry = null;
+                let selected = null;
+                let index = 0;
+
+                // 🔹 CASO 1: tabla con días
+                if (day && groupedAssignments[key]?.[day]?.length > 0) {
+
+                    if (!assignmentIndex[key]) assignmentIndex[key] = {};
+                    if (!assignmentIndex[key][day]) assignmentIndex[key][day] = 0;
+
+                    index = assignmentIndex[key][day]++;
+                    entry = groupedAssignments[key][day];
+
+                    selected = entry[index % entry.length];
+                }
+
+                // 🔹 CASO 2: tabla SIN días
+                else if (groupedAssignments[key]) {
+
+                    const days = Object.keys(groupedAssignments[key]);
+
+                    if (days.length > 0) {
+                        const firstDay = days[0];
+                        const persons = groupedAssignments[key][firstDay];
+
+                        if (persons && persons.length > 0) {
+                            index = 0; // 👈 explícito
+                            selected = persons[0];
+                        }
+                    }
+                }
+
+                // 🔴 fallback
+                if (!selected) return match;
+
+                return `<span class="editable-cell" 
+                data-function="${key}"
+                data-day="${day}"
+                data-index="${index}">${selected.name} (${selected.nickname})</span>`;
+            });
+
+            nodo.replaceWith(span);
+        }
+
+        /* ================================
+        🖱 CLICK CELDA
+        ================================ */
+
+        document.addEventListener("click", e => {
+
+            const cell = e.target.closest(".editable-cell");
+            if (!cell) return;
+
+            document.querySelectorAll(".editable-cell").forEach(c => c.classList.remove("selected-cell"));
+
+            cell.classList.add("selected-cell");
+            selectedCell = cell;
+
+            mostrarSelector(cell.dataset.function, cell.dataset.index);
+        });
+
+        /* ================================
+        🎛 SIDEBAR SELECTOR
+        ================================ */
+
+        function mostrarSelector(functionName, index) {
+            const panel = document.getElementById("editor-panel");
+            const entry = groupedAssignments[functionName];
+            if (!entry) return;
+
+            // Obtener el texto actual de la celda seleccionada (solo el nombre)
+            const currentText = selectedCell.innerText;
+            const match = currentText.match(/^(.+?)\s*\(/); // extrae solo el nombre antes del paréntesis
+            const currentName = match ? match[1] : "";
+
+            // Mostrar selector con Nombre (Apodo)
+            panel.innerHTML = `
+            <h4>Función: ${functionName}</h4>
+            <select id="person-selector">
+                ${validPersons.map(v => `
+                    <option value="${v.name}">
+                        ${v.name} (${v.nickname || ''})
+                    </option>
+                `).join("")}
+            </select>
+    `;
+
+            const select = document.getElementById("person-selector");
+
+            // ⚡️ setear el valor del select al valor actual de la celda
+            if (currentName) select.value = currentName;
+
+            select.onchange = () => {
+                const value = select.value;
+
+                const assignmentGroup = groupedAssignments[functionName];
+
+                if (!assignmentGroup) return;
+
+                // buscar día
+                let day = selectedCell.dataset.day;
+
+                let personsArray = null;
+
+                if (day && assignmentGroup[day]) {
+                    personsArray = assignmentGroup[day];
+                } else {
+                    // si no hay día, tomamos el primer día disponible
+                    const days = Object.keys(assignmentGroup);
+                    if (days.length > 0) {
+                        day = days[0];
+                        personsArray = assignmentGroup[day];
+                    }
+                }
+
+                if (!personsArray || personsArray.length === 0) return;
+
+                // actualizar nombre en groupedAssignments
+                personsArray[0].name = value; // siempre el primero, como hiciste en procesarTexto
+
+                // actualizar la celda visualmente
+                const person = validPersons.find(p => p.name === value);
+                if (person && selectedCell) {
+                    selectedCell.innerText = `${person.name} (${person.nickname || ''})`;
+                }
+            };
+        }
+
+        let zoomLevel = 1;
+
+        function applyZoom() {
+            const preview = document.getElementById("preview");
+            preview.style.transform = `scale(${zoomLevel})`;
+        }
+
+        function zoomIn() {
+            zoomLevel += 0.1;
+            updateZoomUI();
+        }
+
+        function zoomOut() {
+            zoomLevel -= 0.1;
+            if (zoomLevel < 0.5) zoomLevel = 0.5;
+            updateZoomUI();
+        }
+
+        function updateZoomUI() {
+            const zoomPercent = Math.round(zoomLevel * 100);
+            document.getElementById("zoom-range").value = zoomPercent;
+            document.getElementById("zoom-value").innerText = zoomPercent + "%";
+            applyZoom();
+        }
+
+        document.getElementById("zoom-range").addEventListener("input", e => {
+            zoomLevel = e.target.value / 100;
+            applyZoom();
+        });
+
+        function fitToWidth() {
+
+            const container = document.getElementById("preview-wrapper");
+            const doc = document.querySelector(".doc-wrapper");
+
+            if (!doc) return;
+
+            const containerWidth = container.clientWidth;
+            const docWidth = doc.scrollWidth;
+
+            zoomLevel = containerWidth / docWidth;
+
+            updateZoomUI();
+        }
+        function descargarDocx() {
+
+            if (!originalDocxFile) {
+                alert("Primero cargá un archivo");
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+
+                const zip = new PizZip(e.target.result);
+                console.log(zip);
+
+                let xml = zip.file("word/document.xml").asText();
+
+                // 🔹 INSERTAR SALTOS DE PÁGINA ANTES DE TABLAS GRANDES
+                let tableCounter = 0; // contador de tablas
+
+                xml = xml.replace(/(<w:tbl>.*?#.*?#.*?<\/w:tbl>)/gs, (match) => {
+                    tableCounter++;
+                    if (tableCounter === 1) {
+                        // primera tabla: NO insertamos salto de página
+                        return match;
+                    } else {
+                        // tablas siguientes: agregamos salto de página antes
+                        return "<w:p><w:r><w:br w:type='page'/></w:r></w:p>" + match;
+                    }
+                });
+
+                // 🔥 Convertimos tus #placeholders# a formato docxtemplater
+                let counterMap = {};
+
+                xml = xml.replace(/#(.*?)#/g, (match, key) => {
+                    if (!counterMap[key]) counterMap[key] = 0;
+                    const index = counterMap[key]++;
+                    return `{${key}_${index}}`;
+                });
+
+                zip.file("word/document.xml", xml);
+
+                const DocxClass = window.Docxtemplater || window.docxtemplater;
+
+                if (!DocxClass) {
+                    alert("Docxtemplater no cargó");
+                    return;
+                }
+
+                const doc = new DocxClass(zip, {
+                    paragraphLoop: true,
+                    linebreaks: true
+                });
+
+                const data = {};
+                let counterData = {};
+
+                // 🔹 recorrer UNA sola vez
+                document.querySelectorAll(".editable-cell").forEach(cell => {
+                    const key = cell.dataset.function;
+                    const value = cell.innerText;
+
+                    if (!counterData[key]) counterData[key] = 0;
+
+                    const index = counterData[key]++;
+                    data[`${key}_${index}`] = value;
+                });
+
+                console.log(data);
+
+                // ✅ AGREGAR FECHAS (FUERA del loop)
+                if (schedulePeriod) {
+                    data["Fecha_Inicio_0"] = formatDate(schedulePeriod.startDate);
+                    data["Fecha_Final_0"] = formatDate(schedulePeriod.endDate);
+                }
+
+                try {
+                    doc.setData(data);
+                    doc.render();
+                } catch (error) {
+                    console.error(error);
+                    alert("Error generando el DOCX");
+                    return;
+                }
+
+                const blob = doc.getZip().generate({
+                    type: "blob",
+                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                });
+
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "schedule_editado.docx";
+                link.click();
+            };
+
+            reader.readAsArrayBuffer(originalDocxFile);
+        }
+    </script>
+</section>
+
+</html>

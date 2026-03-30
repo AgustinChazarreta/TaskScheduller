@@ -102,9 +102,15 @@
                     Generar PDF
                 </button>
 
-                <button id="sendPdfEmailBtn" class="btn btn-primary rounded-pill px-4" onclick="sendPdfByEmail()">
-                    <i class="bi bi-envelope-fill"></i>
+                <button type="button" id="sendPdfEmailBtn" class="btn btn-primary rounded-pill px-4"
+                    onclick="sendPdfByEmail()"> <i class="bi bi-envelope-fill"></i>
                     Enviar por mail
+                </button>
+
+                <button type="button" id="editWordBtn" class="btn rounded-pill px-4"
+                    style="background-color:#4f46e5; color:white;" onclick="goToWordEditor()"> <i
+                        class="bi bi-file-earmark-word me-1"></i>
+                    Editar en Word
                 </button>
             </div>
 
@@ -219,6 +225,14 @@
             const pdfBtn = document.getElementById('generatePdfBtn');
             pdfBtn.disabled = true;
             pdfBtn.classList.add('disabled');
+
+            const emailBtn = document.getElementById('sendPdfEmailBtn');
+            emailBtn.disabled = true;
+            emailBtn.classList.add('disabled');
+
+            const wordBtn = document.getElementById('editWordBtn');
+            wordBtn.disabled = true;
+            wordBtn.classList.add('disabled');
         }
 
         Date.prototype.getDayName = function () {
@@ -271,10 +285,15 @@
                         </div>`;
 
                     const pdfBtn = document.getElementById('generatePdfBtn');
-                    if (pdfBtn) {
-                        pdfBtn.disabled = true;
-                        pdfBtn.classList.add('disabled');
-                    }
+                    const emailBtn = document.getElementById('sendPdfEmailBtn');
+                    const wordBtn = document.getElementById('editWordBtn');
+
+                    [pdfBtn, emailBtn, wordBtn].forEach(btn => {
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.classList.add('disabled');
+                        }
+                    });
 
                     return;
                 }
@@ -297,8 +316,18 @@
 
                 const data = await res.json();
 
-                assignments = data.assignments || [];
+                assignments = (data.assignments || []).flatMap(a => {
+                    const daysArray = Array.isArray(a.day) ? a.day : [a.day];
+                    return a.personNames.map((name, index) => ({
+                        week: a.week,
+                        day: daysArray,
+                        functionName: a.functionName,
+                        personName: name,
+                        personNickname: a.personNicknames[index] || ""
+                    }));
+                });
                 currentHouseId = data.houseId || null;
+                console.log(assignments)
                 renderCalendar();
 
             } catch (e) {
@@ -450,7 +479,9 @@
 
             try {
 
-                const dtos = assignments.map(a => {
+                const grouped = {};
+
+                assignments.forEach(a => {
 
                     const dayValue = Array.isArray(a.day) ? a.day[0] : a.day;
 
@@ -460,13 +491,24 @@
                         currentYear
                     );
 
-                    return {
-                        date: realDate.toISOString().split('T')[0], // yyyy-MM-dd
-                        functionName: a.functionName,
-                        personName: a.personName,
-                        personNickname: a.personNickname || null
-                    };
+                    const formattedDate = realDate.toISOString().split('T')[0];
+
+                    const key = formattedDate + "|" + a.functionName;
+
+                    if (!grouped[key]) {
+                        grouped[key] = {
+                            date: formattedDate,
+                            functionName: a.functionName,
+                            personNames: [],
+                            personNicknames: []
+                        };
+                    }
+
+                    grouped[key].personNames.push(a.personName);
+                    grouped[key].personNicknames.push(a.personNickname || "");
                 });
+
+                const dtos = Object.values(grouped);
 
                 const res = await fetch('/api/schedule/create-new-run', {
                     method: 'POST',
@@ -491,6 +533,14 @@
                 const pdfBtn = document.getElementById('generatePdfBtn');
                 pdfBtn.disabled = false;
                 pdfBtn.classList.remove('disabled');
+
+                const emailBtn = document.getElementById('sendPdfEmailBtn');
+                emailBtn.disabled = false;
+                emailBtn.classList.remove('disabled');
+
+                const wordBtn = document.getElementById('editWordBtn');
+                wordBtn.disabled = false;
+                wordBtn.classList.remove('disabled');
 
             } catch (e) {
                 console.error(e);
@@ -728,7 +778,9 @@
 
             try {
 
-                const dtos = assignments.map(a => {
+                const grouped = {};
+
+                assignments.forEach(a => {
 
                     const dayValue = Array.isArray(a.day) ? a.day[0] : a.day;
 
@@ -738,18 +790,24 @@
                         currentYear
                     );
 
-                    // 🔥 Formato seguro sin usar toISOString (evita problemas de zona horaria)
-                    const formattedDate = realDate.getFullYear() + "-" +
-                        String(realDate.getMonth() + 1).padStart(2, "0") + "-" +
-                        String(realDate.getDate()).padStart(2, "0");
+                    const formattedDate = realDate.toISOString().split('T')[0];
 
-                    return {
-                        date: formattedDate,
-                        functionName: a.functionName,
-                        personName: a.personName,
-                        personNickname: a.personNickname || null
-                    };
+                    const key = formattedDate + "|" + a.functionName;
+
+                    if (!grouped[key]) {
+                        grouped[key] = {
+                            date: formattedDate,
+                            functionName: a.functionName,
+                            personNames: [],
+                            personNicknames: []
+                        };
+                    }
+
+                    grouped[key].personNames.push(a.personName);
+                    grouped[key].personNicknames.push(a.personNickname || "");
                 });
+
+                const dtos = Object.values(grouped);
 
                 const res = await fetch('/api/schedule/export-pdf', {
                     method: 'POST',
@@ -809,9 +867,16 @@
                 console.error(e);
                 showAlert("Error inesperado al enviar PDF por mail", "danger");
             } finally {
-                btn.disabled = false;
+                if (!scheduleModified) {
+                    btn.disabled = false;
+                    btn.classList.remove('disabled');
+                }
                 btn.innerHTML = `<i class="bi bi-envelope-fill"></i> Enviar por mail`;
             }
+        }
+
+        function goToWordEditor() {
+            window.location.href = "/admin/schedule/word";
         }
     </script>
 </section>

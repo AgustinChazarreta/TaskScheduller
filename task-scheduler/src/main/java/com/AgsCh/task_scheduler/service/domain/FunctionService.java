@@ -44,7 +44,8 @@ public class FunctionService {
         Function function = new Function(
                 dto.getName(),
                 dto.isSequential(),
-                dto.getAssignedDays());
+                dto.getAssignedDays(),
+                dto.getRequiredPersons());
 
         function.setHouse(house); // 🔥 LA LÍNEA CLAVE
 
@@ -58,8 +59,8 @@ public class FunctionService {
     }
 
     public Function findById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Function not found"));
+        return repository.findByIdAndActiveTrue(id)
+                .orElseThrow(() -> new RuntimeException("Function not found or inactive"));
     }
 
     public List<FunctionResponseDTO> findDTOByHouseId(Long houseId) {
@@ -74,7 +75,8 @@ public class FunctionService {
                 function.getId(),
                 function.getName(),
                 function.isSequential(),
-                function.getAssignedDays());
+                function.getAssignedDays(),
+                function.getRequiredPersons());
     }
 
     // -------- UPDATE --------
@@ -84,6 +86,7 @@ public class FunctionService {
         function.setName(dto.getName());
         function.setSequential(dto.isSequential());
         function.setAssignedDays(dto.getAssignedDays());
+        function.setRequiredPersons(dto.getRequiredPersons());
 
         repository.save(function);
         scheduleService.invalidate(function.getHouse());

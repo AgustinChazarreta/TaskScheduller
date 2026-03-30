@@ -3,9 +3,8 @@ package com.AgsCh.task_scheduler.dto.response;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.WeekFields;
+import java.util.List;
 import java.util.Locale;
-
-import com.AgsCh.task_scheduler.model.FunctionAssignment;
 
 public class FunctionAssignmentResponseDTO {
 
@@ -13,20 +12,20 @@ public class FunctionAssignmentResponseDTO {
     private int week;
     private DayOfWeek day;
     private String functionName;
-    private String personName;
-    private String personNickname;
+    private List<String> personNames;
+    private List<String> personNicknames;
 
     public FunctionAssignmentResponseDTO(
             LocalDate date,
             String functionName,
-            String personName,
-            String personNickname) {
+            List<String> personNames,
+            List<String> personNicknames) {
 
-        this.date = date; // 🔹 guardar fecha completa
+        this.date = date;
         this.day = date.getDayOfWeek();
         this.functionName = functionName;
-        this.personName = personName;
-        this.personNickname = personNickname;
+        this.personNames = personNames;
+        this.personNicknames = personNicknames;
         this.week = date.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
     }
 
@@ -47,24 +46,11 @@ public class FunctionAssignmentResponseDTO {
         return functionName;
     }
 
-    public String getPersonName() {
-        return personName;
+    public List<String> getPersonNames() {
+        return personNames;
     }
 
-    public String getPersonNickname() {
-        return personNickname;
-    }
-
-    // ================= CONVERTIR DESDE ENTITY =================
-    public static FunctionAssignmentResponseDTO fromEntity(FunctionAssignment entity) {
-
-        String personName = entity.getPerson() != null ? entity.getPerson().getFullName() : "UNASSIGNED";
-        String personNickname = entity.getPerson() != null ? entity.getPerson().getNickName() : "";
-
-        return new FunctionAssignmentResponseDTO(
-                entity.getDate(),
-                entity.getFunction().getName(),
-                personName,
-                personNickname);
+    public List<String> getPersonNicknames() {
+        return personNicknames;
     }
 }
