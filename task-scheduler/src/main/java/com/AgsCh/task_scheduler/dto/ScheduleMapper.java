@@ -17,248 +17,250 @@ import com.AgsCh.task_scheduler.repository.FunctionRepository;
 
 public final class ScheduleMapper {
 
-    private ScheduleMapper() {
-        // utility class
-    }
-
-    /*
-     * ======================
-     * REQUEST → MODEL
-     * ======================
-     */
-
-    public static Schedule toModel(
-            ScheduleRequestDTO request,
-            FunctionRepository functionRepository,
-            PersonRepository personRepository) {
-
-        // 1️⃣ Traer Functions y Persons existentes de la DB
-        List<Function> functions = loadFunctions(request.getFunctionIds(), functionRepository);
-        List<Person> persons = loadPersons(request.getPersonIds(), personRepository);
-
-        // 2️⃣ Fechas
-        LocalDate start = request.getPeriod().getStartDate();
-        LocalDate end = request.getPeriod().getEndDate();
-
-        // 3️⃣ Crear TaskAssignments con planningId
-        List<FunctionAssignment> assignments = createAssignments(functions, start, end);
-
-        return new Schedule(persons, functions, assignments, start, end);
-    }
-
-    private static List<Function> loadFunctions(List<Long> ids, FunctionRepository repo) {
-        List<Function> functions = new ArrayList<>();
-        for (Long id : ids) {
-            // Asume que cada id ya existe en la DB
-            Function function = repo.findById(id)
-                    .orElseThrow(() -> new BusinessException(
-                            "Function no encontrada en DB: " + id));
-            functions.add(function);
-        }
-        return functions;
-    }
-
-    private static List<Person> loadPersons(List<Long> ids, PersonRepository repo) {
-        List<Person> persons = new ArrayList<>();
-        for (Long id : ids) {
-            // Asume que cada id ya existe en la DB
-            Person person = repo.findById(id)
-                    .orElseThrow(() -> new BusinessException(
-                            "Person no encontrada en DB: " + id));
-            persons.add(person);
-        }
-        return persons;
-    }
-
-    private static List<FunctionAssignment> createAssignments(
-            List<Function> functions,
-            LocalDate startDate,
-            LocalDate endDate) {
-
-        if (startDate.isAfter(endDate)) {
-            throw new BusinessException("Start date is after end date");
+        private ScheduleMapper() {
+                // utility class
         }
 
-        List<FunctionAssignment> assignments = new ArrayList<>();
+        /*
+         * ======================
+         * REQUEST → MODEL
+         * ======================
+         */
 
-        for (Function function : functions) {
-            for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+        public static Schedule toModel(
+                        ScheduleRequestDTO request,
+                        FunctionRepository functionRepository,
+                        PersonRepository personRepository) {
 
-                if (function.getAssignedDays().contains(date.getDayOfWeek())) {
+                // 1️⃣ Traer Functions y Persons existentes de la DB
+                List<Function> functions = loadFunctions(request.getFunctionIds(), functionRepository);
+                List<Person> persons = loadPersons(request.getPersonIds(), personRepository);
 
-                    int required = Math.max(1, function.getRequiredPersons());
+                // 2️⃣ Fechas
+                LocalDate start = request.getPeriod().getStartDate();
+                LocalDate end = request.getPeriod().getEndDate();
 
-                    for (int i = 0; i < required; i++) {
+                // 3️⃣ Crear TaskAssignments con planningId
+                List<FunctionAssignment> assignments = createAssignments(functions, start, end);
 
-                        FunctionAssignment assignment = new FunctionAssignment(function, date, i);
+                return new Schedule(persons, functions, assignments, start, end);
+        }
 
-                        assignments.add(assignment);
-                    }
+        private static List<Function> loadFunctions(List<Long> ids, FunctionRepository repo) {
+                List<Function> functions = new ArrayList<>();
+                for (Long id : ids) {
+                        // Asume que cada id ya existe en la DB
+                        Function function = repo.findById(id)
+                                        .orElseThrow(() -> new BusinessException(
+                                                        "Function no encontrada en DB: " + id));
+                        functions.add(function);
                 }
-            }
+                return functions;
         }
 
-        return assignments;
-    }
-
-    /*
-     * ======================
-     * MODEL → RESPONSE
-     * ======================
-     */
-
-    public static ScheduleResponseDTO toResponse(Schedule solution) {
-
-        List<FunctionAssignment> sorted = solution.getFunctionAssignmentList()
-                .stream()
-                .sorted(Comparator
-                        .comparing(FunctionAssignment::getDate)
-                        .thenComparing(a -> a.getFunction().getName())
-                        .thenComparing(FunctionAssignment::getIndex))
-                .toList();
-
-        Map<String, List<FunctionAssignment>> grouped = sorted.stream()
-                .collect(Collectors.groupingBy(
-                        a -> a.getFunction().getName() + "|" + a.getDate(),
-                        LinkedHashMap::new, // 🔥 mantiene orden
-                        Collectors.toList()));
-
-        List<FunctionAssignmentResponseDTO> responses = new ArrayList<>();
-
-        for (List<FunctionAssignment> group : grouped.values()) {
-
-            FunctionAssignment first = group.get(0);
-
-            List<String> personNames = group.stream()
-                    .sorted(Comparator.comparingInt(FunctionAssignment::getIndex))
-                    .map(a -> a.getPerson() != null
-                            ? a.getPerson().getFullName()
-                            : "UNASSIGNED")
-                    .toList();
-
-            List<String> nicknames = group.stream()
-                    .sorted(Comparator.comparingInt(FunctionAssignment::getIndex))
-                    .map(a -> a.getPerson() != null
-                            ? a.getPerson().getNickName()
-                            : "")
-                    .toList();
-
-            responses.add(new FunctionAssignmentResponseDTO(
-                    first.getDate(),
-                    first.getFunction().getName(),
-                    personNames,
-                    nicknames));
+        private static List<Person> loadPersons(List<Long> ids, PersonRepository repo) {
+                List<Person> persons = new ArrayList<>();
+                for (Long id : ids) {
+                        // Asume que cada id ya existe en la DB
+                        Person person = repo.findById(id)
+                                        .orElseThrow(() -> new BusinessException(
+                                                        "Person no encontrada en DB: " + id));
+                        persons.add(person);
+                }
+                return persons;
         }
 
-        return new ScheduleResponseDTO(
-                responses,
-                solution.getScore() != null ? solution.getScore().toString() : "NO_SCORE");
-    }
+        private static List<FunctionAssignment> createAssignments(
+                        List<Function> functions,
+                        LocalDate startDate,
+                        LocalDate endDate) {
 
-    /*
-     * ======================
-     * RUN → RESPONSE
-     * ======================
-     */
+                if (startDate.isAfter(endDate)) {
+                        throw new BusinessException("Start date is after end date");
+                }
 
-    public static ScheduleResponseDTO toResponse(ScheduleRun run) {
+                List<FunctionAssignment> assignments = new ArrayList<>();
 
-        if (run == null) {
-            throw new BusinessException("ScheduleRun es null");
+                for (Function function : functions) {
+                        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+
+                                if (function.getAssignedDays().contains(date.getDayOfWeek())) {
+
+                                        int required = Math.max(1, function.getRequiredPersons());
+
+                                        for (int i = 0; i < required; i++) {
+
+                                                FunctionAssignment assignment = new FunctionAssignment(function, date,
+                                                                i);
+
+                                                assignments.add(assignment);
+                                        }
+                                }
+                        }
+                }
+
+                return assignments;
         }
 
-        Map<String, List<FunctionAssignment>> grouped = run.getAssignments()
-                .stream()
-                .collect(Collectors.groupingBy(a -> a.getFunction().getName() + "|" + a.getDate()));
+        /*
+         * ======================
+         * MODEL → RESPONSE
+         * ======================
+         */
 
-        List<FunctionAssignmentResponseDTO> responses = new ArrayList<>();
+        public static ScheduleResponseDTO toResponse(Schedule solution) {
 
-        for (List<FunctionAssignment> group : grouped.values()) {
+                List<FunctionAssignment> sorted = solution.getFunctionAssignmentList()
+                                .stream()
+                                .sorted(Comparator
+                                                .comparing(FunctionAssignment::getDate)
+                                                .thenComparing(a -> a.getFunction().getName())
+                                                .thenComparing(FunctionAssignment::getIndex))
+                                .toList();
 
-            FunctionAssignment first = group.get(0);
+                Map<String, List<FunctionAssignment>> grouped = sorted.stream()
+                                .collect(Collectors.groupingBy(
+                                                a -> a.getFunction().getName() + "|" + a.getDate(),
+                                                LinkedHashMap::new, // 🔥 mantiene orden
+                                                Collectors.toList()));
 
-            List<String> personNames = group.stream()
-                    .sorted(Comparator.comparingInt(FunctionAssignment::getIndex))
-                    .map(a -> a.getPerson() != null
-                            ? a.getPerson().getFullName()
-                            : "UNASSIGNED")
-                    .toList();
+                List<FunctionAssignmentResponseDTO> responses = new ArrayList<>();
 
-            List<String> nicknames = group.stream()
-                    .sorted(Comparator.comparingInt(FunctionAssignment::getIndex))
-                    .map(a -> a.getPerson() != null
-                            ? a.getPerson().getNickName()
-                            : "")
-                    .toList();
+                for (List<FunctionAssignment> group : grouped.values()) {
 
-            responses.add(new FunctionAssignmentResponseDTO(
-                    first.getDate(),
-                    first.getFunction().getName(),
-                    personNames,
-                    nicknames));
+                        FunctionAssignment first = group.get(0);
+
+                        List<String> personNames = group.stream()
+                                        .sorted(Comparator.comparingInt(FunctionAssignment::getIndex))
+                                        .map(a -> a.getPerson() != null
+                                                        ? a.getPerson().getFullName()
+                                                        : "UNASSIGNED")
+                                        .toList();
+
+                        List<String> nicknames = group.stream()
+                                        .sorted(Comparator.comparingInt(FunctionAssignment::getIndex))
+                                        .map(a -> a.getPerson() != null
+                                                        ? a.getPerson().getNickName()
+                                                        : "")
+                                        .toList();
+
+                        responses.add(new FunctionAssignmentResponseDTO(
+                                        first.getDate(),
+                                        first.getFunction().getName(),
+                                        personNames,
+                                        nicknames));
+                }
+
+                return new ScheduleResponseDTO(
+                                responses,
+                                solution.getScore() != null ? solution.getScore().toString() : "NO_SCORE");
         }
 
-        String score = run.getScore() != null
-                ? run.getScore()
-                : "NO_SCORE";
+        /*
+         * ======================
+         * RUN → RESPONSE
+         * ======================
+         */
 
-        return new ScheduleResponseDTO(responses, score);
-    }
+        public static ScheduleResponseDTO toResponse(ScheduleRun run) {
 
-    public static Schedule toModelFromAssignments(
-            List<FunctionAssignmentResponseDTO> dtos,
-            List<Function> functions,
-            List<Person> persons) {
+                if (run == null) {
+                        throw new BusinessException("ScheduleRun es null");
+                }
 
-        if (dtos == null || dtos.isEmpty()) {
-            throw new BusinessException("No hay assignments para crear el Schedule");
+                Map<String, List<FunctionAssignment>> grouped = run.getAssignments()
+                                .stream()
+                                .collect(Collectors.groupingBy(a -> a.getFunction().getName() + "|" + a.getDate()));
+
+                List<FunctionAssignmentResponseDTO> responses = new ArrayList<>();
+
+                for (List<FunctionAssignment> group : grouped.values()) {
+
+                        FunctionAssignment first = group.get(0);
+
+                        List<String> personNames = group.stream()
+                                        .sorted(Comparator.comparingInt(FunctionAssignment::getIndex))
+                                        .map(a -> a.getPerson() != null
+                                                        ? a.getPerson().getFullName()
+                                                        : "UNASSIGNED")
+                                        .toList();
+
+                        List<String> nicknames = group.stream()
+                                        .sorted(Comparator.comparingInt(FunctionAssignment::getIndex))
+                                        .map(a -> a.getPerson() != null
+                                                        ? a.getPerson().getNickName()
+                                                        : "")
+                                        .toList();
+
+                        responses.add(new FunctionAssignmentResponseDTO(
+                                        first.getDate(),
+                                        first.getFunction().getName(),
+                                        personNames,
+                                        nicknames));
+                }
+
+                String score = run.getScore() != null
+                                ? run.getScore()
+                                : "NO_SCORE";
+
+                return new ScheduleResponseDTO(responses, score);
         }
 
-        List<FunctionAssignment> assignments = new ArrayList<>();
+        public static Schedule toModelFromAssignments(
+                        List<FunctionAssignmentResponseDTO> dtos,
+                        List<Function> functions,
+                        List<Person> persons) {
 
-        for (FunctionAssignmentResponseDTO dto : dtos) {
+                if (dtos == null || dtos.isEmpty()) {
+                        throw new BusinessException("No hay assignments para crear el Schedule");
+                }
 
-            // 🔹 Buscar función por nombre
-            Function function = functions.stream()
-                    .filter(f -> f.getName().equals(dto.getFunctionName()))
-                    .findFirst()
-                    .orElseThrow(() -> new BusinessException("Función no encontrada: " + dto.getFunctionName()));
+                List<FunctionAssignment> assignments = new ArrayList<>();
 
-            // 🔹 Usar fecha directa (NO reconstruir con week/day)
-            LocalDate date = dto.getDate();
+                for (FunctionAssignmentResponseDTO dto : dtos) {
 
-            int index = 0;
+                        // 🔹 Buscar función por nombre
+                        Function function = functions.stream()
+                                        .filter(f -> f.getName().equals(dto.getFunctionName()))
+                                        .findFirst()
+                                        .orElseThrow(() -> new BusinessException(
+                                                        "Función no encontrada: " + dto.getFunctionName()));
 
-            for (String personName : dto.getPersonNames()) {
+                        // 🔹 Usar fecha directa (NO reconstruir con week/day)
+                        LocalDate date = dto.getDate();
 
-                // 🔹 Buscar persona (puede ser null si es UNASSIGNED)
-                Person person = personName.equals("UNASSIGNED")
-                        ? null
-                        : persons.stream()
-                                .filter(p -> p.getFullName().equals(personName))
-                                .findFirst()
-                                .orElse(null);
+                        int index = 0;
 
-                FunctionAssignment assignment = new FunctionAssignment(function, date, index++);
+                        for (String personName : dto.getPersonNames()) {
 
-                assignment.setPerson(person);
+                                // 🔹 Buscar persona (puede ser null si es UNASSIGNED)
+                                Person person = personName.equals("UNASSIGNED")
+                                                ? null
+                                                : persons.stream()
+                                                                .filter(p -> p.getFullName().equals(personName))
+                                                                .findFirst()
+                                                                .orElse(null);
 
-                assignments.add(assignment);
-            }
+                                FunctionAssignment assignment = new FunctionAssignment(function, date, index++);
+
+                                assignment.setPerson(person);
+
+                                assignments.add(assignment);
+                        }
+                }
+
+                // 🔹 Calcular rango real del schedule
+                LocalDate startDate = assignments.stream()
+                                .map(FunctionAssignment::getDate)
+                                .min(LocalDate::compareTo)
+                                .orElseThrow();
+
+                LocalDate endDate = assignments.stream()
+                                .map(FunctionAssignment::getDate)
+                                .max(LocalDate::compareTo)
+                                .orElseThrow();
+
+                return new Schedule(persons, functions, assignments, startDate, endDate);
         }
-
-        // 🔹 Calcular rango real del schedule
-        LocalDate startDate = assignments.stream()
-                .map(FunctionAssignment::getDate)
-                .min(LocalDate::compareTo)
-                .orElseThrow();
-
-        LocalDate endDate = assignments.stream()
-                .map(FunctionAssignment::getDate)
-                .max(LocalDate::compareTo)
-                .orElseThrow();
-
-        return new Schedule(persons, functions, assignments, startDate, endDate);
-    }
 
 }

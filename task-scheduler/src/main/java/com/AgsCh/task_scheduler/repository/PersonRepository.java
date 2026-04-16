@@ -18,4 +18,6 @@ public interface PersonRepository extends JpaRepository<Person, Long> {
     List<Person> findByGroupId(Long groupId);
 
     List<Person> findByHouseAndGroup(House house, Group group);
+
+    boolean existsByEmail(String email);
 }

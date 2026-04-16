@@ -42,4 +42,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAdminsByHouseIdWithAdminData(@Param("houseId") Long houseId);
 
     long countByRoleAndActiveTrue(Role webmaster);
+
+    @Query("""
+            SELECT u FROM User u
+            JOIN FETCH u.adminData
+            WHERE u.username = :username
+            """)
+    Optional<User> findByUsernameWithAdminData(String username);
 }

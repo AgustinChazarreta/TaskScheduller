@@ -16,6 +16,7 @@ let personIdToDelete = null;
 let personNameToDelete = null;
 let pendingAlert = null;
 const personsCache = {};
+let selectedExternalPerson = null;
 
 let allPersons = []; // 🔹 para el filtro
 
@@ -294,7 +295,7 @@ form.addEventListener("submit", async e => {
     setLoadingButton(saveBtn, true);
 
     const payload = {
-        fullName: personName.value.trim(),
+        fullName: $("#personName").val().trim(),
         nickName: personNickname.value.trim() || null,
         birthDate: personBirthDate.value,
         active: personStatus.checked,
@@ -354,9 +355,21 @@ form.addEventListener("submit", async e => {
         };
     }
 
-    const file = photoInput.files[0];
-    if (file) {
-        await uploadProfileImage(personId, file);
+    // ===============================
+    // PROFILE IMAGE (INPUT o EXTERNAL)
+    // ===============================
+
+    const fileFromInput = photoInput.files[0];
+
+    let finalFile = fileFromInput;
+
+    // si no hay archivo manual, usar imagen externa
+    if (!finalFile && selectedExternalPerson?.photo) {
+        finalFile = base64ToFile(selectedExternalPerson.photo);
+    }
+
+    if (finalFile) {
+        await uploadProfileImage(personId, finalFile);
     }
 
     setLoadingButton(saveBtn, false);
@@ -482,29 +495,58 @@ document
 function resetForm() {
 
     editingPersonId = null;
-
     currentUnavailabilities = [];
 
     renderUnavailabilities();
 
     modalTitle.innerHTML = `<i class="bi bi-person-plus me-2"></i>Agregar persona`;
 
+    // reset form HTML nativo
     form.reset();
 
+    // ==========================
+    // INPUTS normales (seguro)
+    // ==========================
+    $("#personNickname").val("");
+    $("#personBirthDate").val("");
+    $("#personEmail").val("");
+    $("#personEntryDate").val("");
+    $("#personExitDate").val("");
+
+    $("#personStatus").prop("checked", false);
+    $("#mailStatus").prop("checked", false);
+
+    document.getElementById("personGroup").value = "";
+
+    // ==========================
+    // SELECT2 múltiple
+    // ==========================
     $("#personFunctions").val(null).trigger("change");
     $("#personDays").val(null).trigger("change");
 
+    // ==========================
+    // SELECT2 principal (nombre)
+    // ==========================
+    $("#personName")
+        .val(null)
+        .trigger("change");
+
+    // ==========================
+    // FOTO
+    // ==========================
     photoPreview.src = "/person-circle.svg";
 
     if (photoInput) {
         photoInput.value = "";
     }
+    selectedExternalPerson = null;
 
+    // ==========================
+    // unavailabilities inputs
+    // ==========================
     unavailabilityStart.value = "";
     unavailabilityEnd.value = "";
     unavailabilityReason.value = "";
-
-    document.getElementById("personGroup").value = "";
 }
 
 
@@ -533,6 +575,69 @@ modalEl.addEventListener("shown.bs.modal", () => {
 
         });
 
+    // ===============================
+    // SELECT2 - AUTOCOMPLETE EXTERNAL PERSON
+    // ===============================
+    $("#personName").select2({
+        placeholder: "Buscar persona...",
+        width: "100%",
+        minimumInputLength: 2,
+        allowClear: true,
+        dropdownParent: $('#personModal'),
+
+        ajax: {
+            delay: 300,
+
+            transport: async function (params, success, failure) {
+                try {
+                    const results = await searchExternalPersons(params.data.term);
+
+                    success({
+                        results: results.map((p) => ({
+                            id: p.fullName,
+                            text: p.fullName,
+                            data: p
+                        }))
+                    });
+
+                } catch (err) {
+                    failure(err);
+                }
+            }
+        },
+
+        templateResult: function (item) {
+            if (!item.id) return item.text;
+
+            const p = item.data;
+
+            const imgSrc = p.photo
+                ? `data:image/jpeg;base64,${p.photo}`
+                : "/person-circle.svg";
+
+            return $(`
+            <div style="display:flex;gap:10px;align-items:center;">
+                <img src="${imgSrc}" style="width:32px;height:32px;border-radius:50%;">
+                <div>
+                    <div style="font-weight:600;">${p.fullName}</div>
+                    <small>${p.email || "-"}</small>
+                </div>
+            </div>
+        `);
+        },
+
+        templateSelection: item => item.text
+    });
+
+
+    // IMPORTANTE: evitar duplicar eventos
+    $("#personName").off("select2:select");
+
+    $("#personName").on("select2:select", function (e) {
+        const data = e.params.data.data;
+        selectedExternalPerson = data;
+        useExternalPersonFromSelect(data);
+    });
 });
 
 modalEl.addEventListener("hidden.bs.modal", () => {
@@ -670,6 +775,22 @@ async function uploadProfileImage(personId, file) {
 
     }
 
+}
+
+
+function base64ToFile(base64, filename = "external.jpg") {
+    const arr = base64.split(",");
+    const mime = "image/jpeg";
+    const bstr = atob(arr.length > 1 ? arr[1] : arr[0]);
+
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+
+    return new File([u8arr], filename, { type: mime });
 }
 
 
