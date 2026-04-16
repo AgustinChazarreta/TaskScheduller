@@ -15,7 +15,7 @@ import javax.sql.DataSource;
 import java.util.Map;
 
 @Configuration
-@EnableJpaRepositories(basePackages = "com.AgsCh.task_scheduler.repository.primary", entityManagerFactoryRef = "primaryEntityManagerFactory", transactionManagerRef = "primaryTransactionManager")
+@EnableJpaRepositories(basePackages = "com.AgsCh.task_scheduler.repository", entityManagerFactoryRef = "primaryEntityManagerFactory", transactionManagerRef = "primaryTransactionManager")
 public class PrimaryDataSourceConfig {
 
     @Value("${spring.jpa.database-platform:org.hibernate.dialect.MySQL8Dialect}")
