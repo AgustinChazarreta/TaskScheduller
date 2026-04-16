@@ -17,8 +17,9 @@ import java.util.Map;
 @Configuration
 @EnableJpaRepositories(basePackages = "com.AgsCh.task_scheduler.repository", excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.AgsCh\\.task_scheduler\\.repository\\.congregatio\\..*"), entityManagerFactoryRef = "primaryEntityManagerFactory", transactionManagerRef = "primaryTransactionManager")
 public class PrimaryDataSourceConfig {
-    @Value("${spring.jpa.database-platform}")
+    @Value("${spring.jpa.database-platform:org.hibernate.dialect.MySQL8Dialect}")
     private String dialect;
+
     @Value("${spring.jpa.hibernate.ddl-auto:update}")
     private String ddlAuto;
 
