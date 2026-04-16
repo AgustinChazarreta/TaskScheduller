@@ -3,7 +3,8 @@ package com.AgsCh.task_scheduler.config;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
@@ -11,14 +12,15 @@ import javax.sql.DataSource;
 @Configuration
 public class ExternalJdbcConfig {
 
-    @Bean(name = "externalDataSource")
+    @Bean(name = "congregatioDataSource")
     @ConfigurationProperties(prefix = "spring.datasource.congregatio")
-    public DataSource externalDataSource() {
+    public DataSource congregatioDataSource() {
         return DataSourceBuilder.create().build();
     }
 
-    @Bean
-    public JdbcTemplate jdbcTemplate(@Qualifier("externalDataSource") DataSource ds) {
-        return new JdbcTemplate(ds);
+    @Bean(name = "congregatioJdbcTemplate")
+    public JdbcTemplate congregatioJdbcTemplate(
+            @Qualifier("congregatioDataSource") DataSource dataSource) {
+        return new JdbcTemplate(dataSource);
     }
 }
