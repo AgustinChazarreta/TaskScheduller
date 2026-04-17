@@ -49,6 +49,7 @@ public class FunctionAssignment {
     @PlanningVariable(valueRangeProviderRefs = "personRange")
     private Person person;
 
+    @Transient
     private int index;
 
     /**
