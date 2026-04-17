@@ -29,7 +29,7 @@ public class Function {
     @Column(nullable = false)
     private boolean active = true;
 
-    @Column(nullable = false)
+    @Column(name = "required_persons", nullable = false)
     private int requiredPersons = 1; // por defecto 1
 
     @ElementCollection(fetch = FetchType.EAGER)

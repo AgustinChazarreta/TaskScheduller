@@ -17,29 +17,34 @@ public class Person {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // Identificador único
 
-    @Column(nullable = false)
+    @Column(name = "full_name", nullable = false)
     private String fullName; // Nombre completo
 
-    @Column
+    @Column(name = "nick_name")
     private String nickName; // Nombre de guerra
 
+    @Column(name = "birth_date")
     private LocalDate birthDate; // Fecha de nacimiento
+
 
     private String email;
 
-    @Column
+    @Column(name = "email_notifications_enabled")
     private boolean emailNotificationsEnabled = false;
 
     @Column
     private boolean active = true;
 
+    @Column(name = "entry_date")
     private LocalDate entryDate;
 
+    @Column(name = "exit_date")
     private LocalDate exitDate;
 
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
+    @Column(name = "profile_image_public_id")
     private String profileImagePublicId;
 
     // Patrón semanal (normalmente)

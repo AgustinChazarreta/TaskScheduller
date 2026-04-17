@@ -20,7 +20,7 @@ public class AdminData {
     @Column(nullable = true)
     private String orden; // Orden I, Orden II
 
-    @Column(nullable = true)
+    @Column(name = "sede_residencia", nullable = true)
     private String sedeResidencia;
 
     @Column(nullable = true)

@@ -26,7 +26,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(name = "password_temporary", nullable = false)
     private boolean passwordTemporary = false;
 
     @Enumerated(EnumType.STRING)
@@ -38,6 +38,7 @@ public class User implements UserDetails {
 
     private boolean active = true;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @ManyToOne
