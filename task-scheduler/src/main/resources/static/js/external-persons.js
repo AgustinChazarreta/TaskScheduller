@@ -1,25 +1,28 @@
 let externalSearchTimeout = null;
 
-function searchExternalPersons(name, callback) {
+function searchExternalPersons(name) {
+    return new Promise((resolve) => {
 
-    clearTimeout(externalSearchTimeout);
+        clearTimeout(externalSearchTimeout);
 
-    externalSearchTimeout = setTimeout(() => {
+        externalSearchTimeout = setTimeout(() => {
 
-        if (!name || name.trim().length < 3) {
-            callback([]);
-            return;
-        }
+            if (!name || name.trim().length < 3) {
+                resolve([]);
+                return;
+            }
 
-        fetch(`/api/external-persons/search?name=${encodeURIComponent(name)}`)
-            .then(res => {
-                if (!res.ok) return [];
-                return res.json();
-            })
-            .then(data => callback(data))
-            .catch(() => callback([]));
+            fetch(`/api/external-persons/search?name=${encodeURIComponent(name)}`)
+                .then(res => {
+                    if (!res.ok) return [];
+                    return res.json();
+                })
+                .then(data => resolve(data))
+                .catch(() => resolve([]));
 
-    }, 400); // 👈 clave: evita spam de requests
+        }, 400);
+
+    });
 }
 
 function useExternalPersonFromSelect(p) {
