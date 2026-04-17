@@ -19,6 +19,7 @@ public class House {
 
     private boolean active = true;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     // ========================
