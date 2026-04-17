@@ -10,6 +10,8 @@ import com.AgsCh.task_scheduler.util.file.ByteArrayMultipartFile;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 import java.util.List;
 
@@ -20,6 +22,7 @@ public class ExternalPersonImportService {
     private final PersonRepository personRepository;
     private final CurrentUserService currentUserService;
     private final ImageStorageService imageStorageService;
+    private final Map<String, List<ExternalPersonDTO>> cache = new ConcurrentHashMap<>();
 
     public ExternalPersonImportService(
             ExternalPersonSearchPort externalPort,
@@ -36,24 +39,42 @@ public class ExternalPersonImportService {
     // 🔍 solo búsqueda
     public List<ExternalPersonDTO> search(String name) {
 
-        // 🔹 1. traer externos
+        if (name == null || name.trim().length() < 3) {
+            return List.of();
+        }
+
+        String key = name.trim().toLowerCase();
+
+        // =========================
+        // 1. CACHE HIT
+        // =========================
+        if (cache.containsKey(key)) {
+            return cache.get(key);
+        }
+
+        // =========================
+        // 2. FETCH EXTERNAL
+        // =========================
         List<ExternalPersonDTO> external = externalPort.searchByName(name);
 
-        // 🔹 2. traer ordens del usuario
         List<String> ordensPermitidas = currentUserService.getCurrentUserOrdens();
 
-        // 🔹 3. filtrar
-        return external.stream()
+        // =========================
+        // 3. FILTERING
+        // =========================
+        List<ExternalPersonDTO> result = external.stream()
                 .filter(dto -> dto.getEmail() != null)
-
-                // 🚫 evitar duplicados internos
                 .filter(dto -> !personRepository.existsByEmail(dto.getEmail()))
-
-                // 🔥 FILTRO POR ORDEN
                 .filter(dto -> dto.getOrden() != null)
                 .filter(dto -> ordensPermitidas.contains(dto.getOrden()))
-
                 .toList();
+
+        // =========================
+        // 4. CACHE STORE
+        // =========================
+        cache.put(key, result);
+
+        return result;
     }
 
     // 📥 importar al sistema interno

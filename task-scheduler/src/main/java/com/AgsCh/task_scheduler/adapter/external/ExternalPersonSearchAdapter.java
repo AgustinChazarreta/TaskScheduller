@@ -2,6 +2,8 @@ package com.AgsCh.task_scheduler.adapter.external;
 
 import com.AgsCh.task_scheduler.dto.external.ExternalPersonDTO;
 import com.AgsCh.task_scheduler.port.external.ExternalPersonSearchPort;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +14,8 @@ public class ExternalPersonSearchAdapter implements ExternalPersonSearchPort {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public ExternalPersonSearchAdapter(JdbcTemplate jdbcTemplate) {
+    public ExternalPersonSearchAdapter(
+            @Qualifier("congregatioJdbcTemplate") JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 

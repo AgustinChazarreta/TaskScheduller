@@ -22,7 +22,7 @@ public class ExternalPersonController {
     @GetMapping("/search")
     public List<ExternalPersonDTO> search(@RequestParam String name) {
 
-        if (name == null || name.trim().length() < 2) {
+        if (name == null || name.trim().length() < 3) {
             return List.of();
         }
 

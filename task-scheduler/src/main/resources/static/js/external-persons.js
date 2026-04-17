@@ -1,13 +1,26 @@
-function searchExternalPersons(name) {
-    if (!name || name.length < 2) return [];
+let externalSearchTimeout = null;
 
-    return fetch(`/api/external-persons/search?name=${name}`)
-        .then(res => {
-            if (!res.ok) throw new Error("error");
-            return res.json();
-        });
+function searchExternalPersons(name, callback) {
+
+    clearTimeout(externalSearchTimeout);
+
+    externalSearchTimeout = setTimeout(() => {
+
+        if (!name || name.trim().length < 3) {
+            callback([]);
+            return;
+        }
+
+        fetch(`/api/external-persons/search?name=${encodeURIComponent(name)}`)
+            .then(res => {
+                if (!res.ok) return [];
+                return res.json();
+            })
+            .then(data => callback(data))
+            .catch(() => callback([]));
+
+    }, 400); // 👈 clave: evita spam de requests
 }
-
 
 function useExternalPersonFromSelect(p) {
 
