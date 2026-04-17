@@ -3,6 +3,8 @@ package com.AgsCh.task_scheduler.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.AgsCh.task_scheduler.model.Group;
 import com.AgsCh.task_scheduler.model.House;
@@ -10,7 +12,7 @@ import com.AgsCh.task_scheduler.model.Person;
 
 public interface PersonRepository extends JpaRepository<Person, Long> {
     List<Person> findByHouse(House house);
-    
+
     List<Person> findByHouseId(Long houseId);
 
     List<Person> findByGroup(Group group);
@@ -20,4 +22,7 @@ public interface PersonRepository extends JpaRepository<Person, Long> {
     List<Person> findByHouseAndGroup(House house, Group group);
 
     boolean existsByEmail(String email);
+
+    @Query("SELECT p.email FROM Person p WHERE p.email IN :emails")
+    List<String> findExistingEmails(@Param("emails") List<String> emails);
 }

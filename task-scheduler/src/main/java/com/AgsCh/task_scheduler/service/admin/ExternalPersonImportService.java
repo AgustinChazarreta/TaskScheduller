@@ -12,7 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
-
+import java.util.Set;
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -22,7 +23,21 @@ public class ExternalPersonImportService {
     private final PersonRepository personRepository;
     private final CurrentUserService currentUserService;
     private final ImageStorageService imageStorageService;
-    private final Map<String, List<ExternalPersonDTO>> cache = new ConcurrentHashMap<>();
+    private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
+    private volatile long lastFailureTime = 0;
+    private static final long BLOCK_TIME = 60_000; // 1 minuto
+
+    private static class CacheEntry {
+        List<ExternalPersonDTO> data;
+        long timestamp;
+
+        CacheEntry(List<ExternalPersonDTO> data) {
+            this.data = data;
+            this.timestamp = System.currentTimeMillis();
+        }
+    }
+
+    private static final long CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
     public ExternalPersonImportService(
             ExternalPersonSearchPort externalPort,
@@ -48,31 +63,58 @@ public class ExternalPersonImportService {
         // =========================
         // 1. CACHE HIT
         // =========================
-        if (cache.containsKey(key)) {
-            return cache.get(key);
+        CacheEntry entry = cache.get(key);
+
+        if (entry != null && (System.currentTimeMillis() - entry.timestamp) < CACHE_TTL) {
+            return entry.data;
+        }
+
+        if (System.currentTimeMillis() - lastFailureTime < BLOCK_TIME) {
+            return List.of(); // NO intentar conexión
         }
 
         // =========================
         // 2. FETCH EXTERNAL
         // =========================
-        List<ExternalPersonDTO> external = externalPort.searchByName(name);
+        List<ExternalPersonDTO> external;
+
+        try {
+            external = externalPort.searchByName(name);
+        } catch (Exception e) {
+            lastFailureTime = System.currentTimeMillis();
+            System.out.println("🚫 DB externa bloqueada temporalmente");
+            return List.of();
+        }
 
         List<String> ordensPermitidas = currentUserService.getCurrentUserOrdens();
 
         // =========================
-        // 3. FILTERING
+        // 3. FILTERING (optimizado PRO)
         // =========================
+
+        List<String> emails = external.stream()
+                .map(ExternalPersonDTO::getEmail)
+                .filter(e -> e != null && !e.isBlank())
+                .toList();
+
+        Set<String> existingEmailsSet = emails.isEmpty()
+                ? Set.of()
+                : new HashSet<>(personRepository.findExistingEmails(emails));
+
         List<ExternalPersonDTO> result = external.stream()
-                .filter(dto -> dto.getEmail() != null)
-                .filter(dto -> !personRepository.existsByEmail(dto.getEmail()))
+                .filter(dto -> dto.getEmail() != null && !dto.getEmail().isBlank())
+                .filter(dto -> !existingEmailsSet.contains(dto.getEmail()))
                 .filter(dto -> dto.getOrden() != null)
                 .filter(dto -> ordensPermitidas.contains(dto.getOrden()))
                 .toList();
-
         // =========================
         // 4. CACHE STORE
         // =========================
-        cache.put(key, result);
+        cache.put(key, new CacheEntry(result));
+
+        if (cache.size() > 1000) {
+            cache.clear(); // simple pero efectivo
+        }
 
         return result;
     }

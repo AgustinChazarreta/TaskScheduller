@@ -30,7 +30,7 @@ public class ExternalPersonSearchAdapter implements ExternalPersonSearchPort {
                         `Data Nacimento` AS birthDate,
                         `Foto` AS photo
                     FROM Congregatio
-                    WHERE LOWER(`Nome Completo`) LIKE LOWER(?)
+                    WHERE `Nome Completo` LIKE ?
                     LIMIT 10
                 """;
 

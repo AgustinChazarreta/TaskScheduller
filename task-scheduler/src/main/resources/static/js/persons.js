@@ -581,12 +581,12 @@ modalEl.addEventListener("shown.bs.modal", () => {
     $("#personName").select2({
         placeholder: "Buscar persona...",
         width: "100%",
-        minimumInputLength: 2,
+        minimumInputLength: 3,
         allowClear: true,
         dropdownParent: $('#personModal'),
 
         ajax: {
-            delay: 300,
+            delay: 500,
 
             transport: async function (params, success, failure) {
                 try {
