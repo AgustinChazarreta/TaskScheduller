@@ -157,61 +157,6 @@
     <!-- ================= ALERTAS ================= -->
     <div id="alertContainer" class="mb-4"></div>
 
-
-    <!-- ================= GENERADOR ================= -->
-    <div class="card border-0 shadow-sm rounded-4 mb-4 overlay-wrapper" id="resolveCard">
-        <div class="card-body p-4">
-
-            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-                <h5 class="fw-bold mb-0">
-                    <i class="bi bi-cpu me-2"></i>
-                    Generador de Schedule
-                </h5>
-                <small class="text-muted">
-                    Motor de optimización automática
-                </small>
-            </div>
-
-            <form id="scheduleForm">
-
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="startDate" class="form-label fw-semibold">
-                            Fecha de inicio
-                        </label>
-                        <input type="date" class="form-control rounded-3" id="startDate" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label for="endDate" class="form-label fw-semibold">
-                            Fecha de fin
-                        </label>
-                        <input type="date" class="form-control rounded-3" id="endDate" required>
-                    </div>
-                </div>
-
-                <div class="text-end">
-                    <button type="submit" class="btn btn-primary px-4 py-2" id="resolveBtn">
-
-                        <span id="resolveText">
-                            <i class="bi bi-cpu me-1"></i>
-                            Generar Schedule
-                        </span>
-
-                        <span id="resolveSpinner" class="d-none">
-                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            Resolviendo...
-                        </span>
-
-                    </button>
-                </div>
-
-            </form>
-
-        </div>
-    </div>
-
-
     <!-- ================= PERSONAS ================= -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
@@ -223,23 +168,6 @@
 
             <div id="personsContainer">
                 <p class="text-muted mb-0">Cargando personas...</p>
-            </div>
-
-        </div>
-    </div>
-
-
-    <!-- ================= FUNCIONES ================= -->
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-4">
-
-            <h5 class="fw-bold mb-4">
-                <i class="bi bi-list-task me-2"></i>
-                Funciones Cargadas
-            </h5>
-
-            <div id="functionsContainer">
-                <p class="text-muted mb-0">Cargando funciones...</p>
             </div>
 
         </div>

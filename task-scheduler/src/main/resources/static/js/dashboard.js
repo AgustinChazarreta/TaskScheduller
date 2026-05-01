@@ -12,7 +12,6 @@ const functionsCache = {};
 document.addEventListener('DOMContentLoaded', () => {
     loadScheduleStatus();
     loadPersons();
-    loadFunctions();
     bindForm();
     bindPersonSelection();
     bindSelectionButtons();
@@ -224,23 +223,6 @@ async function loadPersons() {
     }
 }
 
-async function loadFunctions() {
-    try {
-        const response = await fetch('/api/functions');
-        if (!response.ok) throw new Error('HTTP ' + response.status);
-
-        const data = await response.json();
-        const functions = Array.isArray(data) ? data : Object.values(data);
-
-        functions.forEach(f => functionsCache[f.id] = f);
-        renderFunctions(functions);
-
-    } catch (e) {
-        console.error('loadFunctions error:', e);
-        showAlert('No se pudieron cargar las funciones', 'danger');
-    }
-}
-
 /* =====================================================
    RENDER
 ===================================================== */
@@ -317,77 +299,6 @@ function renderPersons(persons) {
             : "bg-danger-subtle text-danger"
         } px-3 py-2 fw-bold">
                                     ${p.active ? "Activo" : "Inactivo"}
-                                </span>
-                            </td>
-
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-}
-function renderFunctions(functions) {
-    const container = document.getElementById('functionsContainer');
-
-    if (!functions.length) {
-        container.innerHTML =
-            '<p class="text-muted mb-0">No hay funciones cargadas</p>';
-        return;
-    }
-
-    container.innerHTML = `
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="text-center" style="width: 40px;"></th>
-                        <th style="padding-left: 1rem;">Función</th>
-                        <th style="padding-left: 2rem;">Tipo</th>
-                        <th class="text-center">Días asignados</th>
-                        <th class="text-center">Capacidad</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${functions.map(f => `
-                        <tr>
-
-                            <!-- Ícono -->
-                            <td class="text-center">
-                                <i class="bi bi-gear text-secondary fs-5"></i>
-                            </td>
-
-                            <!-- Nombre -->
-                            <td>
-                                <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-semibold fs-6">
-                                    ${f.name}
-                                </span>
-                            </td>
-
-                            <!-- Tipo -->
-                            <td>
-                                <span class="badge ${f.sequential
-            ? "bg-info-subtle text-info"
-            : "bg-warning-subtle text-warning"
-        } px-3 py-2 fw-bold">
-                                    ${f.sequential ? "Secuencial" : "Aleatoria"}
-                                </span>
-                            </td>
-
-                            <!-- Días centrados -->
-                            <td class="text-center">
-                                <div class="d-flex justify-content-center flex-wrap gap-1">
-                                    ${formatDays(f.assignedDays)}
-                                </div>
-                            </td>
-                                    
-                            <!-- Personas necesarias -->
-                            <td class="text-center">
-                                <span class="badge bg-info-subtle text-dark fw-semibold fs-6">
-                                    ${(() => {
-            const value = f.requiredPersons && f.requiredPersons > 0 ? f.requiredPersons : 1;
-            return `${value} ${value > 1 ? "personas" : "persona"}`;
-        })()}
                                 </span>
                             </td>
 

@@ -1,0 +1,726 @@
+let assignments = [];
+let persons = [];
+let currentHouseId = null;
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+const order = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+const jsDays = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+let scheduleModified = false;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadPersons();
+    checkScheduleStatusAndLoad();
+});
+
+document.getElementById('dayModal')
+    .addEventListener('hidden.bs.modal', function () {
+        if (scheduleModified) {
+            renderCalendar();
+        }
+    });
+
+// ================= ALERT =================
+function showAlert(message, type = "success", showIcon = true) {
+
+    const container = document.getElementById("alertContainer");
+    const alert = document.createElement("div");
+
+    let iconHtml = '';
+    if (showIcon) {
+        if (type === "success") iconHtml = '<i class="bi bi-check-circle-fill me-2"></i>';
+        else if (type === "danger") iconHtml = '<i class="bi bi-x-circle-fill me-2"></i>';
+    }
+
+    alert.className = `alert alert-${type} alert-dismissible fade show d-flex align-items-center`;
+    alert.innerHTML = `${iconHtml}${message}<button class="btn-close ms-auto" data-bs-dismiss="alert"></button>`;
+
+    container.appendChild(alert);
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+    setTimeout(() => alert.remove(), 6000);
+}
+
+async function loadPersons() {
+    try {
+        const res = await fetch('/api/persons');
+        if (!res.ok) throw new Error();
+
+        const raw = await res.json();
+
+        // Normalizamos la estructura del backend
+        persons = raw.map(p => ({
+            id: p.id,
+            name: p.fullName,          // ← viene como fullName
+            nickname: p.nickName || null  // ← viene como nickName
+        }));
+
+    } catch (e) {
+        console.error("Error cargando personas", e);
+        persons = [];
+    }
+}
+
+function markScheduleModified() {
+    scheduleModified = true;
+    document.getElementById('saveChangesBtn').style.display = 'block';
+
+    const pdfBtn = document.getElementById('generatePdfBtn');
+    pdfBtn.disabled = true;
+    pdfBtn.classList.add('disabled');
+
+    const emailBtn = document.getElementById('sendPdfEmailBtn');
+    emailBtn.disabled = true;
+    emailBtn.classList.add('disabled');
+
+    const wordBtn = document.getElementById('editWordBtn');
+    wordBtn.disabled = true;
+    wordBtn.classList.add('disabled');
+}
+
+Date.prototype.getDayName = function () {
+    return ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"][this.getDay()];
+}
+
+function getWeekNumber(date) {
+    const start = new Date(date.getFullYear(), 0, 1);
+    const diff = date - start;
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+    return Math.floor((dayOfYear + start.getDay()) / 7) + 1;
+}
+
+function getDateFromWeekStartingSunday(week, dayName, year) {
+
+    const dayMap = {
+        SUNDAY: 0,
+        MONDAY: 1,
+        TUESDAY: 2,
+        WEDNESDAY: 3,
+        THURSDAY: 4,
+        FRIDAY: 5,
+        SATURDAY: 6
+    };
+
+    const firstJan = new Date(year, 0, 1);
+    const firstWeekStart = new Date(firstJan);
+    firstWeekStart.setDate(firstJan.getDate() - firstJan.getDay());
+
+    const result = new Date(firstWeekStart);
+    result.setDate(firstWeekStart.getDate() + (week - 1) * 7 + dayMap[dayName]);
+
+    return result;
+}
+
+async function checkScheduleStatusAndLoad() {
+    const container = document.getElementById('resultsContainer');
+    try {
+        const res = await fetch('/api/admin/schedule/status');
+        if (!res.ok) throw new Error();
+        const { invalidated } = await res.json();
+        if (invalidated) {
+
+            container.innerHTML = `
+                        <div class="d-flex flex-column justify-content-center text-center text-muted" style="min-height:50vh;">
+                            <i class="bi bi-exclamation-triangle fs-1 mb-3"></i>
+                            <h4>Resultados no disponibles</h4>
+                            <p>El schedule fue modificado y necesita resolverse nuevamente.</p>
+                        </div>`;
+
+            const pdfBtn = document.getElementById('generatePdfBtn');
+            const emailBtn = document.getElementById('sendPdfEmailBtn');
+            const wordBtn = document.getElementById('editWordBtn');
+
+            [pdfBtn, emailBtn, wordBtn].forEach(btn => {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.add('disabled');
+                }
+            });
+
+            return;
+        }
+        loadResults();
+    } catch (e) {
+        container.innerHTML = `<p class="text-danger text-center py-5">No se pudo verificar el estado del schedule</p>`;
+    }
+}
+
+async function loadResults() {
+
+    try {
+        const res = await fetch('/api/admin/schedule/current');
+
+        if (!res.ok) {
+            assignments = [];
+            renderCalendar();
+            return;
+        }
+
+        const data = await res.json();
+
+        assignments = (data.assignments || []).flatMap(a => {
+            const daysArray = Array.isArray(a.day) ? a.day : [a.day];
+            return a.personNames.map((name, index) => ({
+                week: a.week,
+                day: daysArray,
+                functionName: a.functionName,
+                personName: name,
+                personNickname: a.personNicknames[index] || ""
+            }));
+        });
+        currentHouseId = data.houseId || null;
+        console.log(assignments)
+        renderCalendar();
+
+    } catch (e) {
+        console.error("Error cargando schedule actual", e);
+        assignments = [];
+        renderCalendar();
+    }
+}
+
+function renderCalendar() {
+    const container = document.getElementById('assignmentsContainer');
+    const monthLabel = document.getElementById('monthLabel');
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    const numDays = lastDay.getDate();
+    monthLabel.innerHTML = `<span class="badge bg-primary fs-4">${capitalizeFirstLetter(firstDay.toLocaleString('es-AR', { month: 'long', year: 'numeric' }))}</span>`;
+    let html = "";
+
+    const startDay = firstDay.getDay();
+    for (let i = 0; i < startDay; i++) html += `<div class="day-cell"></div>`;
+
+    for (let d = 1; d <= numDays; d++) {
+        const dayDate = new Date(currentYear, currentMonth, d);
+        const dayName = jsDays[dayDate.getDay()];
+        const dayAssignments = assignments.filter(a => {
+            const daysArray = Array.isArray(a.day) ? a.day : [a.day];
+            return daysArray.some(day => {
+                const assignmentDate = getDateFromWeekStartingSunday(a.week, day, currentYear);
+                return assignmentDate.getDate() === dayDate.getDate() &&
+                    assignmentDate.getMonth() === dayDate.getMonth() &&
+                    assignmentDate.getFullYear() === dayDate.getFullYear();
+            });
+        });
+
+        html += `<div class="day-cell" data-date="${dayDate.getTime()}" onclick="showDayModal(${dayDate.getTime()})">
+                    <div class="day-header">${d} ${formatDays([dayName])}</div>
+                    <div class="assignments-container">`;
+
+        const maxAssignments = 3;
+        dayAssignments.slice(0, maxAssignments).forEach(a => {
+
+            const assignmentDate = getDateFromWeekStartingSunday(
+                a.week,
+                Array.isArray(a.day) ? a.day[0] : a.day,
+                currentYear
+            );
+
+            html += `<div class="function-badge"
+                data-person-name="${a.personName}"
+                data-person-nickname="${a.personNickname || ''}"
+                data-function-name="${a.functionName}"
+                data-week="${a.week}"
+                data-original-date="${assignmentDate.getTime()}">
+                ${a.personName}${a.personNickname ? ` (${a.personNickname})` : ''} - ${a.functionName}
+            </div>`;
+        });
+
+        if (dayAssignments.length > maxAssignments) {
+            html += `<div class="function-badge" style="background-color:#6c757d;">+${dayAssignments.length - maxAssignments} más</div>`;
+        }
+
+        html += `</div></div>`;
+    }
+
+    container.innerHTML = html;
+    makeAssignmentsDraggable();
+    makeDaysDroppable();
+}
+
+function makeAssignmentsDraggable() {
+
+    const badges = document.querySelectorAll('.function-badge');
+
+    badges.forEach(b => {
+
+        if (b.dataset.personName) {
+
+            b.setAttribute('draggable', true);
+            b.classList.add('draggable');
+
+            b.ondragstart = (e) => {
+
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    originalDate: b.dataset.originalDate,
+                    functionName: b.dataset.functionName,
+                    personName: b.dataset.personName,
+                    personNickname: b.dataset.personNickname
+                }));
+
+                b.style.opacity = '0.5';
+
+                // 🔥 SI ESTÁ DENTRO DEL MODAL → CERRARLO AL EMPEZAR A ARRASTRAR
+                const modalEl = document.getElementById('dayModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            };
+
+            b.ondragend = () => {
+                b.style.opacity = '1';
+            };
+        }
+    });
+}
+
+function makeDaysDroppable() {
+    const dayCells = document.querySelectorAll('.day-cell');
+    dayCells.forEach(cell => {
+        cell.ondragover = (e) => { e.preventDefault(); cell.classList.add('drag-over'); };
+        cell.ondragleave = (e) => { cell.classList.remove('drag-over'); };
+        cell.ondrop = (e) => {
+            e.preventDefault();
+            cell.classList.remove('drag-over');
+
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            const originalDate = new Date(parseInt(data.originalDate));
+            const newDate = new Date(parseInt(cell.dataset.date));
+
+            const assignment = assignments.find(a => {
+
+                const currentAssignmentDate = getDateFromWeekStartingSunday(
+                    a.week,
+                    Array.isArray(a.day) ? a.day[0] : a.day,
+                    currentYear
+                );
+
+                return (
+                    currentAssignmentDate.getTime() === originalDate.getTime() &&
+                    a.functionName === data.functionName &&
+                    a.personName === data.personName &&
+                    (a.personNickname || '') === (data.personNickname || '')
+                );
+            });
+
+            if (assignment) {
+                assignment.day = [newDate.getDayName()];
+                assignment.week = getWeekNumber(newDate);
+                markScheduleModified();
+            }
+
+            renderCalendar();
+        };
+    });
+}
+
+document.getElementById('saveChangesBtn').addEventListener('click', async () => {
+
+    try {
+
+        const grouped = {};
+
+        assignments.forEach(a => {
+
+            const dayValue = Array.isArray(a.day) ? a.day[0] : a.day;
+
+            const realDate = getDateFromWeekStartingSunday(
+                a.week,
+                dayValue,
+                currentYear
+            );
+
+            const formattedDate = realDate.toISOString().split('T')[0];
+
+            const key = formattedDate + "|" + a.functionName;
+
+            if (!grouped[key]) {
+                grouped[key] = {
+                    date: formattedDate,
+                    functionName: a.functionName,
+                    personNames: [],
+                    personNicknames: []
+                };
+            }
+
+            grouped[key].personNames.push(a.personName);
+            grouped[key].personNicknames.push(a.personNickname || "");
+        });
+
+        const dtos = Object.values(grouped);
+
+        const res = await fetch('/api/schedule/create-new-run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dtos) // 🔥 ahora sí enviamos lista directa
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("Error backend:", errorText);
+            showAlert("Error backend: " + errorText, "danger");
+            return;
+        }
+
+        const updatedSchedule = await res.json();
+
+        showAlert("Schedule guardado como nueva versión.");
+
+        scheduleModified = false;
+        document.getElementById('saveChangesBtn').style.display = 'none';
+
+        const pdfBtn = document.getElementById('generatePdfBtn');
+        pdfBtn.disabled = false;
+        pdfBtn.classList.remove('disabled');
+
+        const emailBtn = document.getElementById('sendPdfEmailBtn');
+        emailBtn.disabled = false;
+        emailBtn.classList.remove('disabled');
+
+        const wordBtn = document.getElementById('editWordBtn');
+        wordBtn.disabled = false;
+        wordBtn.classList.remove('disabled');
+
+    } catch (e) {
+        console.error(e);
+        showAlert("Error al guardar el schedule.", "danger");
+    }
+});
+
+function showDayModal(time) {
+
+    const date = new Date(time);
+
+    const dayAssignments = assignments.filter(a => {
+        const daysArray = Array.isArray(a.day) ? a.day : [a.day];
+        return daysArray.some(day => {
+            const assignmentDate = getDateFromWeekStartingSunday(a.week, day, date.getFullYear());
+            return assignmentDate.getDate() === date.getDate() &&
+                assignmentDate.getMonth() === date.getMonth() &&
+                assignmentDate.getFullYear() === date.getFullYear();
+        });
+    });
+
+    let content = `
+        <div class="d-flex justify-content-center mb-3">
+            <span class="badge bg-secondary fs-6 px-3 py-2">
+                ${formatProfessionalDate(date)}
+            </span>
+        </div>
+    `;
+
+    if (dayAssignments.length === 0) {
+
+        content += "<p style='text-align:center;'>No hay asignaciones para este día.</p>";
+
+    } else {
+
+        content += `
+            <div style="
+                display:flex;
+                flex-direction:column;
+                gap:0.5rem;
+                align-items:center;
+                max-height:400px;
+                overflow-y:auto;
+            ">
+        `;
+
+        dayAssignments.forEach((a, index) => {
+
+            const assignmentDate = getDateFromWeekStartingSunday(
+                a.week,
+                Array.isArray(a.day) ? a.day[0] : a.day,
+                currentYear
+            );
+
+            content += `
+                        <div style="
+                            display:flex;
+                            justify-content:center;
+                            width:100%;
+                        ">
+
+                            <div id="assignment-${assignmentDate.getTime()}-${index}"
+                                style="
+                                    display:flex;
+                                    align-items:center;
+                                    justify-content:center;
+                                    gap:0.5rem;
+                                    width:100%;
+                                    max-width:400px;
+                                ">
+
+                                <div class="function-badge draggable"
+                                    draggable="true"
+                                    data-person-name="${a.personName}"
+                                    data-person-nickname="${a.personNickname || ''}"
+                                    data-function-name="${a.functionName}"
+                                    data-week="${a.week}"
+                                    data-original-date="${assignmentDate.getTime()}"
+                                    style="
+                                        flex:1;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        padding:0.5rem 1rem;
+                                        font-size:0.85rem;
+                                    ">
+                                    ${a.personName}${a.personNickname ? ` (${a.personNickname})` : ''} - ${a.functionName}
+                                </div>
+
+                                <button class="btn btn-sm btn-outline-secondary"
+                                    onclick="enablePersonChange(${assignmentDate.getTime()}, '${a.functionName}', '${a.personName}', '${a.personNickname || ''}', ${index})">
+                                    Editar
+                                </button>
+
+                            </div>
+                        </div>
+                    `;
+        });
+
+        content += `</div>`;
+    }
+
+    document.getElementById('dayModalBody').innerHTML = content;
+
+    const modalElement = document.getElementById('dayModal');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+
+    // 🔥 ACTIVAMOS DRAG EN LOS BADGES DEL MODAL
+    makeAssignmentsDraggable();
+}
+
+function nextMonth() { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(); }
+function prevMonth() { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } renderCalendar(); }
+
+function formatDays(days) {
+    const labels = { MONDAY: "Lunes", TUESDAY: "Martes", WEDNESDAY: "Miércoles", THURSDAY: "Jueves", FRIDAY: "Viernes", SATURDAY: "Sábado", SUNDAY: "Domingo" };
+    return order.filter(d => days.includes(d)).map(d => labels[d]).join(", ");
+}
+
+function formatProfessionalDate(date) {
+    const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    return `${days[date.getDay()]} ${date.getDate()} de ${months[date.getMonth()]} de ${date.getFullYear()}`;
+}
+
+function capitalizeFirstLetter(str) { return str.charAt(0).toUpperCase() + str.slice(1); }
+
+function enablePersonChange(originalDate, functionName, personName, personNickname, index) {
+
+    const assignment = assignments.find(a => {
+
+        const currentAssignmentDate = getDateFromWeekStartingSunday(
+            a.week,
+            Array.isArray(a.day) ? a.day[0] : a.day,
+            currentYear
+        );
+
+        return (
+            currentAssignmentDate.getTime() === originalDate &&
+            a.functionName === functionName &&
+            a.personName === personName &&
+            (a.personNickname || '') === (personNickname || '')
+        );
+    });
+
+    if (!assignment) return;
+
+    const selectOptions = persons.map(p => {
+        return `<option value="${p.name}" ${p.name === assignment.personName ? 'selected' : ''}>
+            ${p.name}${p.nickname ? ` (${p.nickname})` : ''}
+        </option>`;
+    }).join("");
+
+    const container = document.getElementById(`assignment-${originalDate}-${index}`);
+
+    // 🔥 mantenemos layout horizontal
+    container.innerHTML = `
+        <select id="personSelect-${originalDate}-${index}"
+            class="form-select"
+            style="flex:1; font-size:0.85rem;">
+            ${selectOptions}
+        </select>
+
+        <button class="btn btn-success btn-sm"
+            onclick="savePersonChange(${originalDate}, '${functionName}', ${index})">
+            Guardar
+        </button>
+    `;
+}
+
+function savePersonChange(originalDate, functionName, index) {
+
+    const select = document.getElementById(`personSelect-${originalDate}-${index}`);
+    if (!select) return;
+
+    const newPersonName = select.value;
+
+    const assignment = assignments.find(a => {
+
+        const currentAssignmentDate = getDateFromWeekStartingSunday(
+            a.week,
+            Array.isArray(a.day) ? a.day[0] : a.day,
+            currentYear
+        );
+
+        return (
+            currentAssignmentDate.getTime() === originalDate &&
+            a.functionName === functionName
+        );
+    });
+
+    if (!assignment) return;
+
+    const selectedPerson = persons.find(p => p.name === newPersonName);
+
+    assignment.personName = selectedPerson.name;
+    assignment.personNickname = selectedPerson.nickname || null;
+
+    markScheduleModified();
+
+    // 🔥 En vez de renderCalendar(), solo reconstruimos ese bloque
+    const container = document.getElementById(`assignment-${originalDate}-${index}`);
+
+    container.innerHTML = `
+        <div class="function-badge draggable"
+            draggable="true"
+            data-person-name="${assignment.personName}"
+            data-person-nickname="${assignment.personNickname || ''}"
+            data-function-name="${assignment.functionName}"
+            data-week="${assignment.week}"
+            data-original-date="${originalDate}"
+            style="
+                flex:1;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                padding:0.5rem 1rem;
+                font-size:0.85rem;
+            ">
+            ${assignment.personName}${assignment.personNickname ? ` (${assignment.personNickname})` : ''} - ${assignment.functionName}
+        </div>
+
+        <button class="btn btn-sm btn-outline-secondary"
+            onclick="enablePersonChange(${originalDate}, '${assignment.functionName}', '${assignment.personName}', '${assignment.personNickname || ''}', ${index})">
+            Editar
+        </button>
+    `;
+
+    // 🔥 Volvemos a activar drag solo para ese badge
+    makeAssignmentsDraggable();
+}
+
+async function generatePDF() {
+
+    try {
+
+        const grouped = {};
+
+        assignments.forEach(a => {
+
+            const dayValue = Array.isArray(a.day) ? a.day[0] : a.day;
+
+            const realDate = getDateFromWeekStartingSunday(
+                a.week,
+                dayValue,
+                currentYear
+            );
+
+            const formattedDate = realDate.toISOString().split('T')[0];
+
+            const key = formattedDate + "|" + a.functionName;
+
+            if (!grouped[key]) {
+                grouped[key] = {
+                    date: formattedDate,
+                    functionName: a.functionName,
+                    personNames: [],
+                    personNicknames: []
+                };
+            }
+
+            grouped[key].personNames.push(a.personName);
+            grouped[key].personNicknames.push(a.personNickname || "");
+        });
+
+        const dtos = Object.values(grouped);
+
+        const res = await fetch('/api/schedule/export-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dtos)
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("Error backend:", errorText);
+            showAlert("Error generando PDF", "danger");
+            return;
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "schedule.pdf";
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url); // ✅ limpia memoria
+
+    } catch (error) {
+        console.error("Error inesperado:", error);
+        showAlert("Error inesperado generando PDF", "danger");
+    }
+}
+
+async function sendPdfByEmail() {
+    const btn = document.getElementById('sendPdfEmailBtn');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Enviando...`;
+
+    try {
+        const res = await fetch(`/api/schedule/send-pdfs`, {
+            method: 'POST'
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("Error backend:", errorText);
+            showAlert("Error enviando PDF por mail", "danger");
+        } else {
+            const data = await res.json();
+            let message = `✅ Éxitos: ${data.successCount}`;
+            if (data.failCount > 0) {
+                message += ` ⚠️ Fallos: ${data.failCount}\n` + data.failDetails.join('\n');
+            }
+            showAlert(message);
+        }
+
+    } catch (e) {
+        console.error(e);
+        showAlert("Error inesperado al enviar PDF por mail", "danger");
+    } finally {
+        if (!scheduleModified) {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        }
+        btn.innerHTML = `<i class="bi bi-envelope-fill"></i> Enviar por mail`;
+    }
+}
+
+function goToWordEditor() {
+    window.location.href = "/admin/schedule/word";
+}

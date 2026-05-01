@@ -334,6 +334,20 @@
                         <!-- ================= ADMIN ================= -->
                         <th:block sec:authorize="hasRole('ADMIN')">
 
+                            <li class="nav-item px-3 mt-2 mb-2">
+                                <div class="bg-primary rounded-3 p-2 text-center shadow-sm">
+
+                                    <div class="d-flex align-items-center justify-content-center gap-2">
+                                        <i class="bi bi-house-door-fill text-white fs-4"></i>
+
+                                        <span class="fw-bold text-white fs-5" th:text="${houseName}">
+                                            House
+                                        </span>
+                                    </div>
+
+                                </div>
+                            </li>
+
                             <!-- Panel Principal -->
                             <li class="nav-header text-uppercase small text-muted">Panel</li>
                             <li class="nav-item">
