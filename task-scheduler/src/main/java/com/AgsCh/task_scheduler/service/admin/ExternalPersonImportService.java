@@ -25,7 +25,7 @@ public class ExternalPersonImportService {
     private final ImageStorageService imageStorageService;
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
     private volatile long lastFailureTime = 0;
-    private static final long BLOCK_TIME = 60_000; // 1 minuto
+    private static final long BLOCK_TIME = 10_000; // 10 segundos
 
     private static class CacheEntry {
         List<ExternalPersonDTO> data;
@@ -82,7 +82,7 @@ public class ExternalPersonImportService {
             external = externalPort.searchByName(name);
         } catch (Exception e) {
             lastFailureTime = System.currentTimeMillis();
-            
+
             System.out.println("🚫 Error real DB externa:");
             e.printStackTrace();
 
