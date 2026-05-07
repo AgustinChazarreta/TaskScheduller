@@ -82,7 +82,10 @@ public class ExternalPersonImportService {
             external = externalPort.searchByName(name);
         } catch (Exception e) {
             lastFailureTime = System.currentTimeMillis();
-            System.out.println("🚫 DB externa bloqueada temporalmente");
+            
+            System.out.println("🚫 Error real DB externa:");
+            e.printStackTrace();
+
             return List.of();
         }
 
