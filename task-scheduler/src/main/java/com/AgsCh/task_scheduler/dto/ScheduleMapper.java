@@ -152,8 +152,12 @@ public final class ScheduleMapper {
                 }
 
                 return new ScheduleResponseDTO(
+                                solution.getStartDate(),
+                                solution.getEndDate(),
                                 responses,
-                                solution.getScore() != null ? solution.getScore().toString() : "NO_SCORE");
+                                solution.getScore() != null
+                                                ? solution.getScore().toString()
+                                                : "NO_SCORE");
         }
 
         /*
@@ -203,7 +207,11 @@ public final class ScheduleMapper {
                                 ? run.getScore()
                                 : "NO_SCORE";
 
-                return new ScheduleResponseDTO(responses, score);
+                return new ScheduleResponseDTO(
+                                run.getStartDate(),
+                                run.getEndDate(),
+                                responses,
+                                score);
         }
 
         public static Schedule toModelFromAssignments(

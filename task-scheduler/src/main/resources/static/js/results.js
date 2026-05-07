@@ -59,7 +59,8 @@ function bindForm() {
             }
 
             showAlert('Schedule generado correctamente');
-            enableExportButtons(); 
+            enableExportButtons();
+            goToWordEditor();
 
         } catch (error) {
             console.error(error);
@@ -169,7 +170,7 @@ async function sendPdfByEmail() {
 }
 
 function goToWordEditor() {
-    window.location.href = "/admin/schedule/word";
+    window.open("/admin/schedule/word", "_blank");
 }
 
 async function checkScheduleStatus() {

@@ -562,6 +562,8 @@ public class PersonService {
         }
 
         return new ScheduleResponseDTO(
+                activeRun.getStartDate(),
+                activeRun.getEndDate(),
                 myAssignments,
                 activeRun.getScore());
     }
