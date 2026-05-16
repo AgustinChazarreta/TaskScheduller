@@ -6,18 +6,19 @@ import jakarta.persistence.*;
 @Table(name = "word_templates")
 public class WordTemplate {
 
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    
     private String fileName;
 
     private String contentType;
-
+    
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGBLOB")
     private byte[] data;
-
+    
     @OneToOne
     @JoinColumn(name = "house_id", nullable = false, unique = true)
     private House house;
