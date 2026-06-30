@@ -795,6 +795,36 @@ function base64ToFile(base64, filename = "external.jpg") {
     return new File([u8arr], filename, { type: mime });
 }
 
+function selectWeekdays() {
+    const weekdays = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY"
+    ];
+
+    $("#personDays").val(weekdays).trigger("change");
+}
+
+function selectAllDays() {
+    const allDays = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY"
+    ];
+
+    $("#personDays").val(allDays).trigger("change");
+}
+
+function clearWorkingDays() {
+    $("#personDays").val(null).trigger("change");
+}
+
 
 /* ===============================
    INIT

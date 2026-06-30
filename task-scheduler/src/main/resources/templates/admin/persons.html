@@ -198,6 +198,22 @@
 
                             <div class="col-md-12">
                                 <label class="form-label fw-semibold">Días de trabajo</label>
+                                <div class="mb-2 d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill"
+                                        onclick="selectWeekdays()">
+                                        Lunes a Viernes
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill"
+                                        onclick="selectAllDays()">
+                                        Todos los días
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                                        onclick="clearWorkingDays()">
+                                        Limpiar
+                                    </button>
+                                </div>
                                 <select id="personDays" class="form-control select2 rounded-3" multiple required
                                     style="width:100%;">
                                     <option value="MONDAY">Lunes</option>
