@@ -346,11 +346,7 @@ form.addEventListener("submit", async e => {
         pendingAlert = {
             message: `
         <i class="bi bi-check2-circle text-success fs-5"></i>
-        <span class="fw-bold">Persona creada correctamente</span><br>
-        Email: <strong>${payload.email}</strong><br>
-        Password temporal: <strong>${result.temporaryPassword}</strong><br>
-        El usuario deberá cambiarla al ingresar.
-    `,
+        <span class="fw-bold">Usuario ${payload.fullName} creado correctamente</span><br>`,
             type: "success"
         };
     }
