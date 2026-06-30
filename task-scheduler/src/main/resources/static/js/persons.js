@@ -70,6 +70,12 @@ function setLoadingButton(button, loading = true) {
     }
 }
 
+function getToday() {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    return today.toISOString().split("T")[0];
+}
+
 /* ===============================
    BOOTSTRAP ALERT
 ================================ */
@@ -506,7 +512,7 @@ function resetForm() {
     $("#personNickname").val("");
     $("#personBirthDate").val("");
     $("#personEmail").val("");
-    $("#personEntryDate").val("");
+    $("#personEntryDate").val(getToday());
     $("#personExitDate").val("");
 
     $("#personStatus").prop("checked", false);
