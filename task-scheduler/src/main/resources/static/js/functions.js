@@ -133,11 +133,35 @@ async function loadFunctions() {
     applyFunctionFilter();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    loadFunctions();
+async function loadCurrentTemplate() {
+    const res = await fetch("/api/functions/word-template/info");
+    if (!res.ok) return;
+    const data = await res.json();
+    const info = document.getElementById("currentTemplateInfo");
+
+    if (data.fileName) {
+        info.innerHTML = `
+            <i class="bi bi-file-earmark-word text-primary me-1"></i>
+            Archivo actual:
+            <strong>${data.fileName}</strong>
+        `;
+    } else {
+        info.innerHTML = `
+            <i class="bi bi-file-earmark-word me-1"></i>
+            No hay ningún archivo cargado.
+        `;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+    await loadFunctions();
+    await loadCurrentTemplate();
 
     const filter = document.getElementById("filterType");
-    if (filter) filter.addEventListener("change", applyFunctionFilter);
+    if (filter) {
+        filter.addEventListener("change", applyFunctionFilter);
+    }
 });
 
 /* ===========================================
@@ -196,6 +220,8 @@ async function loadFunctionsFromWord() {
 
     allFunctions = { ...functionCache, ...draftFunctions };
     applyFunctionFilter();
+
+    await loadCurrentTemplate();
 }
 
 /* ===========================================

@@ -48,6 +48,10 @@
         <div class="card mb-4 border-0 shadow-sm rounded-4">
             <div class="card-body">
                 <input type="file" class="form-control mb-2" id="wordFile" accept=".docx">
+                <small id="currentTemplateInfo" class="text-muted d-block mb-3">
+                    <i class="bi bi-file-earmark-word me-1"></i>
+                    No hay ningún archivo cargado.
+                </small>
                 <button class="btn btn-primary rounded-pill px-4" onclick="loadFunctionsFromWord()">
                     <i class="bi bi-upload me-1"></i> Cargar funciones
                 </button>

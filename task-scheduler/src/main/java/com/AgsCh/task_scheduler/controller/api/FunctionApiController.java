@@ -3,6 +3,7 @@ package com.AgsCh.task_scheduler.controller.api;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -25,103 +26,120 @@ import com.AgsCh.task_scheduler.util.word.WordParser;
 @RequestMapping("/api/functions")
 public class FunctionApiController {
 
-    private final FunctionService service;
-    private final WordTemplateService wordTemplateService;
-    private final CurrentUserService currentUserService;
+        private final FunctionService service;
+        private final WordTemplateService wordTemplateService;
+        private final CurrentUserService currentUserService;
 
-    public FunctionApiController(
-            FunctionService service,
-            WordTemplateService wordTemplateService,
-            CurrentUserService currentUserService) {
+        public FunctionApiController(
+                        FunctionService service,
+                        WordTemplateService wordTemplateService,
+                        CurrentUserService currentUserService) {
 
-        this.service = service;
-        this.wordTemplateService = wordTemplateService;
-        this.currentUserService = currentUserService;
-    }
+                this.service = service;
+                this.wordTemplateService = wordTemplateService;
+                this.currentUserService = currentUserService;
+        }
 
-    // -------- CREATE --------
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public void createFunctions(
-            @RequestBody List<FunctionRequestDTO> functions,
-            Authentication authentication) {
+        // -------- CREATE --------
+        @PostMapping
+        @PreAuthorize("hasRole('ADMIN')")
+        public void createFunctions(
+                        @RequestBody List<FunctionRequestDTO> functions,
+                        Authentication authentication) {
 
-        service.createFunctions(functions, authentication.getName());
-    }
+                service.createFunctions(functions, authentication.getName());
+        }
 
-    // -------- READ --------
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
-    public List<FunctionResponseDTO> list() {
+        // -------- READ --------
+        @GetMapping
+        @PreAuthorize("hasAnyRole('ADMIN','USER')")
+        public List<FunctionResponseDTO> list() {
 
-        return service.findAll()
-                .stream()
-                .map(f -> new FunctionResponseDTO(
-                        f.getId(),
-                        f.getName(),
-                        f.isSequential(),
-                        f.getAssignedDays(),
-                        f.getRequiredPersons()))
-                .collect(Collectors.toList());
-    }
+                return service.findAll()
+                                .stream()
+                                .map(f -> new FunctionResponseDTO(
+                                                f.getId(),
+                                                f.getName(),
+                                                f.isSequential(),
+                                                f.getAssignedDays(),
+                                                f.getRequiredPersons()))
+                                .collect(Collectors.toList());
+        }
 
-    // -------- UPDATE --------
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public void update(
-            @PathVariable Long id,
-            @RequestBody FunctionRequestDTO dto) {
+        // -------- UPDATE --------
+        @PutMapping("/{id}")
+        @PreAuthorize("hasRole('ADMIN')")
+        public void update(
+                        @PathVariable Long id,
+                        @RequestBody FunctionRequestDTO dto) {
 
-        service.update(id, dto);
-    }
+                service.update(id, dto);
+        }
 
-    // -------- DELETE --------
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
-    }
+        // -------- DELETE --------
+        @DeleteMapping("/{id}")
+        @PreAuthorize("hasRole('ADMIN')")
+        public void delete(@PathVariable Long id) {
+                service.delete(id);
+        }
 
-    // -------- LOAD WORD --------
-    @PostMapping(value = "/from-word", consumes = "multipart/form-data")
-    @PreAuthorize("hasRole('ADMIN')")
-    public List<FunctionResponseDTO> parseFromWord(
-            @RequestParam("file") MultipartFile file,
-            Authentication authentication) throws IOException {
+        // -------- LOAD WORD --------
+        @PostMapping(value = "/from-word", consumes = "multipart/form-data")
+        @PreAuthorize("hasRole('ADMIN')")
+        public List<FunctionResponseDTO> parseFromWord(
+                        @RequestParam("file") MultipartFile file,
+                        Authentication authentication) throws IOException {
 
-        User user = currentUserService.getCurrentUser(authentication);
+                User user = currentUserService.getCurrentUser(authentication);
 
-        // 🔥 REEMPLAZA TEMPLATE ANTERIOR
-        wordTemplateService.saveTemplate(file, user.getHouse());
+                // 🔥 REEMPLAZA TEMPLATE ANTERIOR
+                wordTemplateService.saveTemplate(file, user.getHouse());
 
-        List<FunctionRequestDTO> dtos = WordParser.parseFunctionsFromWord(file);
+                List<FunctionRequestDTO> dtos = WordParser.parseFunctionsFromWord(file);
 
-        return dtos.stream()
-                .map(dto -> new FunctionResponseDTO(
-                        null,
-                        dto.getName(),
-                        dto.isSequential(),
-                        dto.getAssignedDays(),
-                        dto.getRequiredPersons()))
-                .toList();
-    }
+                return dtos.stream()
+                                .map(dto -> new FunctionResponseDTO(
+                                                null,
+                                                dto.getName(),
+                                                dto.isSequential(),
+                                                dto.getAssignedDays(),
+                                                dto.getRequiredPersons()))
+                                .toList();
+        }
 
-    // -------- GET PERSISTED WORD --------
-    @GetMapping("/word-template")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<byte[]> getWordTemplate(
-            Authentication authentication) {
+        // -------- GET PERSISTED WORD --------
+        @GetMapping("/word-template")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<byte[]> getWordTemplate(
+                        Authentication authentication) {
 
-        User user = currentUserService.getCurrentUser(authentication);
+                User user = currentUserService.getCurrentUser(authentication);
 
-        WordTemplate template = wordTemplateService.getTemplate(user.getHouse().getId());
+                WordTemplate template = wordTemplateService.getTemplate(user.getHouse().getId());
 
-        return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=\"" + template.getFileName() + "\"")
-                .contentType(MediaType.parseMediaType(
-                        template.getContentType()))
-                .body(template.getData());
-    }
+                return ResponseEntity.ok()
+                                .header(
+                                                HttpHeaders.CONTENT_DISPOSITION,
+                                                "inline; filename=\"" + template.getFileName() + "\"")
+                                .contentType(MediaType.parseMediaType(
+                                                template.getContentType()))
+                                .body(template.getData());
+        }
+
+        @GetMapping("/word-template/info")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<Map<String, String>> getWordTemplateInfo(Authentication authentication) {
+                User user = currentUserService.getCurrentUser(authentication);
+
+                WordTemplate template = wordTemplateService.getTemplate(user.getHouse().getId());
+
+                if (template == null) {
+                        return ResponseEntity.ok().body(
+                                        java.util.Map.of("fileName", (String) null));
+                }
+
+                return ResponseEntity.ok().body(
+                                java.util.Map.of(
+                                                "fileName", template.getFileName()));
+        }
 }
