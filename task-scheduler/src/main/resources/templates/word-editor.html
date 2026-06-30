@@ -311,7 +311,7 @@
             </div>
 
             <div id="panel">
-                
+
                 <div id="editor-panel">
                     <p class="text-muted text-center mb-0">Seleccioná una celda</p>
                 </div>
@@ -607,7 +607,7 @@
                 return `<span class="editable-cell"
                     data-function="${key}"
                     data-day="${day}"
-                    data-index="${index}">${selected.name} (${selected.nickname})</span>`;
+                    data-index="${index}">${selected.nickname || selected.name}</span>`;
             });
 
             nodo.replaceWith(span);
@@ -649,7 +649,7 @@
                 <select id="person-selector">
                     ${validPersons.map(v => `
                         <option value="${v.name}">
-                            ${v.name} (${v.nickname || ''})
+                            ${v.nickname || v.name}
                         </option>
                     `).join("")}
                 </select>
@@ -670,7 +670,7 @@
                 if (person && selectedCell) {
 
                     selectedCell.innerText =
-                        `${person.name} (${person.nickname || ''})`;
+                        person.nickname || person.name;
                 }
             };
         }
