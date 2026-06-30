@@ -182,46 +182,91 @@ async function loadFunctionsFromWord() {
         return;
     }
 
-    const fd = new FormData();
-    fd.append("file", file);
+    setLoadingWord(true);
+    try {
 
-    const res = await secureFetch("/api/functions/from-word", {
-        method: "POST",
-        body: fd
-    });
+        const fd = new FormData();
+        fd.append("file", file);
 
-    if (!res.ok) {
-        showAlert(`
-        <div class="d-flex align-items-start gap-2">
-            <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
-            <div>
-                <div class="fw-semibold">Error leyendo el archivo Word</div>
-                <small class="text-muted">No se pudieron importar las funciones.</small>
+        const res = await secureFetch("/api/functions/from-word", {
+            method: "POST",
+            body: fd
+        });
+
+
+        if (!res.ok) {
+            showAlert(`
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+                <div>
+                    <div class="fw-semibold">Error leyendo el archivo Word</div>
+                    <small class="text-muted">No se pudieron importar las funciones.</small>
+                </div>
             </div>
-        </div>
-    `, "danger");
-        return;
-    }
-
-    const data = await res.json();
-    console.log(data);
-    data.forEach(f => {
-        const key = f.name; // seguimos usando name como key para drafts
-
-        if (!functionCache[key] && !draftFunctions[key]) {
-            draftFunctions[key] = {
-                name: f.name,
-                assignedDays: f.assignedDays || [],
-                sequential: f.sequential ?? false,
-                requiredPersons: f.requiredPersons ?? 1
-            };
+        `, "danger");
+            return;
         }
-    });
 
-    allFunctions = { ...functionCache, ...draftFunctions };
-    applyFunctionFilter();
+        const data = await res.json();
+        console.log(data);
+        data.forEach(f => {
+            const key = f.name; // seguimos usando name como key para drafts
 
-    await loadCurrentTemplate();
+            if (!functionCache[key] && !draftFunctions[key]) {
+                draftFunctions[key] = {
+                    name: f.name,
+                    assignedDays: f.assignedDays || [],
+                    sequential: f.sequential ?? false,
+                    requiredPersons: f.requiredPersons ?? 1
+                };
+            }
+        });
+
+        allFunctions = { ...functionCache, ...draftFunctions };
+        applyFunctionFilter();
+
+        await loadCurrentTemplate();
+
+        showAlert(`
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-check-circle-fill text-success fs-5 mt-1"></i>
+                <div>
+                    <div class="fw-semibold">Archivo cargado correctamente</div>
+                    <small class="text-muted">
+                        Se importaron las funciones desde el archivo Word.
+                    </small>
+                </div>
+            </div>
+        `, "success");
+    }
+    finally {
+        setLoadingWord(false);
+    }
+}
+
+function setLoadingWord(loading) {
+
+    const btn = document.getElementById("loadWordBtn");
+    const spinner = document.getElementById("loadWordSpinner");
+    const text = document.getElementById("loadWordText");
+    const input = document.getElementById("wordFile");
+
+    if (loading) {
+        btn.disabled = true;
+        input.disabled = true;
+
+        spinner.classList.remove("d-none");
+        text.innerHTML = "Cargando archivo...";
+    } else {
+        btn.disabled = false;
+        input.disabled = false;
+
+        spinner.classList.add("d-none");
+        text.innerHTML = `
+            <i class="bi bi-upload me-1"></i>
+            Cargar funciones
+        `;
+    }
 }
 
 /* ===========================================
