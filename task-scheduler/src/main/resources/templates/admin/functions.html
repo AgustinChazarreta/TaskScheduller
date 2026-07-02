@@ -52,7 +52,8 @@
                     <i class="bi bi-file-earmark-word me-1"></i>
                     No hay ningún archivo cargado.
                 </small>
-                <button id="loadWordBtn" class="btn btn-primary rounded-pill px-4" onclick="loadFunctionsFromWord()">
+                <button id="loadWordBtn" class="btn btn-primary rounded-pill px-4" onclick="loadFunctionsFromWord()"
+                    disabled>
                     <span id="loadWordSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"
                         aria-hidden="true">
                     </span>
@@ -60,6 +61,26 @@
                         <i class="bi bi-upload me-1"></i>
                         Cargar funciones
                     </span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= CAMBIOS PENDIENTES ================= -->
+        <div id="pendingChangesBanner" class="alert alert-warning d-none shadow-sm rounded-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                <div>
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Hay cambios sin guardar</strong>
+                    <div class="small mt-1">
+                        Las funciones se encuentran cargadas en la página, pero todavía no fueron guardadas en el
+                        sistema.
+                    </div>
+                </div>
+
+                <button class="btn btn-success rounded-pill px-4" onclick="saveFunctions()">
+                    <i class="bi bi-floppy me-1"></i>
+                    Guardar cambios
                 </button>
             </div>
         </div>
@@ -86,12 +107,6 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
-
-                <div class="mt-3 mb-3 ms-3">
-                    <button class="btn btn-success rounded-pill px-4" onclick="saveFunctions()">
-                        <i class="bi bi-floppy me-1"></i> Guardar funciones
-                    </button>
                 </div>
             </div>
         </div>

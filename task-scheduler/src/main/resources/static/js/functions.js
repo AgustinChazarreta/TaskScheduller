@@ -131,6 +131,7 @@ async function loadFunctions() {
 
     allFunctions = { ...functionCache, ...draftFunctions };
     applyFunctionFilter();
+    updatePendingChangesBanner();
 }
 
 async function loadCurrentTemplate() {
@@ -157,11 +158,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await loadFunctions();
     await loadCurrentTemplate();
+    updatePendingChangesBanner();
 
     const filter = document.getElementById("filterType");
     if (filter) {
         filter.addEventListener("change", applyFunctionFilter);
     }
+
+    const wordInput = document.getElementById("wordFile");
+    const loadBtn = document.getElementById("loadWordBtn");
+
+    wordInput.addEventListener("change", () => {
+        loadBtn.disabled = wordInput.files.length === 0;
+    });
 });
 
 /* ===========================================
@@ -208,7 +217,6 @@ async function loadFunctionsFromWord() {
         }
 
         const data = await res.json();
-        console.log(data);
         data.forEach(f => {
             const key = f.name; // seguimos usando name como key para drafts
 
@@ -224,6 +232,8 @@ async function loadFunctionsFromWord() {
 
         allFunctions = { ...functionCache, ...draftFunctions };
         applyFunctionFilter();
+
+        updatePendingChangesBanner();
 
         await loadCurrentTemplate();
 
@@ -241,6 +251,10 @@ async function loadFunctionsFromWord() {
     }
     finally {
         setLoadingWord(false);
+
+        document.getElementById("wordFile").value = "";
+
+        document.getElementById("loadWordBtn").disabled = true;
     }
 }
 
@@ -256,16 +270,45 @@ function setLoadingWord(loading) {
         input.disabled = true;
 
         spinner.classList.remove("d-none");
-        text.innerHTML = "Cargando archivo...";
+        text.innerHTML = `Procesando archivo...`;
     } else {
-        btn.disabled = false;
+
         input.disabled = false;
 
+        // Solo habilita el botón si hay un archivo seleccionado
+        btn.disabled = input.files.length === 0;
+
         spinner.classList.add("d-none");
+
         text.innerHTML = `
-            <i class="bi bi-upload me-1"></i>
-            Cargar funciones
-        `;
+        <i class="bi bi-upload me-1"></i>
+        Cargar funciones
+    `;
+    }
+}
+
+/* ===========================================
+    CAMBIOS PENDIENTES
+=========================================== */
+
+function updatePendingChangesBanner() {
+    const banner = document.getElementById("pendingChangesBanner");
+    if (!banner) return;
+    const hasDrafts = Object.keys(draftFunctions).length > 0;
+    const hasEdited = Object.values(functionCache).some(f => f.dirty);
+
+    if (hasDrafts || hasEdited) {
+        // Solo hace scroll la primera vez que aparece
+        if (banner.classList.contains("d-none")) {
+            banner.classList.remove("d-none");
+
+            banner.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+        }
+    } else {
+        banner.classList.add("d-none");
     }
 }
 
@@ -366,6 +409,7 @@ form.addEventListener("submit", async e => {
 
     allFunctions = { ...functionCache, ...draftFunctions };
     applyFunctionFilter();
+    updatePendingChangesBanner();
 });
 
 function resetForm() {
@@ -459,6 +503,7 @@ document
 
         allFunctions = { ...functionCache, ...draftFunctions };
         applyFunctionFilter();
+        updatePendingChangesBanner();
     });
 
 /* ===========================================
