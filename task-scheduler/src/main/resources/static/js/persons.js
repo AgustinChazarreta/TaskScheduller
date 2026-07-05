@@ -534,7 +534,6 @@ function resetForm() {
     $("#personNickname").val("");
     $("#personBirthDate").val("");
     $("#personEmail").val("");
-    $("#personEntryDate").val(getToday());
     $("#personExitDate").val("");
 
     $("#personStatus").prop("checked", false);
@@ -653,6 +652,13 @@ modalEl.addEventListener("shown.bs.modal", () => {
         templateSelection: item => item.text
     });
 
+    if (!editingPersonId) {
+        const today = getToday();
+        const $input = $("#personEntryDate");
+
+        $input.val(today);
+        $input.trigger("input").trigger("change");
+    }
 
     // IMPORTANTE: evitar duplicar eventos
     $("#personName").off("select2:select");
