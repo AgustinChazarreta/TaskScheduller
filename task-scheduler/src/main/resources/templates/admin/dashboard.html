@@ -3,6 +3,195 @@
 
 <section class="container-fluid py-3 dashboard-bg">
 
+    <style>
+        /* ================================
+   TABLA BASE (CONTROL TOTAL)
+================================ */
+        .persons-table {
+            width: 100%;
+            table-layout: fixed;
+            /* 🔥 CLAVE: evita que “Persona” se expanda */
+            border-collapse: collapse;
+        }
+
+        /* ================================
+   HEADERS
+================================ */
+        .persons-table thead th {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        /* ================================
+   CELDAS BASE
+================================ */
+        .persons-table td {
+            vertical-align: middle;
+            padding: 0.75rem;
+        }
+
+        /* alineación general */
+        .persons-table th,
+        .persons-table td {
+            vertical-align: middle;
+        }
+
+        /* ================================
+   DISTRIBUCIÓN DE COLUMNAS
+   (ESTO ARREGLA “PERSONA” GRANDE)
+================================ */
+
+        /* AVATAR */
+        .persons-table th:nth-child(1),
+        .persons-table td:nth-child(1) {
+            width: 70px;
+            text-align: center;
+        }
+
+        /* PERSONA */
+        .persons-table th:nth-child(2),
+        .persons-table td:nth-child(2) {
+            width: 32%;
+            text-align: left;
+        }
+
+        /* GRUPO */
+        .persons-table th:nth-child(3),
+        .persons-table td:nth-child(3) {
+            width: 18%;
+            text-align: center;
+        }
+
+        /* DISPONIBILIDAD */
+        .persons-table th:nth-child(4),
+        .persons-table td:nth-child(4) {
+            width: 30%;
+            text-align: center;
+        }
+
+        /* ESTADO */
+        .persons-table th:nth-child(5),
+        .persons-table td:nth-child(5) {
+            width: 20%;
+            text-align: center;
+        }
+
+        /* ================================
+   TEXTO NOMBRE (EVITA DESBORDE)
+================================ */
+        .persons-table td:nth-child(2) .fw-semibold {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ================================
+   AVATAR
+================================ */
+        .person-avatar-sm {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #dee2e6;
+        }
+
+        /* ================================
+   STATUS BADGE
+================================ */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .status-active {
+            background: rgba(25, 135, 84, 0.12);
+            color: #1b5e20;
+        }
+
+        .status-inactive {
+            background: rgba(220, 53, 69, 0.12);
+            color: #7a1c24;
+        }
+
+        .status-badge .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .status-active .dot {
+            background: #28a745;
+        }
+
+        .status-inactive .dot {
+            background: #dc3545;
+        }
+
+        /* ================================
+   DISPONIBILIDAD
+================================ */
+        .availability-cell {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            align-content: center;
+            gap: 4px;
+            min-height: 100%;
+        }
+
+        /* badges de días */
+        .day-badge {
+            display: inline-flex;
+            align-items: center;
+            margin: 2px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: #E0F2FE;
+            color: #0661eb;
+            font-size: .75rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        /* ================================
+   RESPONSIVE
+================================ */
+        @media (max-width: 768px) {
+
+            .persons-table td,
+            .persons-table th {
+                font-size: 0.85rem;
+                padding: 0.5rem;
+            }
+
+            .persons-table td:nth-child(2) {
+                width: 40%;
+            }
+
+            .person-avatar-sm {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+
     <!-- ================= HEADER ================= -->
     <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
@@ -20,8 +209,8 @@
                 <button class="btn btn-dark rounded-pill px-3 py-2 d-flex align-items-center gap-2"
                     data-bs-toggle="dropdown" data-bs-display="static">
 
-                    <i class="bi bi-person-circle fs-5"></i>                    
-                    <span class="fw-semibold" th:text="${nombreUsuario}"></span>                    
+                    <i class="bi bi-person-circle fs-5"></i>
+                    <span class="fw-semibold" th:text="${nombreUsuario}"></span>
 
                 </button>
 

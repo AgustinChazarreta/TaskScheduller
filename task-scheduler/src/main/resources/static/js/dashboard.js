@@ -13,8 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadScheduleStatus();
     loadPersons();
     bindForm();
-    bindPersonSelection();
-    bindSelectionButtons();
 });
 
 /* =====================================================
@@ -168,41 +166,6 @@ function bindForm() {
 }
 
 /* =====================================================
-   PERSONAS
-===================================================== */
-
-function bindPersonSelection() {
-    document.addEventListener('change', (e) => {
-        if (e.target.classList.contains('person-checkbox')) {
-            updateSelectedPersons();
-        }
-    });
-}
-
-function bindSelectionButtons() {
-    document.getElementById('selectAllPersons')
-        ?.addEventListener('click', () => {
-            document
-                .querySelectorAll('.person-checkbox')
-                .forEach(cb => cb.checked = true);
-            updateSelectedPersons();
-        });
-
-    document.getElementById('deselectAllPersons')
-        ?.addEventListener('click', () => {
-            document
-                .querySelectorAll('.person-checkbox')
-                .forEach(cb => cb.checked = false);
-            updateSelectedPersons();
-        });
-}
-
-function updateSelectedPersons() {
-    selectedPersons = [...document.querySelectorAll('.person-checkbox:checked')]
-        .map(cb => cb.value);
-}
-
-/* =====================================================
    DATA LOAD
 ===================================================== */
 
@@ -212,8 +175,7 @@ async function loadPersons() {
         if (!response.ok) throw new Error();
 
         const data = await response.json();
-        const persons = Object.entries(data)
-            .map(([id, p]) => ({ id, ...p }));
+        const persons = Array.isArray(data) ? data : Object.values(data);
 
         persons.forEach(p => personsCache[p.id] = p);
         renderPersons(persons);
@@ -238,72 +200,72 @@ function renderPersons(persons) {
 
     container.innerHTML = `
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light text-center">
+            <table class="table table-hover align-middle mb-0 persons-table">
+
+                <thead>
                     <tr>
-                        <th class="text-center"></th>
-                        <th class="text-center">Nombre</th>
-                        <th class="text-center">Cumpleaños</th>
-                        <th class="text-center">Email</th>
-                        <th class="text-center">Grupo</th>
-                        <th class="text-center">Días disponibles</th>
-                        <th class="text-center">Estado</th>
+                        <th></th>
+                        <th>Persona</th>
+                        <th>Grupo</th>
+                        <th>Disponibilidad</th>
+                        <th>Estado</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     ${persons.map(p => `
                         <tr>
 
-                            <!-- Ícono -->
+                            <!-- FOTO -->
                             <td class="text-center">
-                                <i class="bi bi-person-circle text-secondary fs-5"></i>
+                                <img
+                                    src="${p.profileImageUrl || "/person-circle.svg"}"
+                                    class="person-avatar-sm"
+                                    alt="${p.fullName}"
+                                >
                             </td>
 
-                            <!-- Nombre -->
+                            <!-- NOMBRE + EDAD -->
                             <td>
-                                <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-semibold fs-6">
-                                    ${p.fullName}${p.nickName ? ` (${p.nickName})` : ""}
-                                </span>
+                                <div class="fw-semibold">
+                                    ${p.fullName}
+                                </div>
+
+                                <div class="text-muted small">
+                                    ${calculateAge(p.birthDate)} años
+                                </div>
+
+                                ${p.nickName
+            ? `<div class="text-muted small fst-italic">${p.nickName}</div>`
+            : ""
+        }
                             </td>
 
-                            <!-- Cumpleaños -->
-                            <td>
-                                <span class="badge bg-light text-dark px-3 py-2 fw-semibold border">
-                                    ${p.birthDate}
-                                </span>
-                            </td>
-
-                            <!-- Email -->
-                            <td>
-                                <span class="badge bg-secondary-subtle text-secondary px-3 py-2 fw-semibold">
-                                    ${p.email}
-                                    </span>
-                                    </td>
-                                    
-                                    <!-- Grupo -->
-                                    <td>
-                                        ${p.groupName
-            ? `<span class="badge bg-warning-subtle text-warning px-3 py-2 fw-semibold">${p.groupName}</span>`
-            : `<span class="text-muted">-</span>`}
-                                    </td>
-                                    
-                                    <!-- Días -->
-                                    <td class="text-center">
-                                    ${formatDays(p.workingDays)}
-                                    </td>
-                                    
-                            <!-- Estado -->
+                            <!-- GRUPO -->
                             <td class="text-center">
-                                <span class="badge ${p.active
-            ? "bg-success-subtle text-success"
-            : "bg-danger-subtle text-danger"
-        } px-3 py-2 fw-bold">
+                                ${p.groupName
+            ? `<span class="badge bg-warning-subtle text-warning px-3 py-2">
+                                        ${p.groupName}
+                                       </span>`
+            : `<span class="text-muted">-</span>`
+        }
+                            </td>
+
+                            <!-- DISPONIBILIDAD -->
+                            <td class="text-center">
+                                ${formatDays(p.workingDays)}
+                            </td>
+
+                            <!-- ESTADO (con punto) -->
+                            <td class="text-center">
+                                <span class="status-badge ${p.active ? "status-active" : "status-inactive"}">
+                                    <span class="dot"></span>
                                     ${p.active ? "Activo" : "Inactivo"}
                                 </span>
                             </td>
 
                         </tr>
-                    `).join('')}
+                    `).join("")}
                 </tbody>
             </table>
         </div>
@@ -315,20 +277,70 @@ function renderPersons(persons) {
 ===================================================== */
 
 function formatDays(days = []) {
-    const order = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+
+    const order = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY"
+    ];
+
     const labels = {
-        MONDAY: "Lunes",
-        TUESDAY: "Martes",
-        WEDNESDAY: "Miércoles",
-        THURSDAY: "Jueves",
-        FRIDAY: "Viernes",
-        SATURDAY: "Sábado",
-        SUNDAY: "Domingo"
+        MONDAY: "Lun",
+        TUESDAY: "Mar",
+        WEDNESDAY: "Mié",
+        THURSDAY: "Jue",
+        FRIDAY: "Vie",
+        SATURDAY: "Sáb",
+        SUNDAY: "Dom"
     };
+
+    if (!days || !days.length) {
+        return `<span class="text-muted">-</span>`;
+    }
+
+    const mondayToFriday = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY"
+    ];
+
+    const allDays = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY"
+    ];
+
+    if (
+        mondayToFriday.every(d => days.includes(d)) &&
+        days.length === 5
+    ) {
+        return `<span class="day-badge">Lun - Vie</span>`;
+    }
+
+    if (
+        allDays.every(d => days.includes(d)) &&
+        days.length === 7
+    ) {
+        return `<span class="day-badge">Todos los días</span>`;
+    }
 
     return order
         .filter(d => days.includes(d))
-        .map(d => `<span class="badge bg-primary-subtle text-primary me-1">${labels[d]}</span>`)
+        .map(d =>
+            `<span class="day-badge">
+                ${labels[d]}
+            </span>`
+        )
         .join("");
 }
 
@@ -345,6 +357,24 @@ function showAlert(message, type) {
 
 function clearAlerts() {
     document.getElementById('alertContainer').innerHTML = '';
+}
+
+function calculateAge(birthDate) {
+    if (!birthDate) return "-";
+
+    const today = new Date();
+    const birth = new Date(birthDate);
+
+    let age = today.getFullYear() - birth.getFullYear();
+
+    const monthDiff = today.getMonth() - birth.getMonth();
+    const dayDiff = today.getDate() - birth.getDate();
+
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+        age--;
+    }
+
+    return age;
 }
 
 /* =====================================================
