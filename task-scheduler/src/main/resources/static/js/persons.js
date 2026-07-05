@@ -27,6 +27,7 @@ let allPersons = []; // 🔹 para el filtro
 ================================ */
 
 function formatDays(days = []) {
+
     const order = [
         "MONDAY",
         "TUESDAY",
@@ -38,19 +39,55 @@ function formatDays(days = []) {
     ];
 
     const labels = {
-        MONDAY: "Lunes",
-        TUESDAY: "Martes",
-        WEDNESDAY: "Miércoles",
-        THURSDAY: "Jueves",
-        FRIDAY: "Viernes",
-        SATURDAY: "Sábado",
-        SUNDAY: "Domingo"
+        MONDAY: "Lun",
+        TUESDAY: "Mar",
+        WEDNESDAY: "Mié",
+        THURSDAY: "Jue",
+        FRIDAY: "Vie",
+        SATURDAY: "Sáb",
+        SUNDAY: "Dom"
     };
 
+    if (!days || !days.length) {
+        return `<span class="text-muted">-</span>`;
+    }
+
+    const mondayToFriday = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY"
+    ];
+
+    const allDays = [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY"
+    ];
+
+    if (
+        mondayToFriday.every(d => days.includes(d)) &&
+        days.length === 5
+    ) {
+        return `<span class="day-badge">Lun - Vie</span>`;
+    }
+
+    if (
+        allDays.every(d => days.includes(d)) &&
+        days.length === 7
+    ) {
+        return `<span class="day-badge">Todos los días</span>`;
+    }
+
     return order
-        .filter(d => days?.includes(d))
+        .filter(d => days.includes(d))
         .map(d =>
-            `<span class="badge bg-primary-subtle text-primary me-1">
+            `<span class="day-badge">
                 ${labels[d]}
             </span>`
         )
@@ -98,10 +135,62 @@ function toInputDateFormat(dateStr) {
     return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
+function calculateAge(birthDate) {
+    if (!birthDate) return "";
+    const today = new Date();
+    const birth = new Date(birthDate + "T00:00:00");
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birth.getDate())
+    ) {
+        age--;
+    }
+
+    return age;
+}
+
+function formatBirthDate(date) {
+
+    if (!date) return "";
+
+    const d = new Date(date + "T00:00:00");
+
+    const months = [
+        "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+        "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+    ];
+
+    return `${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function getGroupBadgeClass(groupName) {
+
+    if (!groupName) return "group-color-6";
+
+    const classes = [
+        "group-color-1",
+        "group-color-2",
+        "group-color-3",
+        "group-color-4",
+        "group-color-5",
+        "group-color-6",
+        "group-color-7"
+    ];
+
+    let hash = 0;
+
+    for (const c of groupName) {
+        hash += c.charCodeAt(0);
+    }
+
+    return classes[hash % classes.length];
+}
+
 /* ===============================
    BOOTSTRAP ALERT
 ================================ */
-
 function showAlert(message, type = "success", insideModal = false) {
 
     const container = insideModal
@@ -176,45 +265,50 @@ function renderPersons(data) {
             tbody.insertAdjacentHTML("beforeend", `
                 <tr>
 
-                    <td class="text-center fw-semibold pe-3">
-                        ${index + 1}
-                    </td>
-
-                    <td class="text-center fw-semibold">
-                        ${p.fullName}
-                        ${p.nickName ? `<br><small class="text-muted">${p.nickName}</small>` : ""}
-                    </td>
-
                     <td class="text-center">
-                        <div class="fw-semibold">
-                            ${new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
-                    .format(new Date(p.birthDate + 'T00:00'))}
+                        <img
+                            src="${p.profileImageUrl || "/person-circle.svg"}"
+                            class="person-avatar"
+                            alt="${p.fullName}"
+                        >
+                    </td>
+
+                    <td>
+                        <div class="person-name">${p.fullName}</div>
+                        ${p.nickName ? `<div class="person-nickname">${p.nickName}</div>` : ""}
+                    </td>
+
+                    <td>
+                        <div class="birth-date">
+                            ${formatBirthDate(p.birthDate)}
+                        </div>
+                        <div class="birth-age">
+                            ${calculateAge(p.birthDate)} años
                         </div>
                     </td>
 
-                    <td class="text-center">
-                        ${p.email
-                    ? `<span class="badge bg-secondary-subtle text-secondary">${p.email}</span>`
-                    : `<span class="text-muted">-</span>`}
+                    <td>
+                        ${p.email ? `<span class="person-email" title="${p.email}"> ${p.email} </span>`
+                    : `<span class="text-muted">-</span>`
+                }
                     </td>
 
                     <td class="text-center">
                         ${p.groupName
-                    ? `<span class="badge bg-warning-subtle text-warning">${p.groupName}</span>`
-                    : `<span class="text-muted">-</span>`}
-                    </td>
-
-                    <!-- DÍAS DISPONIBLES CENTRADOS -->
-                    <td class="text-center">
-                        <div class="d-flex justify-content-center flex-wrap gap-1">
-                            ${formatDays(p.workingDays)}
-                        </div>
+                    ? `<span class="badge rounded-pill px-3 py-2 ${getGroupBadgeClass(p.groupName)}">
+                                ${p.groupName}
+                                </span>`
+                    : `<span class="text-muted">Sin grupo</span>`
+                }
                     </td>
 
                     <td class="text-center">
-                        <span class="badge ${p.active
-                    ? "bg-success-subtle text-success"
-                    : "bg-danger-subtle text-danger"}">
+                        ${formatDays(p.workingDays)}
+                    </td>
+
+                    <td>
+                        <span class="status-badge ${p.active ? "status-active" : "status-inactive"}">
+                            <span class="dot"></span>
                             ${p.active ? "Activo" : "Inactivo"}
                         </span>
                     </td>
@@ -374,7 +468,7 @@ form.addEventListener("submit", async e => {
         pendingAlert = {
             message: `
         <i class="bi bi-check2-circle text-success fs-5"></i>
-        <span class="fw-bold">Usuario ${payload.fullName} creado correctamente</span><br>`,
+        Usuario <span class="fw-bold">${payload.fullName}</span> creado correctamente<br>`,
             type: "success"
         };
     }
@@ -500,7 +594,7 @@ document
                 Persona eliminada
             </div>
             <small class="text-muted">
-                ${personNameToDelete} fue eliminado del sistema.
+                <strong>${personNameToDelete}</strong> fue eliminado del sistema.
             </small>
         </div>
     </div>

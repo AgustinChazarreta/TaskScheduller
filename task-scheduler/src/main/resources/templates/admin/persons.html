@@ -2,6 +2,150 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(~{::section})}">
 
 <section>
+    <style>
+        .person-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #dee2e6;
+        }
+
+        .table td:first-child,
+        .table th:first-child {
+            padding-left: 1rem;
+        }
+
+        .person-name {
+            font-weight: 600;
+            font-size: .95rem;
+            line-height: 1.2;
+            color: #212529;
+            max-width: 320px;
+        }
+
+        .person-nickname {
+            margin-top: 2px;
+            font-size: .82rem;
+            color: #6c757d;
+        }
+
+        .birth-date {
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .birth-age {
+            margin-top: 2px;
+            font-size: .82rem;
+            color: #6c757d;
+        }
+
+        .person-email {
+            display: inline-block;
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            color: #495057;
+            font-size: .95rem;
+        }
+
+        .group-color-1 {
+            background: #ECFDF5;
+            color: #047857;
+        }
+
+        .group-color-2 {
+            background: #FFF7ED;
+            color: #C2410C;
+        }
+
+        .group-color-3 {
+            background: #F5F3FF;
+            color: #7C3AED;
+        }
+
+        .group-color-4 {
+            background: #ECFEFF;
+            color: #0F766E;
+        }
+
+        .group-color-5 {
+            background: #FEF2F2;
+            color: #B91C1C;
+        }
+
+        .group-color-6 {
+            background: #F8FAFC;
+            color: #475569;
+        }
+
+        .group-color-7 {
+            background: #FFF1F2;
+            color: #BE123C;
+        }
+
+        .badge {
+            font-weight: 500;
+        }
+
+        .group-badge {
+            border-radius: 999px;
+            padding: .40rem .85rem;
+            font-size: .78rem;
+            font-weight: 600;
+            border: none;
+        }
+
+        .day-badge {
+            display: inline-flex;
+            align-items: center;
+            margin: 2px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: #E0F2FE;
+            border: 1px solid #BAE6FD;
+            color: #0369A1;
+            font-size: .75rem;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: 4px 10px;
+            font-size: .78rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-active {
+            background: #ECFDF5;
+            color: #166534;
+        }
+
+        .status-active .dot {
+            background: #22C55E;
+        }
+
+        .status-inactive {
+            background: #FEF2F2;
+            color: #B91C1C;
+        }
+
+        .status-inactive .dot {
+            background: #EF4444;
+        }
+    </style>
 
     <main class="container-fluid py-4">
 
@@ -43,16 +187,16 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table align-middle mb-0 table-hover">
-                        <thead class="table-light text-center">
+                        <thead class="table-light">
                             <tr>
-                                <th></th>
+                                <th style="width:70px;"></th>
                                 <th>Nombre</th>
                                 <th>Cumpleaños</th>
-                                <th>Email</th>
-                                <th>Grupo</th>
-                                <th>Días disponibles</th>
-                                <th>Estado</th>
-                                <th class="text-end ps-4">Acciones</th>
+                                <th class="text-center">Email</th>
+                                <th class="text-center">Grupo</th>
+                                <th class="text-center">Días disponibles</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-end">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="personsBody"></tbody>
@@ -322,7 +466,7 @@
         </div>
     </div>
 
-    <!-- SCRIPTS (sin tocar nada funcional) -->
+    <!-- SCRIPTS -->
     <script src="/js/csrf.js"></script>
     <script src="/plugins/select2/js/select2.full.min.js"></script>
     <script src="/js/select2-modal.js"></script>
