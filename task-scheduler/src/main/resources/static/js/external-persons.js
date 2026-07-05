@@ -17,7 +17,10 @@ function searchExternalPersons(name) {
                     if (!res.ok) return [];
                     return res.json();
                 })
-                .then(data => resolve(data))
+                .then(data => {
+                    console.log("EXTERNAL PERSON RESPONSE:", data);
+                    resolve(data);
+                })
                 .catch(() => resolve([]));
 
         }, 400);
@@ -28,14 +31,22 @@ function searchExternalPersons(name) {
 function toInputDateFormat(dateStr) {
     if (!dateStr) return "";
 
-    if (dateStr.includes("-") && dateStr.length === 10) {
+    // ISO correcto
+    if (dateStr.includes("-") && dateStr.length === 10 && dateStr[4] === "-") {
         return dateStr;
     }
 
-    const [day, month, year] = dateStr.split("-");
+    // soporta "DD/MM/YYYY" y "DD-MM-YYYY"
+    const normalized = dateStr.replaceAll("/", "-");
+    const parts = normalized.split("-");
+
+    if (parts.length !== 3) return "";
+
+    const [day, month, year] = parts;
+
     if (!day || !month || !year) return "";
 
-    return `${year}-${month}-${day}`;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
 function useExternalPersonFromSelect(p) {
@@ -56,6 +67,9 @@ function useExternalPersonFromSelect(p) {
     $("#personNickname").val(p.nickName || "");
 
     $("#personBirthDate").val(toInputDateFormat(p.birthDate));
+
+    console.log("birthDate RAW:", p.birthDate);
+    console.log("birthDate CONVERTIDA:", toInputDateFormat(p.birthDate));
 
     // =========================
     // FOTO PREVIEW

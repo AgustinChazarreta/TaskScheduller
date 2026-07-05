@@ -80,15 +80,22 @@ function getToday() {
 function toInputDateFormat(dateStr) {
     if (!dateStr) return "";
 
-    // si ya viene ISO
-    if (dateStr.includes("-") && dateStr.length === 10) {
+    // ISO correcto
+    if (dateStr.includes("-") && dateStr.length === 10 && dateStr[4] === "-") {
         return dateStr;
     }
 
-    const [day, month, year] = dateStr.split("-");
+    // soporta "DD/MM/YYYY" y "DD-MM-YYYY"
+    const normalized = dateStr.replaceAll("/", "-");
+    const parts = normalized.split("-");
+
+    if (parts.length !== 3) return "";
+
+    const [day, month, year] = parts;
+
     if (!day || !month || !year) return "";
 
-    return `${year}-${month}-${day}`;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
 /* ===============================
@@ -318,7 +325,7 @@ form.addEventListener("submit", async e => {
     const payload = {
         fullName: $("#personName").val().trim(),
         nickName: personNickname.value.trim() || null,
-        birthDate: personBirthDate.value || null, 
+        birthDate: toInputDateFormat(personBirthDate.value) || null,
         active: personStatus.checked,
         email: personEmail.value.trim(),
         emailNotificationsEnabled: mailStatus.checked,
