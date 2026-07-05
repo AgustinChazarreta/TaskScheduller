@@ -91,12 +91,27 @@ d-flex justify-content-between align-items-center">
                         </div>
 
                         <div class="mb-3">
+
                             <label class="form-label fw-semibold">
                                 Días de trabajo
                             </label>
 
-                            <select id="groupWorkingDays" class="form-select" multiple>
+                            <div class="mb-2 d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill"
+                                    onclick="selectGroupWeekdays()">
+                                    Lunes a Viernes
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill"
+                                    onclick="selectGroupAllDays()">
+                                    Todos los días
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill"
+                                    onclick="clearGroupWorkingDays()">
+                                    Limpiar
+                                </button>
+                            </div>
 
+                            <select id="groupWorkingDays" class="form-select" multiple>
                                 <option value="MONDAY">Lunes</option>
                                 <option value="TUESDAY">Martes</option>
                                 <option value="WEDNESDAY">Miércoles</option>
@@ -104,8 +119,8 @@ d-flex justify-content-between align-items-center">
                                 <option value="FRIDAY">Viernes</option>
                                 <option value="SATURDAY">Sábado</option>
                                 <option value="SUNDAY">Domingo</option>
-
                             </select>
+
                         </div>
                     </div>
 
@@ -514,6 +529,44 @@ onclick="deleteGroup(${g.id})">
                 hidden.classList.add("d-none")
                 btn.innerHTML = btn.dataset.more + ` <i class="bi bi-chevron-down ms-1"></i>`
             }
+
+        }
+
+        function selectGroupWeekdays() {
+
+            $("#groupWorkingDays")
+                .val([
+                    "MONDAY",
+                    "TUESDAY",
+                    "WEDNESDAY",
+                    "THURSDAY",
+                    "FRIDAY"
+                ])
+                .trigger("change");
+
+        }
+
+        function selectGroupAllDays() {
+
+            $("#groupWorkingDays")
+                .val([
+                    "MONDAY",
+                    "TUESDAY",
+                    "WEDNESDAY",
+                    "THURSDAY",
+                    "FRIDAY",
+                    "SATURDAY",
+                    "SUNDAY"
+                ])
+                .trigger("change");
+
+        }
+
+        function clearGroupWorkingDays() {
+
+            $("#groupWorkingDays")
+                .val(null)
+                .trigger("change");
 
         }
 
