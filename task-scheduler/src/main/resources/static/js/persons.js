@@ -77,6 +77,20 @@ function getToday() {
     return today.toISOString().split("T")[0];
 }
 
+function toInputDateFormat(dateStr) {
+    if (!dateStr) return "";
+
+    // si ya viene ISO
+    if (dateStr.includes("-") && dateStr.length === 10) {
+        return dateStr;
+    }
+
+    const [day, month, year] = dateStr.split("-");
+    if (!day || !month || !year) return "";
+
+    return `${year}-${month}-${day}`;
+}
+
 /* ===============================
    BOOTSTRAP ALERT
 ================================ */
@@ -304,7 +318,7 @@ form.addEventListener("submit", async e => {
     const payload = {
         fullName: $("#personName").val().trim(),
         nickName: personNickname.value.trim() || null,
-        birthDate: personBirthDate.value,
+        birthDate: personBirthDate.value || null, 
         active: personStatus.checked,
         email: personEmail.value.trim(),
         emailNotificationsEnabled: mailStatus.checked,
@@ -399,7 +413,7 @@ function editPerson(id) {
 
     personName.value = p.fullName;
     personNickname.value = p.nickName;
-    personBirthDate.value = p.birthDate;
+    personBirthDate.value = toInputDateFormat(p.birthDate || "");
     personEmail.value = p.email;
     mailStatus.checked = p.emailNotificationsEnabled;
     personStatus.checked = p.active;

@@ -25,6 +25,19 @@ function searchExternalPersons(name) {
     });
 }
 
+function toInputDateFormat(dateStr) {
+    if (!dateStr) return "";
+
+    if (dateStr.includes("-") && dateStr.length === 10) {
+        return dateStr;
+    }
+
+    const [day, month, year] = dateStr.split("-");
+    if (!day || !month || !year) return "";
+
+    return `${year}-${month}-${day}`;
+}
+
 function useExternalPersonFromSelect(p) {
 
     selectedExternalPerson = p;
@@ -42,7 +55,7 @@ function useExternalPersonFromSelect(p) {
     $("#personEmail").val(p.email || "");
     $("#personNickname").val(p.nickName || "");
 
-    $("#personBirthDate").val(p.birthDate.replaceAll("/", "-") || "");
+    $("#personBirthDate").val(toInputDateFormat(p.birthDate));
 
     // =========================
     // FOTO PREVIEW
