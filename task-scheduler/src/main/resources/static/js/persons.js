@@ -16,6 +16,7 @@ let personIdToDelete = null;
 let personNameToDelete = null;
 let pendingAlert = null;
 const personsCache = {};
+const groupsCache = {};
 let selectedExternalPerson = null;
 
 let allPersons = []; // 🔹 para el filtro
@@ -722,7 +723,6 @@ async function loadFunctions() {
 async function loadGroups() {
 
     const res = await fetch("/api/groups");
-
     const groups = await res.json();
 
     const select = document.getElementById("personGroup");
@@ -735,6 +735,8 @@ async function loadGroups() {
     }
 
     groups.forEach(g => {
+
+        groupsCache[g.id] = g;
 
         const option = document.createElement("option");
         option.value = g.id;
@@ -751,6 +753,26 @@ async function loadGroups() {
     });
 
 }
+
+document.getElementById("personGroup").addEventListener("change", function () {
+
+    // si estoy editando una persona NO hago nada
+    if (editingPersonId) return;
+
+    const group = groupsCache[this.value];
+
+    if (!group) {
+        return;
+    }
+
+    $("#personFunctions")
+        .val(group.functionIds)
+        .trigger("change");
+
+    $("#personDays")
+        .val(group.workingDays)
+        .trigger("change");
+});
 
 
 /* ===============================

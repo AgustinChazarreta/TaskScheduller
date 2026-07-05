@@ -1,6 +1,8 @@
 package com.AgsCh.task_scheduler.service.admin;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,10 +14,12 @@ import com.AgsCh.task_scheduler.dto.response.GroupResponseDTO;
 import com.AgsCh.task_scheduler.dto.response.PersonResponseDTO;
 import com.AgsCh.task_scheduler.model.Group;
 import com.AgsCh.task_scheduler.model.Person;
+import com.AgsCh.task_scheduler.model.Function;
 import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.repository.GroupRepository;
 import com.AgsCh.task_scheduler.repository.PersonRepository;
 import com.AgsCh.task_scheduler.repository.UserRepository;
+import com.AgsCh.task_scheduler.repository.FunctionRepository;
 
 @Service
 public class GroupService {
@@ -23,13 +27,16 @@ public class GroupService {
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
     private final PersonRepository personRepository;
+    private final FunctionRepository functionRepository;
 
     public GroupService(GroupRepository groupRepository,
             UserRepository userRepository,
-            PersonRepository personRepository) {
+            PersonRepository personRepository,
+            FunctionRepository functionRepository) {
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
         this.personRepository = personRepository;
+        this.functionRepository = functionRepository;
     }
 
     /*
@@ -51,7 +58,12 @@ public class GroupService {
                         g.getPersons()
                                 .stream()
                                 .map(this::mapPerson)
-                                .collect(Collectors.toList())))
+                                .collect(Collectors.toList()),
+                        g.getWorkingDays(),
+                        g.getFunctions()
+                                .stream()
+                                .map(Function::getId)
+                                .collect(Collectors.toSet())))
                 .collect(Collectors.toList());
     }
 
@@ -66,7 +78,12 @@ public class GroupService {
                         g.getPersons()
                                 .stream()
                                 .map(this::mapPerson)
-                                .collect(Collectors.toList())))
+                                .collect(Collectors.toList()),
+                        g.getWorkingDays(),
+                        g.getFunctions()
+                                .stream()
+                                .map(Function::getId)
+                                .collect(Collectors.toSet())))
                 .collect(Collectors.toList());
     }
 
@@ -83,6 +100,18 @@ public class GroupService {
 
         Group group = new Group(dto.getName(), user.getHouse());
 
+        group.setWorkingDays(dto.getWorkingDays());
+
+        if (dto.getFunctionIds() != null) {
+
+            Set<Function> functions = new HashSet<>(
+                    functionRepository.findByHouseIdAndIdIn(
+                            user.getHouse().getId(),
+                            dto.getFunctionIds()));
+
+            group.setFunctions(functions);
+        }
+
         if (dto.getPersonIds() != null && !dto.getPersonIds().isEmpty()) {
 
             List<Person> persons = personRepository.findAllById(dto.getPersonIds());
@@ -98,7 +127,12 @@ public class GroupService {
                 saved.getPersons()
                         .stream()
                         .map(this::mapPerson)
-                        .collect(Collectors.toList()));
+                        .collect(Collectors.toList()),
+                saved.getWorkingDays(),
+                saved.getFunctions()
+                        .stream()
+                        .map(Function::getId)
+                        .collect(Collectors.toSet()));
     }
 
     /*
@@ -120,6 +154,18 @@ public class GroupService {
         }
 
         group.setName(dto.getName());
+
+        group.setWorkingDays(dto.getWorkingDays());
+
+        if (dto.getFunctionIds() != null) {
+
+            Set<Function> functions = new HashSet<>(
+                    functionRepository.findByHouseIdAndIdIn(
+                            user.getHouse().getId(),
+                            dto.getFunctionIds()));
+
+            group.setFunctions(functions);
+        }
 
         if (dto.getPersonIds() != null) {
 
@@ -144,7 +190,12 @@ public class GroupService {
                 saved.getPersons()
                         .stream()
                         .map(this::mapPerson)
-                        .collect(Collectors.toList()));
+                        .collect(Collectors.toList()),
+                saved.getWorkingDays(),
+                saved.getFunctions()
+                        .stream()
+                        .map(Function::getId)
+                        .collect(Collectors.toSet()));
     }
 
     /*

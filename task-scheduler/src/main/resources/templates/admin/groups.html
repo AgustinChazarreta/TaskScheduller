@@ -81,6 +81,32 @@ d-flex justify-content-between align-items-center">
                             <label class="form-label fw-semibold">Personas del grupo</label>
                             <select id="groupPersons" class="form-select" multiple></select>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Funciones del grupo
+                            </label>
+
+                            <select id="groupFunctions" class="form-select" multiple></select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Días de trabajo
+                            </label>
+
+                            <select id="groupWorkingDays" class="form-select" multiple>
+
+                                <option value="MONDAY">Lunes</option>
+                                <option value="TUESDAY">Martes</option>
+                                <option value="WEDNESDAY">Miércoles</option>
+                                <option value="THURSDAY">Jueves</option>
+                                <option value="FRIDAY">Viernes</option>
+                                <option value="SATURDAY">Sábado</option>
+                                <option value="SUNDAY">Domingo</option>
+
+                            </select>
+                        </div>
                     </div>
 
                 </div>
@@ -150,13 +176,18 @@ d-flex justify-content-between align-items-center">
         let groups = []
         let groupModal
         let persons = []
+        let functions = []
 
         document.addEventListener("DOMContentLoaded", async () => {
 
             groupModal = new bootstrap.Modal(document.getElementById("groupModal"))
 
             await loadPersons()
+            await loadFunctions()
+
             initPersonsSelect()
+            initFunctionsSelect()
+            initWorkingDaysSelect()
 
             loadGroups()
 
@@ -179,6 +210,26 @@ d-flex justify-content-between align-items-center">
                 dropdownParent: $("#groupModal")
             })
 
+        }
+
+        function initFunctionsSelect() {
+            const select = $("#groupFunctions")
+            if (select.hasClass("select2-hidden-accessible")) return
+            select.select2({
+                placeholder: "Seleccionar funciones",
+                width: "100%",
+                dropdownParent: $("#groupModal")
+            })
+        }
+
+        function initWorkingDaysSelect() {
+            const select = $("#groupWorkingDays")
+            if (select.hasClass("select2-hidden-accessible")) return
+            select.select2({
+                placeholder: "Seleccionar días",
+                width: "100%",
+                dropdownParent: $("#groupModal")
+            })
         }
 
 
@@ -321,9 +372,10 @@ onclick="deleteGroup(${g.id})">
                 `<i class="bi bi-plus-lg me-2"></i>Nuevo Grupo`
 
             $("#groupPersons").val(null).trigger("change")
+            $("#groupFunctions").val(null).trigger("change")
+            $("#groupWorkingDays").val(null).trigger("change")
 
             groupModal.show()
-
         }
 
 
@@ -342,6 +394,14 @@ onclick="deleteGroup(${g.id})">
             const ids = g.persons ? g.persons.map(p => p.id) : []
 
             $("#groupPersons").val(ids).trigger("change")
+
+            $("#groupFunctions")
+                .val(g.functionIds || [])
+                .trigger("change")
+
+            $("#groupWorkingDays")
+                .val(g.workingDays || [])
+                .trigger("change")
 
             document.getElementById("groupModalTitle").innerHTML =
                 `<i class="bi bi-pencil me-2"></i>Editar Grupo`
@@ -363,9 +423,17 @@ onclick="deleteGroup(${g.id})">
             const selectedPersons =
                 $("#groupPersons").val()?.map(Number) || []
 
+            const selectedFunctions =
+                $("#groupFunctions").val()?.map(Number) || []
+
+            const selectedWorkingDays =
+                $("#groupWorkingDays").val() || []
+
             const payload = {
                 name: document.getElementById("groupName").value,
-                personIds: selectedPersons
+                personIds: selectedPersons,
+                functionIds: selectedFunctions,
+                workingDays: selectedWorkingDays
             }
 
             if (!payload.name) {
@@ -470,6 +538,32 @@ onclick="deleteGroup(${g.id})">
 
                 option.value = p.id
                 option.textContent = p.fullName
+
+                select.appendChild(option)
+
+            })
+
+        }
+
+        /* ================================
+        LOAD FUNCTIONS
+        ================================ */
+        async function loadFunctions() {
+
+            const res = await fetch("/api/functions")
+
+            functions = await res.json()
+
+            const select = document.getElementById("groupFunctions")
+
+            select.innerHTML = ""
+
+            functions.forEach(f => {
+
+                const option = document.createElement("option")
+
+                option.value = f.id
+                option.textContent = f.name
 
                 select.appendChild(option)
 

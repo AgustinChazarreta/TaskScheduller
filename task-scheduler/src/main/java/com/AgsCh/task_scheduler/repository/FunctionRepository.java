@@ -12,4 +12,6 @@ public interface FunctionRepository extends JpaRepository<Function, Long> {
     List<Function> findByHouseIdAndActiveTrue(Long id);
 
     Optional<Function> findByIdAndActiveTrue(Long id);
+
+    List<Function> findByHouseIdAndIdIn(Long houseId, Iterable<Long> ids);
 }
