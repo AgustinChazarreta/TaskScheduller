@@ -85,9 +85,8 @@ public class PersonResponseDTO {
                 entryDate, exitDate, workingDays, functions, null, profileImageUrl, null, null, null, null);
     }
 
-    public PersonResponseDTO(Long id,
-            String fullName) {
-        this(id, fullName, null, null, null, false, false, null, null, null, null, null, null, null, null, null, null);
+    public PersonResponseDTO(Long id, String fullName, String nickName) {
+        this(id, fullName, nickName, null, null, false, false, null, null, null, null, null, null, null, null, null, null);
     }
 
     // ---------------- Getters ----------------

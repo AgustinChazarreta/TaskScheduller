@@ -24,231 +24,232 @@ import com.AgsCh.task_scheduler.repository.FunctionRepository;
 @Service
 public class GroupService {
 
-    private final GroupRepository groupRepository;
-    private final UserRepository userRepository;
-    private final PersonRepository personRepository;
-    private final FunctionRepository functionRepository;
+        private final GroupRepository groupRepository;
+        private final UserRepository userRepository;
+        private final PersonRepository personRepository;
+        private final FunctionRepository functionRepository;
 
-    public GroupService(GroupRepository groupRepository,
-            UserRepository userRepository,
-            PersonRepository personRepository,
-            FunctionRepository functionRepository) {
-        this.groupRepository = groupRepository;
-        this.userRepository = userRepository;
-        this.personRepository = personRepository;
-        this.functionRepository = functionRepository;
-    }
+        public GroupService(GroupRepository groupRepository,
+                        UserRepository userRepository,
+                        PersonRepository personRepository,
+                        FunctionRepository functionRepository) {
+                this.groupRepository = groupRepository;
+                this.userRepository = userRepository;
+                this.personRepository = personRepository;
+                this.functionRepository = functionRepository;
+        }
 
-    /*
-     * =========================================
-     * LISTAR GRUPOS
-     * =========================================
-     */
+        /*
+         * =========================================
+         * LISTAR GRUPOS
+         * =========================================
+         */
 
-    @Transactional(readOnly = true)
-    public List<GroupResponseDTO> findAll() {
+        @Transactional(readOnly = true)
+        public List<GroupResponseDTO> findAll() {
 
-        User user = getCurrentUser();
+                User user = getCurrentUser();
 
-        return groupRepository.findByHouse(user.getHouse())
-                .stream()
-                .map(g -> new GroupResponseDTO(
-                        g.getId(),
-                        g.getName(),
-                        g.getPersons()
+                return groupRepository.findByHouse(user.getHouse())
                                 .stream()
-                                .map(this::mapPerson)
-                                .collect(Collectors.toList()),
-                        g.getWorkingDays(),
-                        g.getFunctions()
+                                .map(g -> new GroupResponseDTO(
+                                                g.getId(),
+                                                g.getName(),
+                                                g.getPersons()
+                                                                .stream()
+                                                                .map(this::mapPerson)
+                                                                .collect(Collectors.toList()),
+                                                g.getWorkingDays(),
+                                                g.getFunctions()
+                                                                .stream()
+                                                                .map(Function::getId)
+                                                                .collect(Collectors.toSet())))
+                                .collect(Collectors.toList());
+        }
+
+        @Transactional(readOnly = true)
+        public List<GroupResponseDTO> findByHouseId(Long houseId) {
+
+                return groupRepository.findByHouseId(houseId)
                                 .stream()
-                                .map(Function::getId)
-                                .collect(Collectors.toSet())))
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<GroupResponseDTO> findByHouseId(Long houseId) {
-
-        return groupRepository.findByHouseId(houseId)
-                .stream()
-                .map(g -> new GroupResponseDTO(
-                        g.getId(),
-                        g.getName(),
-                        g.getPersons()
-                                .stream()
-                                .map(this::mapPerson)
-                                .collect(Collectors.toList()),
-                        g.getWorkingDays(),
-                        g.getFunctions()
-                                .stream()
-                                .map(Function::getId)
-                                .collect(Collectors.toSet())))
-                .collect(Collectors.toList());
-    }
-
-    /*
-     * =========================================
-     * CREAR GRUPO
-     * =========================================
-     */
-
-    @Transactional
-    public GroupResponseDTO create(GroupRequestDTO dto) {
-
-        User user = getCurrentUser();
-
-        Group group = new Group(dto.getName(), user.getHouse());
-
-        group.setWorkingDays(dto.getWorkingDays());
-
-        if (dto.getFunctionIds() != null) {
-
-            Set<Function> functions = new HashSet<>(
-                    functionRepository.findByHouseIdAndIdIn(
-                            user.getHouse().getId(),
-                            dto.getFunctionIds()));
-
-            group.setFunctions(functions);
+                                .map(g -> new GroupResponseDTO(
+                                                g.getId(),
+                                                g.getName(),
+                                                g.getPersons()
+                                                                .stream()
+                                                                .map(this::mapPerson)
+                                                                .collect(Collectors.toList()),
+                                                g.getWorkingDays(),
+                                                g.getFunctions()
+                                                                .stream()
+                                                                .map(Function::getId)
+                                                                .collect(Collectors.toSet())))
+                                .collect(Collectors.toList());
         }
 
-        if (dto.getPersonIds() != null && !dto.getPersonIds().isEmpty()) {
+        /*
+         * =========================================
+         * CREAR GRUPO
+         * =========================================
+         */
 
-            List<Person> persons = personRepository.findAllById(dto.getPersonIds());
+        @Transactional
+        public GroupResponseDTO create(GroupRequestDTO dto) {
 
-            group.addPersons(persons);
+                User user = getCurrentUser();
+
+                Group group = new Group(dto.getName(), user.getHouse());
+
+                group.setWorkingDays(dto.getWorkingDays());
+
+                if (dto.getFunctionIds() != null) {
+
+                        Set<Function> functions = new HashSet<>(
+                                        functionRepository.findByHouseIdAndIdIn(
+                                                        user.getHouse().getId(),
+                                                        dto.getFunctionIds()));
+
+                        group.setFunctions(functions);
+                }
+
+                if (dto.getPersonIds() != null && !dto.getPersonIds().isEmpty()) {
+
+                        List<Person> persons = personRepository.findAllById(dto.getPersonIds());
+
+                        group.addPersons(persons);
+                }
+
+                Group saved = groupRepository.save(group);
+
+                return new GroupResponseDTO(
+                                saved.getId(),
+                                saved.getName(),
+                                saved.getPersons()
+                                                .stream()
+                                                .map(this::mapPerson)
+                                                .collect(Collectors.toList()),
+                                saved.getWorkingDays(),
+                                saved.getFunctions()
+                                                .stream()
+                                                .map(Function::getId)
+                                                .collect(Collectors.toSet()));
         }
 
-        Group saved = groupRepository.save(group);
+        /*
+         * =========================================
+         * ACTUALIZAR GRUPO
+         * =========================================
+         */
 
-        return new GroupResponseDTO(
-                saved.getId(),
-                saved.getName(),
-                saved.getPersons()
-                        .stream()
-                        .map(this::mapPerson)
-                        .collect(Collectors.toList()),
-                saved.getWorkingDays(),
-                saved.getFunctions()
-                        .stream()
-                        .map(Function::getId)
-                        .collect(Collectors.toSet()));
-    }
+        @Transactional
+        public GroupResponseDTO update(Long id, GroupRequestDTO dto) {
 
-    /*
-     * =========================================
-     * ACTUALIZAR GRUPO
-     * =========================================
-     */
+                User user = getCurrentUser();
 
-    @Transactional
-    public GroupResponseDTO update(Long id, GroupRequestDTO dto) {
+                Group group = groupRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
 
-        User user = getCurrentUser();
+                if (!group.getHouse().equals(user.getHouse())) {
+                        throw new RuntimeException("No tiene permisos para editar este grupo");
+                }
 
-        Group group = groupRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
+                group.setName(dto.getName());
 
-        if (!group.getHouse().equals(user.getHouse())) {
-            throw new RuntimeException("No tiene permisos para editar este grupo");
+                group.setWorkingDays(dto.getWorkingDays());
+
+                if (dto.getFunctionIds() != null) {
+
+                        Set<Function> functions = new HashSet<>(
+                                        functionRepository.findByHouseIdAndIdIn(
+                                                        user.getHouse().getId(),
+                                                        dto.getFunctionIds()));
+
+                        group.setFunctions(functions);
+                }
+
+                if (dto.getPersonIds() != null) {
+
+                        // quitar relación actual
+                        group.getPersons().forEach(p -> p.setGroup(null));
+                        group.getPersons().clear();
+
+                        // agregar nuevas personas
+                        if (!dto.getPersonIds().isEmpty()) {
+
+                                List<Person> persons = personRepository.findAllById(dto.getPersonIds());
+
+                                group.addPersons(persons);
+                        }
+                }
+
+                Group saved = groupRepository.save(group);
+
+                return new GroupResponseDTO(
+                                saved.getId(),
+                                saved.getName(),
+                                saved.getPersons()
+                                                .stream()
+                                                .map(this::mapPerson)
+                                                .collect(Collectors.toList()),
+                                saved.getWorkingDays(),
+                                saved.getFunctions()
+                                                .stream()
+                                                .map(Function::getId)
+                                                .collect(Collectors.toSet()));
         }
 
-        group.setName(dto.getName());
+        /*
+         * =========================================
+         * ELIMINAR GRUPO
+         * =========================================
+         */
 
-        group.setWorkingDays(dto.getWorkingDays());
+        @Transactional
+        public void delete(Long id) {
 
-        if (dto.getFunctionIds() != null) {
+                User user = getCurrentUser();
 
-            Set<Function> functions = new HashSet<>(
-                    functionRepository.findByHouseIdAndIdIn(
-                            user.getHouse().getId(),
-                            dto.getFunctionIds()));
+                Group group = groupRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
 
-            group.setFunctions(functions);
+                if (!group.getHouse().equals(user.getHouse())) {
+                        throw new RuntimeException("No tiene permisos para eliminar este grupo");
+                }
+
+                // quitar relación con personas
+                group.getPersons().forEach(person -> person.setGroup(null));
+                group.getPersons().clear();
+
+                groupRepository.delete(group);
         }
 
-        if (dto.getPersonIds() != null) {
+        /*
+         * =========================================
+         * MAPPER PERSON
+         * =========================================
+         */
 
-            // quitar relación actual
-            group.getPersons().forEach(p -> p.setGroup(null));
-            group.getPersons().clear();
-
-            // agregar nuevas personas
-            if (!dto.getPersonIds().isEmpty()) {
-
-                List<Person> persons = personRepository.findAllById(dto.getPersonIds());
-
-                group.addPersons(persons);
-            }
+        private PersonResponseDTO mapPerson(Person person) {
+                return new PersonResponseDTO(
+                                person.getId(),
+                                person.getFullName(),
+                                person.getNickName());
         }
 
-        Group saved = groupRepository.save(group);
+        /*
+         * =========================================
+         * OBTENER USUARIO ACTUAL
+         * =========================================
+         */
 
-        return new GroupResponseDTO(
-                saved.getId(),
-                saved.getName(),
-                saved.getPersons()
-                        .stream()
-                        .map(this::mapPerson)
-                        .collect(Collectors.toList()),
-                saved.getWorkingDays(),
-                saved.getFunctions()
-                        .stream()
-                        .map(Function::getId)
-                        .collect(Collectors.toSet()));
-    }
+        private User getCurrentUser() {
 
-    /*
-     * =========================================
-     * ELIMINAR GRUPO
-     * =========================================
-     */
+                String username = SecurityContextHolder
+                                .getContext()
+                                .getAuthentication()
+                                .getName();
 
-    @Transactional
-    public void delete(Long id) {
-
-        User user = getCurrentUser();
-
-        Group group = groupRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
-
-        if (!group.getHouse().equals(user.getHouse())) {
-            throw new RuntimeException("No tiene permisos para eliminar este grupo");
+                return userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         }
-
-        // quitar relación con personas
-        group.getPersons().forEach(person -> person.setGroup(null));
-        group.getPersons().clear();
-
-        groupRepository.delete(group);
-    }
-
-    /*
-     * =========================================
-     * MAPPER PERSON
-     * =========================================
-     */
-
-    private PersonResponseDTO mapPerson(Person person) {
-        return new PersonResponseDTO(
-                person.getId(),
-                person.getFullName());
-    }
-
-    /*
-     * =========================================
-     * OBTENER USUARIO ACTUAL
-     * =========================================
-     */
-
-    private User getCurrentUser() {
-
-        String username = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
-
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-    }
 }

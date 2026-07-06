@@ -283,19 +283,17 @@ d-flex justify-content-between align-items-center">
                 let hiddenMembers = ""
 
                 if (g.persons && g.persons.length > 0) {
-
                     previewMembers = g.persons.slice(0, 3).map(p =>
-                        `<span class="badge bg-secondary-subtle text-secondary me-1 mb-1">
-${p.fullName}
-</span>`
-                    ).join("")
+                    `<span class="badge bg-secondary-subtle text-secondary me-1 mb-1">
+                        ${p.nickName || p.fullName}
+                    </span>`
+                    ).join("");
 
                     hiddenMembers = g.persons.slice(3).map(p =>
                         `<span class="badge bg-secondary-subtle text-secondary me-1 mb-1">
-${p.fullName}
-</span>`
-                    ).join("")
-
+                            ${p.nickName || p.fullName}
+                        </span>`
+                    ).join("");
                 }
 
                 const card = document.createElement("div")
