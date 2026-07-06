@@ -512,7 +512,21 @@ function editPerson(id) {
         <i class="bi bi-person-check me-2"></i>Editar persona
     `;
 
-    personName.value = p.fullName;
+    $("#personName").empty();
+
+    const option = new Option(
+        p.fullName,
+        p.fullName,
+        true,
+        true
+    );
+
+    $("#personName")
+        .append(option)
+        .trigger("change");
+
+    selectedExternalPerson = null;
+    
     personNickname.value = p.nickName;
     personBirthDate.value = toInputDateFormat(p.birthDate || "");
     personEmail.value = p.email;
