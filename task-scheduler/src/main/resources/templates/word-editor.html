@@ -335,100 +335,70 @@
     </main>
 
     <script>
-
         let originalHtml = null;
-
         let assignments = [];
         let groupedAssignments = {};
         let validPersons = [];
         let assignmentIndex = {};
         let schedulePeriod = null;
-
         let selectedCell = null;
-
         let originalDocxFile = null;
 
         async function cargarTemplatePersistido() {
-
             try {
-
                 const response = await fetch("/api/functions/word-template");
-
                 if (!response.ok) {
                     console.log("No hay template Word persistido");
                     return;
                 }
-
                 const blob = await response.blob();
-
                 const file = new File(
                     [blob],
                     "template.docx",
-                    {
-                        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    }
+                    {type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
                 );
-
                 originalDocxFile = file;
 
                 await cargarArchivo(file);
-
                 await cargarSchedule();
-
                 procesarPlaceholders();
-
                 console.log("Template Word cargado automáticamente");
 
             } catch (e) {
-
                 console.error("Error cargando template Word", e);
             }
         }
 
         document.addEventListener("DOMContentLoaded", async () => {
-
             await cargarTemplatePersistido();
         });
 
 
         function cargarArchivo(file) {
-
             return new Promise((resolve) => {
-
                 zoomLevel = 1;
                 updateZoomUI();
-
                 const reader = new FileReader();
 
                 reader.onload = function (e) {
-
                     const preview = document.getElementById("preview");
-
                     docx.renderAsync(e.target.result, preview)
                         .then(() => {
-
                             const wrapper = document.createElement("div");
-
                             wrapper.className = "doc-wrapper";
                             wrapper.innerHTML = preview.innerHTML;
-
                             preview.innerHTML = "";
                             preview.appendChild(wrapper);
-
                             originalHtml = preview.innerHTML;
-
                             resolve();
                         });
                 };
-
                 reader.readAsArrayBuffer(file);
             });
         }
 
         async function cargarSchedule() {
-
             const res = await fetch('/api/admin/schedule/current');
-
             const data = await res.json();
 
             schedulePeriod = {
@@ -446,6 +416,7 @@
             });
 
             groupedAssignments = buildGrouped(assignments);
+            console.log(JSON.stringify(groupedAssignments, null, 2));
 
             validPersons = extractValidPersons(assignments);
         }
@@ -490,66 +461,48 @@
         }
 
         function formatDate(dateStr) {
-
             if (!dateStr) return "";
-
             const [year, month, day] = dateStr.split("-");
-
             return `${day}/${month}/${year}`;
         }
 
         function procesarPlaceholders() {
-
             if (!originalHtml) return;
-
             const container = document.getElementById("preview");
-
             container.innerHTML = originalHtml;
-
             setTimeout(() => applyZoom(), 0);
-
             assignmentIndex = {};
-
             recorrer(container);
-
             const editorPanel = document.getElementById("editor-panel");
-
             editorPanel.style.display = "flex";
         }
 
         function recorrer(nodo) {
+            if (nodo.nodeType !== 1) return;
 
-            if (nodo.nodeType === 3) {
-                procesarTexto(nodo);
-            } else {
-                nodo.childNodes.forEach(recorrer);
+            // Procesamos tablas completas por celda
+            if (nodo.tagName === "TD") {
+                procesarCelda(nodo);
+                return;
             }
+            nodo.childNodes.forEach(recorrer);
         }
 
-        function procesarTexto(nodo) {
 
+        function procesarCelda(td) {
+            const text = td.innerText;
             const regex = /#(.*?)#/g;
-
-            const text = nodo.nodeValue;
-
             if (!regex.test(text)) return;
-
-            const span = document.createElement("span");
-
-            span.innerHTML = text.replace(regex, (match, key) => {
-
+            td.innerHTML = text.replace(regex, (match, key) => {
+                console.log("PLACEHOLDER:", key);
                 if (key === "Fecha_Inicio") {
                     return formatDate(schedulePeriod?.startDate);
                 }
-
                 if (key === "Fecha_Final") {
                     return formatDate(schedulePeriod?.endDate);
                 }
 
-                const td = nodo.parentElement.closest("td");
-
-                const col = td ? td.cellIndex : 0;
-
+                const col = td.cellIndex;
                 const dayMap = {
                     0: "MONDAY",
                     1: "TUESDAY",
@@ -561,47 +514,81 @@
                 };
 
                 const day = dayMap[col];
-
                 let selected = null;
 
+                if (groupedAssignments[key]?.[day]?.length > 0) {
+                    selected = groupedAssignments[key][day][0];
+                } else if (groupedAssignments[key]) {
+                    const firstDay = Object.keys(groupedAssignments[key])[0];
+                    selected = groupedAssignments[key][firstDay][0];
+                }
+
+                if (!selected) {
+                    console.log("No encontrado:", key);
+                    return match;
+                }
+
+                return `<span class="editable-cell" data-function="${key}" data-day="${day}">${selected.nickname || selected.name}</span>`;
+            });
+        }
+
+        function procesarTexto(nodo) {
+            const regex = /#(.*?)#/g;
+            const text = nodo.nodeValue;
+            if (!regex.test(text)) return;
+            const span = document.createElement("span");
+            span.innerHTML = text.replace(regex, (match, key) => {
+                if (key === "Fecha_Inicio") {
+                    return formatDate(schedulePeriod?.startDate);
+                }
+                if (key === "Fecha_Final") {
+                    return formatDate(schedulePeriod?.endDate);
+                }
+
+                const td = nodo.parentElement.closest("td");
+                const col = td ? td.cellIndex : 0;
+                const dayMap = {
+                    0: "MONDAY",
+                    1: "TUESDAY",
+                    2: "WEDNESDAY",
+                    3: "THURSDAY",
+                    4: "FRIDAY",
+                    5: "SATURDAY",
+                    6: "SUNDAY"
+                };
+                const day = dayMap[col];
+                let selected = null;
                 let index = 0;
 
-                if (day && groupedAssignments[key]?.[day]?.length > 0) {
+                console.log({
+                    key,
+                    day,
+                    exists: groupedAssignments[key],
+                    byDay: groupedAssignments[key]?.[day]
+                });
 
+                if (day && groupedAssignments[key]?.[day]?.length > 0) {
                     if (!assignmentIndex[key]) {
                         assignmentIndex[key] = {};
                     }
-
                     if (!assignmentIndex[key][day]) {
                         assignmentIndex[key][day] = 0;
                     }
-
                     index = assignmentIndex[key][day]++;
-
                     const entry = groupedAssignments[key][day];
-
                     selected = entry[index % entry.length];
                 }
-
                 else if (groupedAssignments[key]) {
-
                     const days = Object.keys(groupedAssignments[key]);
-
                     if (days.length > 0) {
-
                         const firstDay = days[0];
-
                         const persons = groupedAssignments[key][firstDay];
-
                         if (persons && persons.length > 0) {
-
                             index = 0;
-
                             selected = persons[0];
                         }
                     }
                 }
-
                 if (!selected) return match;
 
                 return `<span class="editable-cell"
@@ -614,35 +601,26 @@
         }
 
         document.addEventListener("click", e => {
-
             const cell = e.target.closest(".editable-cell");
-
             if (!cell) return;
-
             document.querySelectorAll(".editable-cell")
                 .forEach(c => c.classList.remove("selected-cell"));
-
             cell.classList.add("selected-cell");
-
             selectedCell = cell;
-
             mostrarSelector(cell.dataset.function);
         });
 
         function mostrarSelector(functionName) {
-
             const panel = document.getElementById("editor-panel");
-
             const entry = groupedAssignments[functionName];
-
             if (!entry) return;
+            const currentText = selectedCell.innerText.trim();
+            const person = validPersons.find(p =>
+                p.nickname === currentText ||
+                p.name === currentText
+            );
 
-            const currentText = selectedCell.innerText;
-
-            const match = currentText.match(/^(.+?)\s*\(/);
-
-            const currentName = match ? match[1] : "";
-
+            const currentName = person ? person.name : "";
             panel.innerHTML = `
                 <h4>Función: ${functionName}</h4>
 
@@ -662,190 +640,120 @@
             }
 
             select.onchange = () => {
-
                 const value = select.value;
-
                 const person = validPersons.find(p => p.name === value);
-
                 if (person && selectedCell) {
-
-                    selectedCell.innerText =
-                        person.nickname || person.name;
+                    selectedCell.innerText = person.nickname || person.name;
                 }
             };
         }
-
         let zoomLevel = 1;
 
         function applyZoom() {
-
             const preview = document.getElementById("preview");
-
             preview.style.transform = `scale(${zoomLevel})`;
         }
 
         function zoomIn() {
-
             zoomLevel += 0.1;
-
             updateZoomUI();
         }
 
         function zoomOut() {
-
             zoomLevel -= 0.1;
-
             if (zoomLevel < 0.5) {
                 zoomLevel = 0.5;
             }
-
             updateZoomUI();
         }
 
         function updateZoomUI() {
-
             const zoomPercent = Math.round(zoomLevel * 100);
-
             document.getElementById("zoom-range").value = zoomPercent;
-
-            document.getElementById("zoom-value").innerText =
-                zoomPercent + "%";
-
+            document.getElementById("zoom-value").innerText = zoomPercent + "%";
             applyZoom();
         }
 
         document.getElementById("zoom-range")
             .addEventListener("input", e => {
-
                 zoomLevel = e.target.value / 100;
-
                 applyZoom();
             });
 
         function fitToWidth() {
-
             const container = document.getElementById("preview-wrapper");
-
             const doc = document.querySelector(".doc-wrapper");
-
             if (!doc) return;
-
             const containerWidth = container.clientWidth;
-
             const docWidth = doc.scrollWidth;
-
             zoomLevel = containerWidth / docWidth;
-
             updateZoomUI();
         }
 
         function descargarDocx() {
 
             if (!originalDocxFile) {
-
                 alert("Primero cargá un archivo");
-
                 return;
             }
 
             const reader = new FileReader();
 
             reader.onload = function (e) {
-
                 const zip = new PizZip(e.target.result);
-
-                let xml = zip.file("word/document.xml").asText();
-
-                let tableCounter = 0;
-
-                xml = xml.replace(
-                    /(<w:tbl>.*?#.*?#.*?<\/w:tbl>)/gs,
-                    (match) => {
-
-                        tableCounter++;
-
-                        if (tableCounter === 1) {
-
-                            return match;
-
-                        } else {
-
-                            return "<w:p><w:r><w:br w:type='page'/></w:r></w:p>" + match;
-                        }
-                    }
-                );
-
-                let counterMap = {};
-
-                xml = xml.replace(/#(.*?)#/g, (match, key) => {
-
-                    if (!counterMap[key]) {
-                        counterMap[key] = 0;
-                    }
-
-                    const index = counterMap[key]++;
-
-                    return `{${key}_${index}}`;
-                });
-
-                zip.file("word/document.xml", xml);
 
                 const DocxClass =
                     window.Docxtemplater || window.docxtemplater;
 
                 if (!DocxClass) {
-
                     alert("Docxtemplater no cargó");
-
                     return;
                 }
 
                 const doc = new DocxClass(zip, {
                     paragraphLoop: true,
-                    linebreaks: true
+                    linebreaks: true,
+                    delimiters: {
+                        start: "#",
+                        end: "#"
+                    }
                 });
 
                 const data = {};
-
                 let counterData = {};
 
                 document.querySelectorAll(".editable-cell")
                     .forEach(cell => {
-
                         const key = cell.dataset.function;
+                        const value = cell.innerText.trim();
+                        /* Guardamos el primer valor para placeholders simples*/
+                        if (!data[key]) {
+                            data[key] = value;
+                        }
 
-                        const value = cell.innerText;
-
+                        /* Guardamos también versiones numeradas por si después necesitamos repetir*/
                         if (!counterData[key]) {
                             counterData[key] = 0;
                         }
 
                         const index = counterData[key]++;
-
                         data[`${key}_${index}`] = value;
                     });
 
                 if (schedulePeriod) {
-
-                    data["Fecha_Inicio_0"] =
-                        formatDate(schedulePeriod.startDate);
-
-                    data["Fecha_Final_0"] =
-                        formatDate(schedulePeriod.endDate);
+                    data["Fecha_Inicio"] = formatDate(schedulePeriod.startDate);
+                    data["Fecha_Final"] = formatDate(schedulePeriod.endDate);
                 }
 
+                console.log("DATA FINAL DOCX:", data);
+
                 try {
-
                     doc.setData(data);
-
-                    doc.render();
+                    doc.render();                    
 
                 } catch (error) {
-
                     console.error(error);
-
                     alert("Error generando el DOCX");
-
                     return;
                 }
 
@@ -855,11 +763,8 @@
                 });
 
                 const link = document.createElement("a");
-
                 link.href = URL.createObjectURL(blob);
-
                 link.download = "schedule_editado.docx";
-
                 link.click();
             };
 
