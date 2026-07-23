@@ -526,7 +526,7 @@ function editPerson(id) {
         .trigger("change");
 
     selectedExternalPerson = null;
-    
+
     personNickname.value = p.nickName;
     personBirthDate.value = toInputDateFormat(p.birthDate || "");
     personEmail.value = p.email;
@@ -534,7 +534,7 @@ function editPerson(id) {
     personStatus.checked = p.active;
     personEntryDate.value = p.entryDate;
     personExitDate.value = p.exitDate || "";
-    document.getElementById("personGroup").value = p.groupId || "";
+    $("#personGroup").val(p.groupId || "").trigger("change");
 
     currentUnavailabilities = p.unavailabilities ? [...p.unavailabilities] : [];
     renderUnavailabilities();
@@ -891,12 +891,18 @@ async function loadGroups() {
 
 document.getElementById("personGroup").addEventListener("change", function () {
 
-    // si estoy editando una persona NO hago nada
-    if (editingPersonId) return;
-
     const group = groupsCache[this.value];
 
     if (!group) {
+
+        $("#personFunctions")
+            .val(null)
+            .trigger("change");
+
+        $("#personDays")
+            .val(null)
+            .trigger("change");
+
         return;
     }
 

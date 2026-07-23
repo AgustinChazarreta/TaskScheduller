@@ -1,7 +1,10 @@
 package com.AgsCh.task_scheduler.service.domain;
 
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,7 +79,7 @@ public class PersonService {
         this.functionRepository = functionRepository;
         this.scheduleService = scheduleService;
         this.fileStorageService = fileStorageService;
-        this.userRepository = userRepository;        
+        this.userRepository = userRepository;
         this.scheduleRunRepository = scheduleRunRepository;
         this.houseRepository = houseRepository;
         this.passwordEncoder = passwordEncoder;
@@ -114,22 +117,27 @@ public class PersonService {
 
         // GROUP
         if (dto.getGroupId() != null) {
-
             Group group = groupRepository.findById(dto.getGroupId())
                     .orElseThrow(() -> new RuntimeException("Group not found"));
-
             if (!group.getHouse().getId().equals(currentUser.getHouse().getId())) {
                 throw new RuntimeException("Group does not belong to this house");
             }
-
             person.setGroup(group);
         }
 
         // FUNCIONES
-        if (dto.getFunctionIds() != null && !dto.getFunctionIds().isEmpty()) {
-            List<Function> functions = functionRepository.findAllById(dto.getFunctionIds());
-            for (Function f : functions) {
-                person.addPersonFunction(new PersonFunction(person, f));
+        if (person.getGroup() != null) {
+            updateWorkingDays(person, dto.getWorkingDays());
+            updateFunctions(person, dto.getFunctionIds());
+            rebuildConfiguration(person);
+
+        } else {
+            person.setWorkingDays(dto.getWorkingDays());
+            if (dto.getFunctionIds() != null && !dto.getFunctionIds().isEmpty()) {
+                List<Function> functions = functionRepository.findAllById(dto.getFunctionIds());
+                for (Function function : functions) {
+                    person.addPersonFunction(new PersonFunction(person, function));
+                }
             }
         }
 
@@ -218,13 +226,21 @@ public class PersonService {
         }
 
         // FUNCIONES
-        if (dto.getFunctionIds() != null && !dto.getFunctionIds().isEmpty()) {
-            List<Function> functions = functionRepository.findAllById(dto.getFunctionIds());
-            for (Function f : functions) {
-                if (!f.getHouse().getId().equals(houseId)) {
-                    throw new RuntimeException("Function does not belong to this house");
+        if (person.getGroup() != null) {
+            updateWorkingDays(person, dto.getWorkingDays());
+            updateFunctions(person, dto.getFunctionIds());
+            rebuildConfiguration(person);
+
+        } else {
+            person.setWorkingDays(dto.getWorkingDays());
+            if (dto.getFunctionIds() != null && !dto.getFunctionIds().isEmpty()) {
+                List<Function> functions = functionRepository.findAllById(dto.getFunctionIds());
+                for (Function function : functions) {
+                    if (!function.getHouse().getId().equals(houseId)) {
+                        throw new RuntimeException("Function does not belong to this house");
+                    }
+                    person.addPersonFunction(new PersonFunction(person, function));
                 }
-                person.addPersonFunction(new PersonFunction(person, f));
             }
         }
 
@@ -371,11 +387,16 @@ public class PersonService {
     // =====================================================
     // UPDATE
     // =====================================================
-
     @Transactional
     public void update(Long id, PersonRequestDTO dto) {
 
         Person person = findById(id);
+
+        Group previousGroup = person.getGroup();
+
+        Long previousGroupId = previousGroup != null
+                ? previousGroup.getId()
+                : null;
 
         person.setFullName(dto.getFullName());
         person.setNickName(dto.getNickName());
@@ -385,13 +406,19 @@ public class PersonService {
         person.setActive(dto.isActive());
         person.setEntryDate(dto.getEntryDate());
         person.setExitDate(dto.getExitDate());
-        person.setWorkingDays(dto.getWorkingDays());
 
+        // =====================================================
         // GROUP
+        // =====================================================
+
         if (dto.getGroupId() != null) {
 
             Group group = groupRepository.findById(dto.getGroupId())
                     .orElseThrow(() -> new RuntimeException("Group not found"));
+
+            if (!group.getHouse().getId().equals(person.getHouse().getId())) {
+                throw new RuntimeException("Group does not belong to this house");
+            }
 
             person.setGroup(group);
 
@@ -401,30 +428,82 @@ public class PersonService {
 
         }
 
-        // FUNCIONES
-        Set<Long> newFunctionIds = dto.getFunctionIds() != null ? dto.getFunctionIds() : Set.of();
-        person.getPersonFunctions()
-                .removeIf(pf -> !newFunctionIds.contains(pf.getFunction().getId()));
+        boolean groupChanged = !java.util.Objects.equals(previousGroupId, dto.getGroupId());
 
-        for (Long functionId : newFunctionIds) {
-            boolean exists = person.getPersonFunctions().stream()
-                    .anyMatch(pf -> pf.getFunction().getId().equals(functionId));
-            if (!exists) {
-                Function f = functionRepository.findById(functionId)
-                        .orElseThrow(() -> new RuntimeException("Function not found"));
-                person.addPersonFunction(new PersonFunction(person, f));
+        if (person.getGroup() == null) {
+
+            person.getAdditionalWorkingDays().clear();
+            person.getRemovedWorkingDays().clear();
+            person.getAdditionalFunctions().clear();
+            person.getRemovedFunctions().clear();
+
+            person.setWorkingDays(
+                    dto.getWorkingDays() != null
+                            ? new HashSet<>(dto.getWorkingDays())
+                            : new HashSet<>());
+
+            person.getPersonFunctions().clear();
+
+            if (dto.getFunctionIds() != null && !dto.getFunctionIds().isEmpty()) {
+
+                List<Function> functions = functionRepository.findAllById(dto.getFunctionIds());
+
+                for (Function function : functions) {
+
+                    if (!function.getHouse().getId().equals(person.getHouse().getId())) {
+                        throw new RuntimeException("Function does not belong to this house");
+                    }
+
+                    person.addPersonFunction(new PersonFunction(person, function));
+                }
             }
+
+        } else if (groupChanged) {
+
+            person.getAdditionalWorkingDays().clear();
+            person.getRemovedWorkingDays().clear();
+
+            person.getAdditionalFunctions().clear();
+            person.getRemovedFunctions().clear();
+
+            // limpiar relaciones actuales antes de aplicar el nuevo grupo
+            person.getPersonFunctions().removeIf(pf -> true);
+
+            rebuildConfiguration(person);
+
+        } else {
+
+            updateWorkingDays(person, dto.getWorkingDays());
+            updateFunctions(person, dto.getFunctionIds());
+
+            rebuildConfiguration(person);
         }
 
-        // 🔹 UNAVAILABILITIES
-        person.getUnavailabilities().clear(); // borramos las viejas
+        // =====================================================
+        // UNAVAILABILITIES
+        // =====================================================
+
+        person.getUnavailabilities().clear();
+
         if (dto.getUnavailabilities() != null) {
+
             dto.getUnavailabilities().forEach(uDto -> {
+
                 if (uDto.getEndDate() != null) {
+
                     person.addUnavailability(
-                            new PersonUnavailability(uDto.getStartDate(), uDto.getEndDate(), uDto.getReason()));
+                            new PersonUnavailability(
+                                    uDto.getStartDate(),
+                                    uDto.getEndDate(),
+                                    uDto.getReason()));
+
                 } else {
-                    person.addUnavailability(new PersonUnavailability(uDto.getStartDate(), uDto.getReason()));
+
+                    person.addUnavailability(
+                            new PersonUnavailability(
+                                    uDto.getStartDate(),
+                                    uDto.getReason()));
+
                 }
             });
         }
@@ -593,10 +672,131 @@ public class PersonService {
         return user.getPerson();
     }
 
+    public void rebuildConfiguration(Person person) {
+
+        // ===========================
+        // WORKING DAYS
+        // ===========================
+
+        Set<DayOfWeek> workingDays = EnumSet.noneOf(DayOfWeek.class);
+
+        if (person.getGroup() != null) {
+            workingDays.addAll(person.getGroup().getWorkingDays());
+        }
+
+        workingDays.removeAll(person.getRemovedWorkingDays());
+
+        workingDays.addAll(person.getAdditionalWorkingDays());
+
+        person.setWorkingDays(workingDays);
+
+        // ===========================
+        // FUNCTIONS
+        // ===========================
+
+        Set<Function> desiredFunctions = new HashSet<>();
+
+        if (person.getGroup() != null) {
+            desiredFunctions.addAll(person.getGroup().getFunctions());
+        }
+
+        desiredFunctions.removeAll(person.getRemovedFunctions());
+
+        desiredFunctions.addAll(person.getAdditionalFunctions());
+
+        // eliminar las que ya no deben existir
+        person.getPersonFunctions().removeIf(
+                pf -> desiredFunctions.stream()
+                        .noneMatch(f -> f.getId().equals(pf.getFunction().getId())));
+
+        // funciones actuales
+        Set<Long> currentIds = person.getPersonFunctions()
+                .stream()
+                .map(pf -> pf.getFunction().getId())
+                .collect(Collectors.toSet());
+
+        // agregar solamente las nuevas
+        for (Function function : desiredFunctions) {
+
+            if (!currentIds.contains(function.getId())) {
+
+                PersonFunction pf = new PersonFunction(
+                        person,
+                        function);
+
+                person.addPersonFunction(pf);
+            }
+        }
+    }
+
     public String generateTemporaryPassword() {
         return UUID.randomUUID()
                 .toString()
                 .replace("-", "")
                 .substring(0, 8);
+    }
+
+    private void updateWorkingDays(Person person, Set<DayOfWeek> selectedDays) {
+
+        person.getAdditionalWorkingDays().clear();
+        person.getRemovedWorkingDays().clear();
+
+        selectedDays = selectedDays != null
+                ? selectedDays
+                : Set.of();
+
+        Set<DayOfWeek> groupDays = person.getGroup() != null
+                ? person.getGroup().getWorkingDays()
+                : Set.of();
+
+        for (DayOfWeek day : selectedDays) {
+
+            if (!groupDays.contains(day)) {
+                person.getAdditionalWorkingDays().add(day);
+            }
+        }
+
+        for (DayOfWeek day : groupDays) {
+
+            if (!selectedDays.contains(day)) {
+                person.getRemovedWorkingDays().add(day);
+            }
+        }
+    }
+
+    private void updateFunctions(Person person, Set<Long> selectedFunctionIds) {
+
+        person.getAdditionalFunctions().clear();
+        person.getRemovedFunctions().clear();
+
+        selectedFunctionIds = selectedFunctionIds != null
+                ? selectedFunctionIds
+                : Set.of();
+
+        Set<Function> groupFunctions = person.getGroup() != null
+                ? person.getGroup().getFunctions()
+                : Set.of();
+
+        Set<Function> selectedFunctions = new HashSet<>(
+                functionRepository.findAllById(selectedFunctionIds));
+
+        for (Function function : selectedFunctions) {
+            if (!function.getHouse().getId().equals(person.getHouse().getId())) {
+                throw new RuntimeException("Function does not belong to this house");
+            }
+
+            boolean belongsToGroup = groupFunctions.stream().anyMatch(gf -> gf.getId().equals(function.getId()));
+            if (!belongsToGroup) {
+                person.getAdditionalFunctions().add(function);
+            }
+        }
+
+        for (Function function : groupFunctions) {
+
+            boolean selected = selectedFunctions.stream().anyMatch(sf -> sf.getId().equals(function.getId()));
+            if (!selected) {
+                person.getRemovedFunctions().add(function);
+            }
+        }
     }
 }

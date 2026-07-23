@@ -284,7 +284,7 @@ d-flex justify-content-between align-items-center">
 
                 if (g.persons && g.persons.length > 0) {
                     previewMembers = g.persons.slice(0, 3).map(p =>
-                    `<span class="badge bg-secondary-subtle text-secondary me-1 mb-1">
+                        `<span class="badge bg-secondary-subtle text-secondary me-1 mb-1">
                         ${p.nickName || p.fullName}
                     </span>`
                     ).join("");
@@ -454,26 +454,40 @@ onclick="deleteGroup(${g.id})">
                 return
             }
 
-            if (id) {
+            let response;
 
-                await fetch(`/api/groups/${id}`, {
+            if (id) {
+                response = await fetch(`/api/groups/${id}`, {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
                     body: JSON.stringify(payload)
-                })
+                });
 
             } else {
-
-                await fetch(`/api/groups`, {
+                response = await fetch(`/api/groups`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
                     body: JSON.stringify(payload)
-                })
+                });
 
             }
 
-            groupModal.hide()
-            loadGroups()
+            if (!response.ok) {
+                const error = await response.text();
+                alert(error);
+                return;
+            }
+
+            groupModal.hide();
+
+            await Promise.all([
+                loadPersons(),
+                loadGroups()
+            ]);
 
         }
 
@@ -504,15 +518,20 @@ onclick="deleteGroup(${g.id})">
 
                 if (!deleteGroupId) return
 
-                await fetch(`/api/groups/${deleteGroupId}`, {
+                const response = await fetch(`/api/groups/${deleteGroupId}`, {
                     method: "DELETE"
-                })
+                });
 
-                deleteGroupModal.hide()
+                if (!response.ok) {
+                    alert(await response.text());
+                    return;
+                }
 
-                deleteGroupId = null
+                deleteGroupModal.hide();
 
-                loadGroups()
+                deleteGroupId = null;
+
+                await loadGroups();
 
             })
 

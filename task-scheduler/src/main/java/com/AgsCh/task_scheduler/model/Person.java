@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +26,6 @@ public class Person {
 
     @Column(name = "birth_date")
     private LocalDate birthDate; // Fecha de nacimiento
-
 
     private String email;
 
@@ -54,12 +54,34 @@ public class Person {
     @Enumerated(EnumType.STRING)
     private Set<DayOfWeek> workingDays = EnumSet.noneOf(DayOfWeek.class);
 
+    // Días agregados manualmente
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "person_additional_working_days", joinColumns = @JoinColumn(name = "person_id"))
+    @Column(name = "day_of_week")
+    @Enumerated(EnumType.STRING)
+    private Set<DayOfWeek> additionalWorkingDays = EnumSet.noneOf(DayOfWeek.class);
+
+    // Días excluidos manualmente
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "person_removed_working_days", joinColumns = @JoinColumn(name = "person_id"))
+    @Column(name = "day_of_week")
+    @Enumerated(EnumType.STRING)
+    private Set<DayOfWeek> removedWorkingDays = EnumSet.noneOf(DayOfWeek.class);
+
     // ---- Relaciones ----
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PersonUnavailability> unavailabilities = new ArrayList<>();
 
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PersonFunction> personFunctions = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "person_additional_functions", joinColumns = @JoinColumn(name = "person_id"), inverseJoinColumns = @JoinColumn(name = "function_id"))
+    private Set<Function> additionalFunctions = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "person_removed_functions", joinColumns = @JoinColumn(name = "person_id"), inverseJoinColumns = @JoinColumn(name = "function_id"))
+    private Set<Function> removedFunctions = new HashSet<>();
 
     @OneToMany(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FunctionAssignment> functionAssignments = new ArrayList<>();
@@ -135,12 +157,28 @@ public class Person {
         return workingDays;
     }
 
+    public Set<DayOfWeek> getAdditionalWorkingDays() {
+        return additionalWorkingDays;
+    }
+
+    public Set<DayOfWeek> getRemovedWorkingDays() {
+        return removedWorkingDays;
+    }
+
     public List<PersonUnavailability> getUnavailabilities() {
         return unavailabilities;
     }
 
     public List<PersonFunction> getPersonFunctions() {
         return personFunctions;
+    }
+
+    public Set<Function> getAdditionalFunctions() {
+        return additionalFunctions;
+    }
+
+    public Set<Function> getRemovedFunctions() {
+        return removedFunctions;
     }
 
     public List<FunctionAssignment> getFunctionAssignments() {
@@ -198,6 +236,18 @@ public class Person {
                 : EnumSet.noneOf(DayOfWeek.class);
     }
 
+    public void setAdditionalWorkingDays(Set<DayOfWeek> additionalWorkingDays) {
+        this.additionalWorkingDays = additionalWorkingDays != null
+                ? EnumSet.copyOf(additionalWorkingDays)
+                : EnumSet.noneOf(DayOfWeek.class);
+    }
+
+    public void setRemovedWorkingDays(Set<DayOfWeek> removedWorkingDays) {
+        this.removedWorkingDays = removedWorkingDays != null
+                ? EnumSet.copyOf(removedWorkingDays)
+                : EnumSet.noneOf(DayOfWeek.class);
+    }
+
     // ---- Helpers de dominio (opcional pero elegante) ----
 
     public boolean worksOn(DayOfWeek dayOfWeek) {
@@ -222,6 +272,18 @@ public class Person {
     public void removePersonFunction(PersonFunction pf) {
         personFunctions.remove(pf);
         pf.setPerson(null);
+    }
+
+    public void setAdditionalFunctions(Set<Function> additionalFunctions) {
+        this.additionalFunctions = additionalFunctions != null
+                ? new HashSet<>(additionalFunctions)
+                : new HashSet<>();
+    }
+
+    public void setRemovedFunctions(Set<Function> removedFunctions) {
+        this.removedFunctions = removedFunctions != null
+                ? new HashSet<>(removedFunctions)
+                : new HashSet<>();
     }
 
     public void setProfileImageUrl(String profileImageUrl) {
