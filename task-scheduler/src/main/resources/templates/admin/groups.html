@@ -6,7 +6,7 @@
     <main class="container-fluid py-4">
 
         <!-- ALERTAS -->
-        <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index:1055;"></div>
+        <div id="alertContainer"></div>
 
         <!-- HEADER -->
         <div class="bg-white rounded-4 shadow-sm p-4 mb-4 border-soft
@@ -62,6 +62,9 @@ d-flex justify-content-between align-items-center">
                 </div>
 
                 <div class="modal-body">
+
+                    <!-- ALERTAS DEL MODAL -->
+                    <div id="modalAlertContainer"></div>
 
                     <input type="hidden" id="groupId">
 
@@ -208,6 +211,50 @@ d-flex justify-content-between align-items-center">
 
         })
 
+        function showAlert(message, type = "success", insideModal = false) {
+
+            const container = insideModal
+                ? document.getElementById("modalAlertContainer")
+                : document.getElementById("alertContainer");
+
+
+            if (!container) return;
+
+
+            const alert = document.createElement("div");
+
+            alert.className =
+                `alert alert-${type} alert-dismissible fade show rounded-3 shadow-sm mb-3`;
+
+
+            alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+
+            container.appendChild(alert);
+
+
+            if (insideModal) {
+
+                const modalBody = document.querySelector("#groupModal .modal-body");
+
+                modalBody.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+
+            }
+
+
+            setTimeout(() => {
+
+                alert.classList.remove("show");
+                alert.remove();
+
+            }, 8000);
+        }
 
         /* ================================
         INIT SELECT2
@@ -450,8 +497,22 @@ onclick="deleteGroup(${g.id})">
             }
 
             if (!payload.name) {
-                alert("El nombre es obligatorio")
-                return
+
+                showAlert(`
+    <div class="d-flex align-items-start gap-2">
+        <i class="bi bi-exclamation-triangle-fill text-warning fs-5 mt-1"></i>
+        <div>
+            <div class="fw-semibold">
+                Nombre obligatorio
+            </div>
+            <small class="text-muted">
+                Debés ingresar un nombre para el grupo.
+            </small>
+        </div>
+    </div>
+`, "warning", true);
+
+                return;
             }
 
             let response;
@@ -477,12 +538,46 @@ onclick="deleteGroup(${g.id})">
             }
 
             if (!response.ok) {
-                const error = await response.text();
-                alert(error);
+
+                showAlert(`
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+            <div>
+                <div class="fw-semibold">
+                    No se pudo guardar el grupo
+                </div>
+                <small class="text-muted">
+                    El servidor no pudo procesar los cambios.
+                </small>
+            </div>
+        </div>
+    `, "danger", true);
+
                 return;
             }
 
+
+            const action = id ? "actualizado" : "creado";
+
+            showAlert(`
+    <div class="d-flex align-items-start gap-2">
+        <i class="bi ${id
+                    ? "bi-pencil-fill"
+                    : "bi-people-fill"} text-success fs-5 mt-1"></i>
+        <div>
+            <div class="fw-semibold">
+                Grupo ${action} correctamente
+            </div>
+            <small class="text-muted">
+                <strong>${payload.name}</strong> fue ${action} en el sistema.
+            </small>
+        </div>
+    </div>
+`, "success");
+
+
             groupModal.hide();
+
 
             await Promise.all([
                 loadPersons(),
@@ -523,13 +618,42 @@ onclick="deleteGroup(${g.id})">
                 });
 
                 if (!response.ok) {
-                    alert(await response.text());
+
+                    showAlert(`
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
+            <div>
+                <div class="fw-semibold">
+                    No se pudo eliminar el grupo
+                </div>
+            </div>
+        </div>
+    `, "danger");
+
                     return;
                 }
 
+
                 deleteGroupModal.hide();
 
+
+                showAlert(`
+    <div class="d-flex align-items-start gap-2">
+        <i class="bi bi-trash-fill text-success fs-5 mt-1"></i>
+        <div>
+            <div class="fw-semibold">
+                Grupo eliminado correctamente
+            </div>
+            <small class="text-muted">
+                El grupo fue eliminado del sistema.
+            </small>
+        </div>
+    </div>
+`, "success");
+
+
                 deleteGroupId = null;
+
 
                 await loadGroups();
 

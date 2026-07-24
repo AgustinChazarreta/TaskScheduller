@@ -462,15 +462,46 @@ form.addEventListener("submit", async e => {
     let personId = editingPersonId;
 
     if (!editingPersonId) {
+
         const result = await res.json();
         personId = result.personId;
 
         pendingAlert = {
             message: `
-        <i class="bi bi-check2-circle text-success fs-5"></i>
-        Usuario <span class="fw-bold">${payload.fullName}</span> creado correctamente<br>`,
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-person-plus-fill text-success fs-5 mt-1"></i>
+                <div>
+                    <div class="fw-semibold">
+                        Persona creada correctamente
+                    </div>
+                    <small class="text-muted">
+                        <strong>${payload.fullName}</strong> fue agregado al sistema.
+                    </small>
+                </div>
+            </div>
+        `,
             type: "success"
         };
+
+    } else {
+
+        pendingAlert = {
+            message: `
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-pencil-fill text-success fs-5 mt-1"></i>
+                <div>
+                    <div class="fw-semibold">
+                        Persona actualizada correctamente
+                    </div>
+                    <small class="text-muted">
+                        Los cambios de <strong>${payload.fullName}</strong> se guardaron correctamente.
+                    </small>
+                </div>
+            </div>
+        `,
+            type: "success"
+        };
+
     }
 
     // ===============================

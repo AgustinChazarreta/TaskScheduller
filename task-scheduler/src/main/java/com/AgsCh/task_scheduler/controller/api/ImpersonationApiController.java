@@ -17,89 +17,89 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @PreAuthorize("hasRole('WEBMASTER')")
 public class ImpersonationApiController {
 
-    private final AdminSession adminSession;
-    private final HouseService houseService;
-    private final UserRepository userRepository;
+        private final AdminSession adminSession;
+        private final HouseService houseService;
+        private final UserRepository userRepository;
 
-    public ImpersonationApiController(
-            AdminSession adminSession,
-            HouseService houseService,
-            UserRepository userRepository) {
+        public ImpersonationApiController(
+                        AdminSession adminSession,
+                        HouseService houseService,
+                        UserRepository userRepository) {
 
-        this.adminSession = adminSession;
-        this.houseService = houseService;
-        this.userRepository = userRepository;
-    }
-
-    @PostMapping("/house/{houseId}")
-    public ResponseEntity<Void> enterHouse(
-            @PathVariable Long houseId) {
-
-        House house = houseService.getHouseById(houseId);
-
-        if (house == null) {
-            return ResponseEntity.notFound().build();
+                this.adminSession = adminSession;
+                this.houseService = houseService;
+                this.userRepository = userRepository;
         }
 
-        Authentication authentication = SecurityContextHolder
-                .getContext()
-                .getAuthentication();
+        @PostMapping("/house/{houseId}")
+        public ResponseEntity<Void> enterHouse(
+                        @PathVariable Long houseId) {
 
-        User webmaster = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("Webmaster not found"));
+                House house = houseService.getHouseById(houseId);
 
-        // asignación temporal
-        webmaster.setHouse(house);
+                if (house == null) {
+                        return ResponseEntity.notFound().build();
+                }
 
-        userRepository.save(webmaster);
+                Authentication authentication = SecurityContextHolder
+                                .getContext()
+                                .getAuthentication();
 
-        System.out.println(
-                "WEBMASTER "
-                        + webmaster.getUsername()
-                        + " ahora tiene house "
-                        + house.getId());
+                User webmaster = userRepository.findByUsername(authentication.getName())
+                                .orElseThrow(() -> new RuntimeException("Webmaster not found"));
 
-        adminSession.setHouse(house);
-        adminSession.setHouseId(house.getId());
-        adminSession.setHouseName(house.getName());
-        adminSession.setImpersonating(true);
+                // asignación temporal
+                webmaster.setHouse(house);
 
-        System.out.println(
-                "Webmaster entrando en House: "
-                        + house.getName());
+                userRepository.save(webmaster);
 
-        return ResponseEntity.ok().build();
-    }
+                System.out.println(
+                                "WEBMASTER "
+                                                + webmaster.getUsername()
+                                                + " ahora tiene house "
+                                                + house.getId());
 
-    @GetMapping("/current")
-    public ResponseEntity<?> currentHouse() {
+                adminSession.setHouse(house);
+                adminSession.setHouseId(house.getId());
+                adminSession.setHouseName(house.getName());
+                adminSession.setImpersonating(true);
 
-        return ResponseEntity.ok(new Object() {
+                System.out.println(
+                                "Webmaster entrando en House: "
+                                                + house.getName());
 
-            public final Long houseId = adminSession.getHouseId();
-            public final String houseName = adminSession.getHouseName();
-            public final boolean impersonating = adminSession.isImpersonating();
+                return ResponseEntity.ok().build();
+        }
 
-        });
-    }
+        @GetMapping("/current")
+        public ResponseEntity<?> currentHouse() {
 
-    @PostMapping("/stop")
-    public ResponseEntity<Void> stopImpersonation(
-            Authentication authentication) {
+                return ResponseEntity.ok(new Object() {
 
-        User webmaster = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("Webmaster not found"));
+                        public final Long houseId = adminSession.getHouseId();
+                        public final String houseName = adminSession.getHouseName();
+                        public final boolean impersonating = adminSession.isImpersonating();
 
-        // volver al estado original
-        webmaster.setHouse(null);
+                });
+        }
 
-        userRepository.save(webmaster);
+        @PostMapping("/stop")
+        public ResponseEntity<Void> stopImpersonation(
+                        Authentication authentication) {
 
-        System.out.println(
-                "WEBMASTER restaurado. House = null");
+                User webmaster = userRepository.findByUsername(authentication.getName())
+                                .orElseThrow(() -> new RuntimeException("Webmaster not found"));
 
-        adminSession.clear();
+                // volver al estado original
+                webmaster.setHouse(null);
 
-        return ResponseEntity.ok().build();
-    }
+                userRepository.save(webmaster);
+
+                System.out.println(
+                                "WEBMASTER restaurado. House = null");
+
+                adminSession.clear();
+
+                return ResponseEntity.ok().build();
+        }
 }
