@@ -12,7 +12,7 @@ import com.AgsCh.task_scheduler.service.admin.FunctionRuleService;
 
 @RestController
 @RequestMapping("/api/function-rules")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("@authz.canAccessAdmin(authentication)")
 public class FunctionRuleApiController {
 
     private final FunctionRuleService service;

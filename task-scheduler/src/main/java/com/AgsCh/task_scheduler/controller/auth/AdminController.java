@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/admin")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("@authz.canAccessAdmin(authentication)")
 public class AdminController {
 
     private final PersonService personService;

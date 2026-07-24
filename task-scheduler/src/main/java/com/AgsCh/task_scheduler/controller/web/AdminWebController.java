@@ -7,7 +7,9 @@ import org.springframework.ui.Model;
 import com.AgsCh.task_scheduler.dto.request.ScheduleRequestDTO;
 import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.service.admin.AdminService;
+import com.AgsCh.task_scheduler.session.AdminSession;
 import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
+import com.AgsCh.task_scheduler.model.Role;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,15 +19,18 @@ import jakarta.validation.Valid;
 
 @Controller
 @RequestMapping("/admin")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("@authz.canAccessAdmin(authentication)")
 public class AdminWebController {
 
     private final AdminService adminService;
     private final AdminScheduleService scheduleService;
+    private final AdminSession adminSession;
 
-    public AdminWebController(AdminService adminService, AdminScheduleService scheduleService) {
+    public AdminWebController(AdminService adminService, AdminScheduleService scheduleService,
+            AdminSession adminSession) {
         this.adminService = adminService;
         this.scheduleService = scheduleService;
+        this.adminSession = adminSession;
     }
 
     /*
@@ -39,7 +44,13 @@ public class AdminWebController {
         String username = authentication.getName();
         User user = adminService.findByUsername(username);
 
-        Long houseId = user.getHouse().getId();
+        Long houseId;
+        if (user.getRole() == Role.WEBMASTER) {
+            houseId = adminSession.getHouseId();
+        } else {
+            houseId = user.getHouse().getId();
+        }
+
         var activeRun = scheduleService.getActiveRunByHouse(houseId);
 
         boolean isValid = activeRun != null;
@@ -51,7 +62,11 @@ public class AdminWebController {
                 activeRun != null ? activeRun.getCreatedAt() : null);
 
         model.addAttribute("adminName", user.getUsername());
-        model.addAttribute("houseName", user.getHouse().getName());
+        if (user.getRole() == Role.WEBMASTER) {
+            model.addAttribute("houseName", adminSession.getHouseName());
+        } else {
+            model.addAttribute("houseName", user.getHouse().getName());
+        }
         model.addAttribute("role", user.getRole().name());
 
         return "admin/dashboard";

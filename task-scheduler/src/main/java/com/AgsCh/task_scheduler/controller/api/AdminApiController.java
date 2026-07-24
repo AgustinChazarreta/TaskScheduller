@@ -19,7 +19,7 @@ import com.AgsCh.task_scheduler.service.admin.AdminScheduleService;
 
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("@authz.canAccessAdmin(authentication)")
 public class AdminApiController {
 
     private final AdminService adminService;

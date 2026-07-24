@@ -7,20 +7,23 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.authorization.AuthorizationDecision;
 
 import com.AgsCh.task_scheduler.model.User;
-import com.AgsCh.task_scheduler.repository.UserRepository;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
         private final CustomUserDetailsService userDetailsService;
-        private final UserRepository userRepository;
+        private final com.AgsCh.task_scheduler.session.AdminSession adminSession;
 
-        public SecurityConfig(CustomUserDetailsService userDetailsService, UserRepository userRepository) {
+        public SecurityConfig(
+                        CustomUserDetailsService userDetailsService,
+                        com.AgsCh.task_scheduler.session.AdminSession adminSession) {
+
                 this.userDetailsService = userDetailsService;
-                this.userRepository = userRepository;
+                this.adminSession = adminSession;
         }
 
         @Bean
@@ -54,7 +57,26 @@ public class SecurityConfig {
                                                 .requestMatchers("/change-password").authenticated()
 
                                                 .requestMatchers("/webmaster/**").hasRole("WEBMASTER")
-                                                .requestMatchers("/admin/**").hasRole("ADMIN")
+                                                .requestMatchers("/admin/**")
+                                                .access((authentication, context) -> {
+
+                                                        boolean isAdmin = authentication.get()
+                                                                        .getAuthorities()
+                                                                        .stream()
+                                                                        .anyMatch(a -> a.getAuthority()
+                                                                                        .equals("ROLE_ADMIN"));
+
+                                                        boolean isWebmaster = authentication.get()
+                                                                        .getAuthorities()
+                                                                        .stream()
+                                                                        .anyMatch(a -> a.getAuthority()
+                                                                                        .equals("ROLE_WEBMASTER"));
+
+                                                        boolean impersonating = adminSession.isImpersonating();
+
+                                                        return new AuthorizationDecision(
+                                                                        isAdmin || (isWebmaster && impersonating));
+                                                })
                                                 .requestMatchers("/user/**").hasRole("USER")
 
                                                 .anyRequest().authenticated())
@@ -74,13 +96,10 @@ public class SecurityConfig {
                                                 })
                                                 .successHandler((request, response, authentication) -> {
 
-                                                        var principal = (org.springframework.security.core.userdetails.User) authentication
+                                                        CustomUserDetails principal = (CustomUserDetails) authentication
                                                                         .getPrincipal();
 
-                                                        String username = principal.getUsername();
-
-                                                        User user = userRepository.findByUsername(username)
-                                                                        .orElseThrow();
+                                                        User user = principal.getUser();
 
                                                         // 🔐 FORZAR CAMBIO DE CONTRASEÑA
                                                         if (user.isPasswordTemporary()) {

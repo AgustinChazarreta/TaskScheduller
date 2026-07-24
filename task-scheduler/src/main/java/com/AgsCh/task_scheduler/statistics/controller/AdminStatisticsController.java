@@ -17,7 +17,7 @@ import com.AgsCh.task_scheduler.statistics.service.HouseStatisticsService;
 
 @Controller
 @RequestMapping("/admin/statistics")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("@authz.canAccessAdmin(authentication)")
 public class AdminStatisticsController {
 
         private final HouseStatisticsService service;

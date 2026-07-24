@@ -25,14 +25,14 @@ public class PersonApiController {
 
     // -------- CREATE --------
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@authz.canAccessAdmin(authentication)")
     public PersonCreatedResponseDTO create(@RequestBody PersonRequestDTO dto) {
         return service.create(dto);
     }
 
     // -------- READ ALL --------
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasRole('USER') || @authz.canAccessAdmin(authentication)")
     public List<PersonResponseDTO> list() {
         return service.findAll().stream()
                 .map(service::mapToResponseDTOSafe) // usamos el DTO seguro que incluye unavailabilities
@@ -41,7 +41,7 @@ public class PersonApiController {
 
     // -------- UPDATE --------
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@authz.canAccessAdmin(authentication)")
     public void update(@PathVariable Long id,
             @RequestBody PersonRequestDTO dto) {
         service.update(id, dto);
@@ -49,7 +49,7 @@ public class PersonApiController {
 
     // -------- DELETE --------
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@authz.canAccessAdmin(authentication)")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }

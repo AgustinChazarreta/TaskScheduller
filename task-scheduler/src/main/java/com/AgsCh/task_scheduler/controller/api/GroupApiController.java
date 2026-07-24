@@ -21,21 +21,21 @@ public class GroupApiController {
 
     // 🔹 Listar todos los grupos
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','WEBMASTER')")
+    @PreAuthorize("hasRole('WEBMASTER') || @authz.canAccessAdmin(authentication)")
     public List<GroupResponseDTO> list() {
         return service.findAll();
     }
 
     // 🔹 Crear un nuevo grupo
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@authz.canAccessAdmin(authentication)")
     public GroupResponseDTO create(@RequestBody GroupRequestDTO dto) {
         return service.create(dto);
     }
 
     // 🔹 Actualizar un grupo existente
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@authz.canAccessAdmin(authentication)")
     public GroupResponseDTO update(@PathVariable Long id,
             @RequestBody GroupRequestDTO dto) {
         return service.update(id, dto);
@@ -43,7 +43,7 @@ public class GroupApiController {
 
     // 🔹 Eliminar un grupo
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@authz.canAccessAdmin(authentication)")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }

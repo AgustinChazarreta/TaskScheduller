@@ -90,7 +90,7 @@ public class ScheduleController {
          * =========================
          */
         @PostMapping("/solve")
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("@authz.canAccessAdmin(authentication)")
         public ScheduleResponseDTO solve(
                         @Valid @RequestBody ScheduleRequestDTO request,
                         Authentication authentication) {
@@ -113,7 +113,7 @@ public class ScheduleController {
          * =========================
          */
         @GetMapping("/current")
-        @PreAuthorize("hasAnyRole('ADMIN','USER')")
+        @PreAuthorize("hasRole('USER') || @authz.canAccessAdmin(authentication)")
         public ScheduleResponseDTO current(@AuthenticationPrincipal User user) {
 
                 validateUserAndHouse(user);
@@ -133,7 +133,7 @@ public class ScheduleController {
          * =========================
          */
         @PostMapping("/create-new-run")
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("@authz.canAccessAdmin(authentication)")
         public ScheduleResponseDTO createNewRun(
                         @Valid @RequestBody List<FunctionAssignmentResponseDTO> dtos,
                         Authentication authentication) {
@@ -186,7 +186,7 @@ public class ScheduleController {
         }
 
         @PostMapping("/export-pdf")
-        @PreAuthorize("hasAnyRole('ADMIN','USER')")
+        @PreAuthorize("hasRole('USER') || @authz.canAccessAdmin(authentication)")
         public ResponseEntity<byte[]> exportPdf(
                         @RequestBody List<FunctionAssignmentResponseDTO> assignments) {
 
@@ -397,7 +397,7 @@ public class ScheduleController {
         }
 
         @PostMapping("/send-pdfs")
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("@authz.canAccessAdmin(authentication)")
         public ResponseEntity<Map<String, Object>> sendAllPdfs() { // 🔥 ya no recibe houseId
 
                 List<Person> persons = personRepository.findAll();

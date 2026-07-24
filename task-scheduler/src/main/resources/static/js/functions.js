@@ -118,7 +118,7 @@ async function loadFunctions() {
             <i class="bi bi-x-circle-fill text-danger fs-5 mt-1"></i>
             <div>
                 <div class="fw-semibold">Error cargando funciones</div>
-                <small class="text-muted">No se pudieron obtener los datos del servidor.</small>
+                <small class="text-muted">No se pudieron obtener los datos.</small>
             </div>
         </div>
     `, "danger");

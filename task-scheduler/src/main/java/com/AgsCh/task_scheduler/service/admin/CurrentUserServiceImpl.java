@@ -9,9 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.AgsCh.task_scheduler.model.AdminData;
+import com.AgsCh.task_scheduler.model.Role;
 import com.AgsCh.task_scheduler.model.User;
 import com.AgsCh.task_scheduler.repository.UserRepository;
 import com.AgsCh.task_scheduler.service.domain.CurrentUserService;
+import com.AgsCh.task_scheduler.session.AdminSession;
 
 @Service
 public class CurrentUserServiceImpl implements CurrentUserService {
@@ -21,23 +23,53 @@ public class CurrentUserServiceImpl implements CurrentUserService {
             "ORDEN_II", List.of("Segunda"));
 
     private final UserRepository userRepository;
+    private final AdminSession adminSession;
 
-    public CurrentUserServiceImpl(UserRepository userRepository) {
+    public CurrentUserServiceImpl(UserRepository userRepository, AdminSession adminSession) {
         this.userRepository = userRepository;
+        this.adminSession = adminSession;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<String> getCurrentUserOrdens() {
 
-        String username = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
+        Authentication auth = SecurityContextHolder.getContext()
+                .getAuthentication();
 
-        User user = userRepository.findByUsernameWithAdminData(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByUsername(auth.getName())
+                .orElseThrow();
 
-        AdminData adminData = user.getAdminData();
+        AdminData adminData = null;
+
+        // ===============================
+        // ADMIN NORMAL
+        // ===============================
+        if (user.getRole() == Role.ADMIN) {
+
+            adminData = user.getAdminData();
+
+        }
+
+        // ===============================
+        // WEBMASTER IMPERSONANDO
+        // ===============================
+        else if (user.getRole() == Role.WEBMASTER
+                && adminSession.isImpersonating()) {
+
+            List<User> admins = userRepository.findByHouseIdAndRole(
+                    adminSession.getHouseId(),
+                    Role.ADMIN);
+
+            if (admins.isEmpty()) {
+                throw new RuntimeException(
+                        "No existe ADMIN para esta House");
+            }
+
+            User admin = admins.get(0);
+
+            adminData = admin.getAdminData();
+        }
 
         if (adminData == null) {
             throw new RuntimeException("AdminData missing");
@@ -58,7 +90,8 @@ public class CurrentUserServiceImpl implements CurrentUserService {
 
         String username = authentication.getName();
 
-        return userRepository.findByUsername(username)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        return user;
     }
 }

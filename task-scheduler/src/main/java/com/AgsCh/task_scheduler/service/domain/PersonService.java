@@ -92,7 +92,7 @@ public class PersonService {
     // CREATE
     // =====================================================
 
-    @PreAuthorize("hasAnyRole('ADMIN','WEBMASTER')")
+    @PreAuthorize("hasRole('WEBMASTER') || @authz.canAccessAdmin(authentication)")
     @Transactional
     public PersonCreatedResponseDTO create(PersonRequestDTO dto) {
 
@@ -177,7 +177,7 @@ public class PersonService {
                 temporaryPassword);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','WEBMASTER')")
+    @PreAuthorize("hasRole('WEBMASTER') || @authz.canAccessAdmin(authentication)")
     @Transactional
     public PersonCreatedResponseDTO createForHouse(Long houseId, PersonRequestDTO dto) {
 

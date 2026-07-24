@@ -42,7 +42,7 @@ public class FunctionApiController {
 
         // -------- CREATE --------
         @PostMapping
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("@authz.canAccessAdmin(authentication)")
         public void createFunctions(
                         @RequestBody List<FunctionRequestDTO> functions,
                         Authentication authentication) {
@@ -52,7 +52,7 @@ public class FunctionApiController {
 
         // -------- READ --------
         @GetMapping
-        @PreAuthorize("hasAnyRole('ADMIN','USER')")
+        @PreAuthorize("hasRole('USER') || @authz.canAccessAdmin(authentication)")
         public List<FunctionResponseDTO> list() {
 
                 return service.findAll()
@@ -68,7 +68,7 @@ public class FunctionApiController {
 
         // -------- UPDATE --------
         @PutMapping("/{id}")
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("@authz.canAccessAdmin(authentication)")
         public void update(
                         @PathVariable Long id,
                         @RequestBody FunctionRequestDTO dto) {
@@ -78,14 +78,14 @@ public class FunctionApiController {
 
         // -------- DELETE --------
         @DeleteMapping("/{id}")
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("@authz.canAccessAdmin(authentication)")
         public void delete(@PathVariable Long id) {
                 service.delete(id);
         }
 
         // -------- LOAD WORD --------
         @PostMapping(value = "/from-word", consumes = "multipart/form-data")
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("@authz.canAccessAdmin(authentication)")
         public List<FunctionResponseDTO> parseFromWord(
                         @RequestParam("file") MultipartFile file,
                         Authentication authentication) throws IOException {
@@ -109,7 +109,7 @@ public class FunctionApiController {
 
         // -------- GET PERSISTED WORD --------
         @GetMapping("/word-template")
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("@authz.canAccessAdmin(authentication)")
         public ResponseEntity<byte[]> getWordTemplate(
                         Authentication authentication) {
 
@@ -127,7 +127,7 @@ public class FunctionApiController {
         }
 
         @GetMapping("/word-template/info")
-        @PreAuthorize("hasRole('ADMIN')")
+        @PreAuthorize("@authz.canAccessAdmin(authentication)")
         public ResponseEntity<Map<String, String>> getWordTemplateInfo(Authentication authentication) {
                 User user = currentUserService.getCurrentUser(authentication);
 

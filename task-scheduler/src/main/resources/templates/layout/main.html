@@ -253,9 +253,9 @@
         <aside class="app-sidebar bg-dark shadow" data-bs-theme="dark">
             <!-- ================= BRAND LINK DINÁMICO ================= -->
 
-            <!-- WEBMASTER -->
-            <th:block sec:authorize="hasRole('WEBMASTER')">
-                <a href="/webmaster/dashboard" class="brand-link" style="text-decoration: none">
+            <!-- ADMIN O WEBMASTER IMPERSONANDO -->
+            <th:block th:if="${isAdminView}">
+                <a href="/admin/dashboard" class="brand-link" style="text-decoration: none">
                     <div class="sidebar-brand">
                         <span class="brand-text fw-bold fs-3">
                             <i class="bi bi-ui-checks-grid me-2 fs-3"></i>Scheduler
@@ -264,9 +264,9 @@
                 </a>
             </th:block>
 
-            <!-- ADMIN -->
-            <th:block sec:authorize="hasRole('ADMIN')">
-                <a href="/admin/dashboard" class="brand-link" style="text-decoration: none">
+            <!-- WEBMASTER NORMAL -->
+            <th:block th:if="${!isAdminView}" sec:authorize="hasRole('WEBMASTER')">
+                <a href="/webmaster/dashboard" class="brand-link" style="text-decoration: none">
                     <div class="sidebar-brand">
                         <span class="brand-text fw-bold fs-3">
                             <i class="bi bi-ui-checks-grid me-2 fs-3"></i>Scheduler
@@ -291,7 +291,7 @@
                     <ul class="nav sidebar-menu flex-column">
 
                         <!-- ================= WEBMASTER ================= -->
-                        <th:block sec:authorize="hasRole('WEBMASTER')">
+                        <th:block th:if="${!isAdminView}" sec:authorize="hasRole('WEBMASTER')">
 
                             <li class="nav-header text-uppercase small text-muted">Panel</li>
                             <li class="nav-item">
@@ -301,12 +301,12 @@
                                 </a>
                             </li>
 
-                            <li class="nav-header text-uppercase small text-muted mt-3">Seguridad</li>
                             <li class="nav-item">
-                                <a href="/webmaster/houses" class="nav-link">
-                                    <i class="nav-icon bi bi-house-door"></i>
-                                    <p>Houses</p>
-                                </a>
+                            <li class="nav-header text-uppercase small text-muted mt-3">Seguridad</li>
+                            <a href="/webmaster/houses" class="nav-link">
+                                <i class="nav-icon bi bi-house-door"></i>
+                                <p>Houses</p>
+                            </a>
                             </li>
                             <li class="nav-item">
                                 <a href="/webmaster/users" class="nav-link">
@@ -332,7 +332,7 @@
 
                         </th:block>
                         <!-- ================= ADMIN ================= -->
-                        <th:block sec:authorize="hasRole('ADMIN')">
+                        <th:block th:if="${isAdminView}">
 
                             <li class="nav-item px-3 mt-2 mb-2">
                                 <div class="bg-primary rounded-3 p-2 text-center shadow-sm">
@@ -435,9 +435,34 @@
         </aside>
 
         <!-- MAIN -->
+        <!-- MAIN -->
         <main class="app-main">
             <div class="container-fluid px-4 py-3">
+
+                <div th:if="${impersonating}"
+                    class="alert alert-warning rounded-4 shadow-sm d-flex justify-content-between align-items-center mb-3">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-exclamation fs-4"></i>
+
+                        <div>
+                            <strong>Modo administración:</strong>
+                            estás ingresando como Admin de
+                            <span class="fw-bold" th:text="${impersonatedHouseName}">
+                                House
+                            </span>
+                        </div>
+                    </div>
+
+                    <button id="btnStopImpersonation" class="btn btn-outline-dark btn-sm">
+                        <i class="bi bi-arrow-left-circle"></i>
+                        Volver a Webmaster
+                    </button>
+
+                </div>
+
                 <th:block th:replace="${content}"></th:block>
+
             </div>
         </main>
         <!-- FOOTER -->
@@ -490,6 +515,8 @@
             house: /*[[${houseName}]]*/ ""
         };
     </script>
+    <script th:src="@{/js/csrf.js}"></script>
+    <script th:src="@{/js/impersonation.js}"></script>
 </body>
 
 </html>

@@ -1,9 +1,6 @@
 package com.AgsCh.task_scheduler.auth;
 
-import java.util.List;
-
 import org.springframework.security.core.userdetails.*;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import com.AgsCh.task_scheduler.model.User;
@@ -25,13 +22,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPassword(),
-                user.isActive(),
-                true,
-                true,
-                true,
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
+        return new CustomUserDetails(user);
     }
 }

@@ -71,8 +71,10 @@ public class AdminService {
     }
 
     public User findByUsername(String username) {
-        return userRepository.findByUsername(username)
+
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        return user;
     }
 
     // actualizar admin
